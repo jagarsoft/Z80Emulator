@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run" type="JarApplication">
+    <option name="WORKING_DIRECTORY" value="C:\Users\Usuario\GitHub\jagarsoft\Z80Emulator" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <module name="Z80Emulator" />
+    <method v="2" />
+  </configuration>
+</component>
