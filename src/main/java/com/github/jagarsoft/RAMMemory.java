@@ -11,7 +11,7 @@ class RAMMemory implements Memory {
             this.ram[addr] = data;
         }
 
-        public byte peek(int addr){
+        public byte peek(int addr) {
             return this.ram[addr];
         }
 }

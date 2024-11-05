@@ -1,4 +1,4 @@
-package com.github.jagarsoft.Z80Emulator.test;
+package com.github.jagarsoft.test;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
