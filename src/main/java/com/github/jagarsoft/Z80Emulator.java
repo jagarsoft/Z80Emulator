@@ -2,20 +2,14 @@ package com.github.jagarsoft;
 
 public class Z80Emulator {
     public static void main(String[ ] arg) {
-        createComputer();
-    }
+        Computer myComp = new Computer();
+        myComp.addCPU(new Z80());
+        myComp.addMemory(new ROMMemory(new byte[]{1, 2, 3}));
+        myComp.addMemory(new RAMMemory(16));
 
-    private static void createComputer() {
-        Z80cpu Z80cpu = new Z80cpu();
-        ROMMemory rom = new ROMMemory(new byte[]{1, 2, 3});
-        RAMMemory ram = new RAMMemory(16);
-
-        Z80cpu.reset();
-        //while(true){
-        for (int i=0; i<3; i++) {
-            int pc = Z80cpu.getPC();
-            byte code = rom.peek(pc);
-            Z80cpu.exec(code);
+        for(;;) {
+            myComp.reset();
+            myComp.run();
         }
     }
 }

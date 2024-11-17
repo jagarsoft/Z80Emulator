@@ -11,6 +11,11 @@ class ROMMemory implements Memory {
         this.rom = bank;
     }
 
+    @Override
+    public int getSize() {
+        return this.rom.length;
+    }
+
     public void poke(int addr, byte data) {
         ;
     }
