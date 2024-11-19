@@ -12,9 +12,7 @@ class ROMMemory implements Memory {
     }
 
     @Override
-    public int getSize() {
-        return this.rom.length;
-    }
+    public int getSize() { return this.rom.length; }
 
     public void poke(int addr, byte data) {
         ;

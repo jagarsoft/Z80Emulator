@@ -9,7 +9,7 @@ public class Computer {
     Dispatcher d;
 
     Computer(){
-        //d = new Dispatcher(new Z80Runner());
+        d = new Dispatcher(new Z80Runner());
     }
 
     void addCPU(Z80 cpu){

@@ -1,13 +1,13 @@
 package com.github.jagarsoft;
 
 public interface Z80OpCode {
-    public int NOP(byte y, byte z);
+    int NOP(byte z, byte y);
 
-    public int EX_AF_AF_(byte y, byte z);
+    int EX_AF_AF_(byte z, byte y);
 
-    public int DJNZ(byte d, byte z);
+    int DJNZ(byte y, byte d);
 
-    public int JR(byte d, byte z);
+    int JR(byte y, byte d);
 
-    public int JR_cc(byte y, byte d);
+    int JR_cc(byte y, byte d);
 }

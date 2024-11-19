@@ -1,18 +1,21 @@
 package com.github.jagarsoft;
 
-public class Disassembler implements Z80OpCode {
+public class Disassembler implements Z80OpCode { // extends z80
+    // eliminar cuando se mueva a Z80OpCode
     static int offset = 0;
+
     
     String cc[] = new String[] {
             "NZ", "Z", "NC", "C", "PO", "PE", "P", "M" 
     };
 
-    public int NOP(byte y, byte z) {
+    // cuando extienda de z80 todos los metodos de abajo sobrecargaran a los de la clase z80
+    public int NOP(byte z, byte y) {
         System.out.println("NOP");
         return 0;
     }
 
-    public int EX_AF_AF_(byte y, byte z) {
+    public int EX_AF_AF_(byte z, byte y) {
         System.out.println("EX AF, AF'");
         return 0;
     }
