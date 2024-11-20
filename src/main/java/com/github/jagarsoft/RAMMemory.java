@@ -9,13 +9,9 @@ class RAMMemory implements Memory {
             this.size = size;
         }
 
-        public void poke(int addr, byte data) {
-            this.ram[addr] = data;
-        }
+        public void poke(int addr, byte data) { ram[addr] = data; }
 
-    public int getSize(){ return this.size; }
+    public int getSize(){ return size; }
 
-        public byte peek(int addr) {
-            return this.ram[addr];
-        }
+        public byte peek(int addr) { return ram[addr]; }
 }

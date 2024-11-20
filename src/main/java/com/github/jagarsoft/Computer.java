@@ -26,15 +26,9 @@ public class Computer {
 
     void run(){
         for (;;) {
-            int operands = 0;
-            int pc = cpu.getPC();
-            byte opCode = this.peek(pc);
-            byte data;
-            operands = d.execute(opCode);
+            int operands = d.execute(this.peek(cpu.getPC())); // peek opCode
             while(operands-- > 0) {
-                pc = cpu.getPC();
-                data = this.peek(pc);
-                d.execute(data);
+                d.execute(this.peek(cpu.getPC())); // peek data
             }
         }
     }

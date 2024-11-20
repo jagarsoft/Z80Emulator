@@ -24,9 +24,5 @@ public class Z80Test {
 
         assertEquals(0x04, cpu.getF(), "EX_AF_AF_ Failed (F)");
         assertEquals(0x02, cpu.getF_(), "EX_AF_AF_ Failed (F')");
-        /*System.out.println("A:"+String.format("0x%02X", cpu.getA()));
-        System.out.println("F:"+String.format("0x%02X", cpu.getF()));
-        System.out.println("A_:"+String.format("0x%02X", cpu.getA_()));
-        System.out.println("F_:"+String.format("0x%02X", cpu.getF_()));*/
     }
 }

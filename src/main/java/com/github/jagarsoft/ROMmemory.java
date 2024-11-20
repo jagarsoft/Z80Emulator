@@ -12,13 +12,11 @@ class ROMMemory implements Memory {
     }
 
     @Override
-    public int getSize() { return this.rom.length; }
+    public void poke(int addr, byte data) { /* Read-Only Memory */; }
 
-    public void poke(int addr, byte data) {
-        ;
-    }
-
-    public byte peek(int addr){
-        return this.rom[addr];
-    }
+    @Override
+    public byte peek(int addr){ return rom[addr]; }
+    
+    @Override
+    public int getSize() { return rom.length; }
 }

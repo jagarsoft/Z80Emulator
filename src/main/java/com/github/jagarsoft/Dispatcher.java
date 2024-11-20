@@ -1,7 +1,6 @@
 package com.github.jagarsoft;
 
 public class Dispatcher {
-    static Z80OpCode opC;
     static int offset;
     static byte x;
     static byte y;
@@ -11,8 +10,6 @@ public class Dispatcher {
     static OpCode[][][] opCodes = new OpCode[4][8][8];
 
     public Dispatcher(Z80OpCode opC) {
-        this.opC = opC;
-
         // According to http://www.z80.info/decoding.htm
         //     [x][z][y]
         opCodes[0][0][0] = opC::NOP;

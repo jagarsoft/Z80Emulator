@@ -3,7 +3,6 @@ package com.github.jagarsoft;
 public class Disassembler extends Z80 implements Z80OpCode {
     static int offset = 0;
 
-    // cuando extienda de z80 todos los metodos de abajo sobrecargaran a los de la clase z80
     public int NOP(byte z, byte y) {
         System.out.println("NOP");
         return 0;
