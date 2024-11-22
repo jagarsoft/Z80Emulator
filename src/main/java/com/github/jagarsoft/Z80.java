@@ -1,165 +1,112 @@
 package com.github.jagarsoft;
 
-import static java.lang.Boolean.TRUE;
-import static java.lang.Boolean.FALSE;
+import java.util.BitSet;
 
 public class Z80 implements Z80OpCode {
+    protected class Register {
+        public byte A;
+        public byte B;
+        public byte C;
+        public byte D;
+        public byte E;
+        public byte H;
+        public byte L;
+        public BitSet F = new BitSet(8); // SF, ZF, xF ,HF, yF, PF, NF, CF;
+    }
+
+    protected byte A;
+    protected byte B;
+    protected byte C;
+    protected byte D;
+    protected byte E;
+    protected byte H;
+    protected byte L;
+    protected BitSet F = new BitSet(8);
     protected int PC;
-    protected byte A, A_;
-    protected boolean SF, ZF, xF ,HF, yF, PF, NF, CF;
-    protected boolean SF_, ZF_, xF_ ,HF_, yF_, PF_, NF_, CF_;
-    protected byte H, H_;
-    protected byte L, L_;
-    protected byte D, D_;
-    protected byte E, E_;
-    protected byte B, B_;
-    protected byte C, C_;
+    protected short IX;
+    protected short IY;
+    protected byte R;
+    
+    protected Register Alternative = new Register();
 
     static int offset = 0;
-    public void reset() { this.PC = 0; }
+    public void reset() { PC = 0; }
 
-    // Getters
-    protected int getPC() {
-        return this.PC++;
-    }
-    public byte getA_() {
-        return this.A_;
-    }
-    public byte getA() {
-        return this.A;
-    }
-    public byte getB() {
-        return this.B;
-    }
-    public byte getB_() {
-        return this.B_;
-    }
-    public byte getC() {
-        return this.C;
-    }
-    public byte getC_() {
-        return this.C_;
-    }
-    public byte getD() {
-        return this.D;
-    }
-    public byte getE_() {
-        return this.E_;
-    }
-    public byte getH() {
-        return this.H;
-    }
-    public byte getH_() {
-        return this.H_;
-    }
-    public byte getL() {
-        return this.L;
-    }
-    public byte getL_() {
-        return this.L_;
-    }
+    // Getters / Setters
+    public byte getA() { return A; }
+    public void setA(byte a) { A = a; }
+    
+    public byte getB() { return B; }
+    public void setB(byte b) { B = b; }
+    
+    public byte getC() { return C; }
+    public void setC(byte c) { C = c; }
+        
+    public byte getD() {return D; }
+    public void setD(byte d) { D = d; }
+    
+    public byte getE() { return E; }
+    public void setE(byte e) { E = e; }
+    
+    public byte getH() { return H; }
+    public void setH(byte h) { H = h; }
+    
+    public byte getL() { return L; }
+    public void setL(byte l) { L = l; }
+    
+    public byte getF() { return F.toByteArray()[0]; }
+    public void setF(byte f) { F = BitSet.valueOf(new byte[]{f}); }
 
-    public byte getF() {
-        int f;
+    public byte getF_() { return Alternative.F.toByteArray()[0]; }
 
-        f  = this.SF ? 0b10000000 : 0;
-        f |= this.ZF ? 0b01000000 : 0;
-        f |= this.xF ? 0b00100000 : 0;
-        f |= this.HF ? 0b00010000 : 0;
-        f |= this.yF ? 0b00001000 : 0;
-        f |= this.PF ? 0b00000100 : 0;
-        f |= this.NF ? 0b00000010 : 0;
-        f |= this.CF ? 0b00000001 : 0;
+    public void setF_(byte f) { Alternative.F = BitSet.valueOf(new byte[]{f}); }
+    
+    public boolean getSF(){ return F.get(7); }
+    public boolean getZF(){ return F.get(6); }
+    public boolean getxF(){ return F.get(5); }
+    public boolean getHF(){ return F.get(4); }
+    public boolean getyF(){ return F.get(3); }
+    public boolean getPF(){ return F.get(2); }
+    public boolean getNF(){ return F.get(1); }
+    public boolean getCF(){ return F.get(0); }
 
-        return (byte)f;
-    }
+    public void setSF(){ F.set(7); }
+    public void setZF(){ F.set(6); }
+    public void setxF(){ F.set(5); }
+    public void setHF(){ F.set(4); }
+    public void setyF(){ F.set(3); }
+    public void setPF(){ F.set(2); }
+    public void setNF(){ F.set(1); }
+    public void setCF(){ F.set(0); }
+    
+    // Words
+    public short getHL(){ return (short)((short)(H << 8) | L); }
+    public short getBC(){ return (short)((short)(B << 8) | C); }
+    public short getDE(){ return (short)((short)(D << 8) | E); }
+    
+    public void setHL(short hl){ H = (byte)((hl &0xFF00) >> 8); L = (byte)(hl & 0x00FF); }
+    public void setBC(short bc){ B = (byte)((bc &0xFF00) >> 8); C = (byte)(bc & 0x00FF); }
+    public void setDE(short de){ D = (byte)((de &0xFF00) >> 8); E = (byte)(de & 0x00FF); }
+    
+    protected int getPC() { return PC++; }
+    protected void setPC(int pc) { PC = pc; }
 
-    public byte getF_() {
-        int f_;
-
-        f_  = this.SF_ ? 0b10000000 : 0;
-        f_ |= this.ZF_ ? 0b01000000 : 0;
-        f_ |= this.xF_ ? 0b00100000 : 0;
-        f_ |= this.HF_ ? 0b00010000 : 0;
-        f_ |= this.yF_ ? 0b00001000 : 0;
-        f_ |= this.PF_ ? 0b00000100 : 0;
-        f_ |= this.NF_ ? 0b00000010 : 0;
-        f_ |= this.CF_ ? 0b00000001 : 0;
-
-        return (byte)f_;
-    }
-
-    // Setters
-    public void setPC(int pc) { this.PC = pc; }
-    public void setA(byte a) { this.A = a; }
-    public void setA_(byte a_) {
-        this.A_ = a_;
-    }
-    public void setB(byte b) {
-        this.B = b;
-    }
-    public void setB_(byte b_) {
-        this.B_ = b_;
-    }
-    public void setC(byte c) {
-        this.C = c;
-    }
-    public void setC_(byte c_) {
-        this.C_ = c_;
-    }
-    public void setD(byte d) {
-        this.D = d;
-    }
-    public void setE_(byte e_) {
-        this.E_ = e_;
-    }
-    public void setH(byte h) {
-        this.H = h;
-    }
-    public void setH_(byte h_) {
-        this.H_ = h_;
-    }
-    public void setL(byte l) {
-        this.L = l;
-    }
-    public void setL_(byte l_) {
-        this.L_ = l_;
-    }
-
-    public void setF(byte f) {
-        this.SF = ((int)f & 0b10000000) != 0 ? TRUE : FALSE;
-        this.ZF = ((int)f & 0b01000000) != 0 ? TRUE : FALSE;
-        this.xF = ((int)f & 0b00100000) != 0 ? TRUE : FALSE;
-        this.HF = ((int)f & 0b00010000) != 0 ? TRUE : FALSE;
-        this.yF = ((int)f & 0b00001000) != 0 ? TRUE : FALSE;
-        this.PF = ((int)f & 0b00000100) != 0 ? TRUE : FALSE;
-        this.NF = ((int)f & 0b00000010) != 0 ? TRUE : FALSE;
-        this.CF = ((int)f & 0b00000001) != 0 ? TRUE : FALSE;
-    }
-
-    public void setF_(byte f_) {
-        this.SF_ = ((int)f_ & 0b10000000) != 0 ? TRUE : FALSE;
-        this.ZF_ = ((int)f_ & 0b01000000) != 0 ? TRUE : FALSE;
-        this.xF_ = ((int)f_ & 0b00100000) != 0 ? TRUE : FALSE;
-        this.HF_ = ((int)f_ & 0b00010000) != 0 ? TRUE : FALSE;
-        this.yF_ = ((int)f_ & 0b00001000) != 0 ? TRUE : FALSE;
-        this.PF_ = ((int)f_ & 0b00000100) != 0 ? TRUE : FALSE;
-        this.NF_ = ((int)f_ & 0b00000010) != 0 ? TRUE : FALSE;
-        this.CF_ = ((int)f_ & 0b00000001) != 0 ? TRUE : FALSE;
-    }
+    /*
+     * Operators
+     */
 
     public int NOP(byte z, byte y) {
         return 0;
     }
 
     public int EX_AF_AF_(byte z, byte y) {
-        z = this.A;
-        this.A = this.A_;
-        this.A_ = z;
+        z = A;
+        A = Alternative.A;
+        Alternative.A = z;
 
-        y = this.getF();
-        this.setF(this.getF_());
-        this.setF_(y);
+        y = getF();
+        setF(getF_());
+        setF_(y);
         return 0;
     }
 
@@ -168,8 +115,8 @@ public class Z80 implements Z80OpCode {
             return ++offset;
         }
 
-        if( --this.B != 0 )
-            this.PC += d;
+        if( --B != 0 )
+            PC += d;
 
         return offset = 0;
     }
@@ -179,7 +126,7 @@ public class Z80 implements Z80OpCode {
             return ++offset;
         }
 
-        this.PC += d;
+        PC += d;
 
         return offset = 0;
     }
@@ -191,13 +138,13 @@ public class Z80 implements Z80OpCode {
         }
 
         switch (cc[y-4]) {
-            case "NZ":  t = ! this.ZF; break;
-            case "Z":   t = this.ZF; break;
-            case "NC":  t = ! this.CF; break;
-            case "C":   t = this.CF; break;
+            case "NZ":  t = ! getZF(); break;
+            case "Z":   t = getZF(); break;
+            case "NC":  t = ! getCF(); break;
+            case "C":   t = getCF(); break;
         }
 
-        if( t ) this.PC += d;
+        if( t ) PC += d;
 
         return offset = 0;
     }

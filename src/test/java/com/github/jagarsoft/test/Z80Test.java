@@ -9,7 +9,7 @@ public class Z80Test {
 
     @Test
     void testEX_AF_AF_() {
-        Z80 cpu = new Z80();
+        Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setA((byte)0x01);
         cpu.setF((byte)0x02);
