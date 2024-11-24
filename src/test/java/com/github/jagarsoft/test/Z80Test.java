@@ -4,8 +4,7 @@ import com.github.jagarsoft.Computer;
 import com.github.jagarsoft.RAMMemory;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class Z80Test {
 
@@ -91,5 +90,31 @@ public class Z80Test {
         
         assertEquals((byte)0xFF, (byte)compTest.peek(0) , "LD (DE), A Failed: (DE)<>0xFF ((DE)=" + compTest.peek(0) + ")");
         assertNotEquals((byte)0x80, (byte)compTest.peek(0) , "LD (DE), A Failed: (DE) still 0x80 ((DE)=" + compTest.peek(0) + ")");
+    }
+
+    @Test
+    void testLD_nn_HL(){
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(new RAMMemory(4));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte)0x02);
+        compTest.poke(0x0001, (byte)0x00);
+        compTest.poke(0x0002, (byte)0x56);
+        compTest.poke(0x0003, (byte)0x78);
+
+        cpu.setPC(0);
+        cpu.setHL((short)0x1234);
+
+        cpu.LD_nn_HL((byte) 0, (byte)0); // LD (0x0002), HL
+
+        assertAll("LD_nn_HL Group",
+            () -> assertEquals((byte)0x33, (byte)compTest.peek(2) , "LD (0x0002), HL Failed: (0x0002)<>0x34=" + Integer.toHexString(compTest.peek(2)) ),
+            () -> assertNotEquals((byte)0x55, (byte)compTest.peek(2) , "LD (0x002), HL Failed: (0x0002) still 0x56=" + Integer.toHexString(compTest.peek(2)) ),
+            () -> assertEquals((byte)0x11, (byte)compTest.peek(3) , "LD (0x0002), HL Failed: (0x0003)<>0x12" + Integer.toHexString(compTest.peek(3)) ),
+            () -> assertNotEquals((byte)0x77, (byte)compTest.peek(3) , "LD (0x0002), HL Failed: (0x0003) still 0x78=" + Integer.toHexString(compTest.peek(3)) ),
+            () -> assertEquals((byte)0x0001, cpu.getPC() , "LD (0x0002), HL Failed: PC no was modified PC<>0x0002 PC=" + Integer.toHexString(cpu.getPC()) )
+        );
     }
 }

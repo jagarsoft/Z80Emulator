@@ -26,6 +26,9 @@ public class Z80 implements Z80OpCode {
     protected short IX;
     protected short IY;
     protected byte R;
+
+    private byte W;
+    private byte Z;
     
     protected Register Alternative = new Register();
 
@@ -87,10 +90,14 @@ public class Z80 implements Z80OpCode {
     public short getHL(){ return (short)((short)(H << 8) | L); }
     public short getBC(){ return (short)((short)(B << 8) | C); }
     public short getDE(){ return (short)((short)(D << 8) | E); }
+
+    private short getWZ(){ return (short)((short)(W << 8) | Z); }
     
     public void setHL(short hl){ H = (byte)((hl &0xFF00) >> 8); L = (byte)(hl & 0x00FF); }
     public void setBC(short bc){ B = (byte)((bc &0xFF00) >> 8); C = (byte)(bc & 0x00FF); }
     public void setDE(short de){ D = (byte)((de &0xFF00) >> 8); E = (byte)(de & 0x00FF); }
+
+    public String getWord(byte h, byte l) { return Integer.toHexString((short)((short)(h << 8) | (l & 0xFF))); }
     
     public int getPC() { return PC++; }
 
@@ -166,6 +173,12 @@ public class Z80 implements Z80OpCode {
         return 0;
     }
     public int LD_nn_HL(byte z, byte y){
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        currentComp.poke(getWZ(), L);
+        currentComp.poke(getWZ()+1, H);
+
         return 0;
     }
     public int LD_nn_A(byte z, byte y){
