@@ -1,9 +1,8 @@
 package com.github.jagarsoft.test;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.github.jagarsoft.Z80;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Z80Test {
 
@@ -24,5 +23,34 @@ public class Z80Test {
 
         assertEquals(0x04, cpu.getF(), "EX_AF_AF_ Failed (F)");
         assertEquals(0x02, cpu.getF_(), "EX_AF_AF_ Failed (F')");
+    }
+    
+    @Test
+    void testDJNZ_B_NotZero_MustJumpBackward() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        
+        cpu.setB((byte)0xFF);
+        cpu.setPC(0x800A);
+
+        cpu.DJNZ((byte) 0, (byte) 0); // Skip offset
+        cpu.DJNZ((byte) 0, (byte) -10);
+
+        assertEquals((byte)0xFE, cpu.getB(), "DJNZ Failed: B<>0 (B=" + cpu.getB() + ")");
+        assertEquals(0x8000, cpu.getPC(), "DJNZ Failed: PC was not modified (PC=" + cpu.getPC() + ")");
+    }
+    
+    @Test
+    void testDJNZ_B_Zero_MustNotJump() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setB((byte)1);
+        cpu.setPC(0x8000);
+
+        cpu.DJNZ((byte) 0, (byte) 0); // Skip offset
+        cpu.DJNZ((byte) 0, (byte) -2);
+
+        assertEquals(0, (int)cpu.getB(), "DJNZ Failed: B=0 (B=" + cpu.getB() + ")");
+        assertEquals(0x8000, cpu.getPC(), "DJNZ Failed: PC was modified (PC=" + cpu.getPC() + ")");
     }
 }

@@ -31,7 +31,10 @@ class Z80ForTesting extends Z80 {
     public short getBC_(){ return (short)((short)(Alternative.B << 8) | Alternative.C); }
     public short getDE_(){ return (short)((short)(Alternative.D << 8) | Alternative.E); }
     
-    public void setHL_(short hl){ Alternative.H = (byte)((hl &0xFF00) >> 8); Alternative.L = (byte)(hl & 0x00FF); }
-    public void setBC_(short bc){ Alternative.B = (byte)((bc &0xFF00) >> 8); Alternative.C = (byte)(bc & 0x00FF); }
-    public void setDE_(short de){ Alternative.D = (byte)((de &0xFF00) >> 8); Alternative.E = (byte)(de & 0x00FF); }
+    public void setHL_(short hl){ Alternative.H = (byte)((hl & 0xFF00) >> 8); Alternative.L = (byte)(hl & 0x00FF); }
+    public void setBC_(short bc){ Alternative.B = (byte)((bc & 0xFF00) >> 8); Alternative.C = (byte)(bc & 0x00FF); }
+    public void setDE_(short de){ Alternative.D = (byte)((de & 0xFF00) >> 8); Alternative.E = (byte)(de & 0x00FF); }
+
+    public int getPC() { return PC; }
+    protected void setPC(int pc) { PC = pc; }
 }

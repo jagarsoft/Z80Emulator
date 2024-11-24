@@ -88,11 +88,11 @@ public class Z80 implements Z80OpCode {
     public void setBC(short bc){ B = (byte)((bc &0xFF00) >> 8); C = (byte)(bc & 0x00FF); }
     public void setDE(short de){ D = (byte)((de &0xFF00) >> 8); E = (byte)(de & 0x00FF); }
     
-    protected int getPC() { return PC++; }
-    protected void setPC(int pc) { PC = pc; }
+    public int getPC() { return PC++; }
+
 
     /*
-     * Operators
+     * Instructions
      */
 
     public int NOP(byte z, byte y) {

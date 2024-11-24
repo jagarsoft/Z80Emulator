@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="AppTest" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+  <configuration default="false" name="Z80Test" type="JUnit" factoryName="JUnit">
     <module name="Z80Emulator" />
-    <option name="PACKAGE_NAME" value="com.github.jagarsoft.Z80Emulator.test" />
-    <option name="MAIN_CLASS_NAME" value="com.github.jagarsoft.Z80Emulator.test.AppTest" />
+    <option name="PACKAGE_NAME" value="com.github.jagarsoft.test" />
+    <option name="MAIN_CLASS_NAME" value="com.github.jagarsoft.test.Z80Test" />
     <option name="METHOD_NAME" value="" />
     <option name="TEST_OBJECT" value="class" />
     <method v="2">
