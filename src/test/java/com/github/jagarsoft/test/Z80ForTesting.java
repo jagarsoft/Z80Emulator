@@ -3,7 +3,7 @@ package com.github.jagarsoft.test;
 import com.github.jagarsoft.Z80;
 
 /**
- * Support class to access to Alternative Register Bank for testing purpose only
+ * Support class to access to Alternative Register Set for testing purpose only
  */
 class Z80ForTesting extends Z80 {
     public byte getA_() { return Alternative.A; }

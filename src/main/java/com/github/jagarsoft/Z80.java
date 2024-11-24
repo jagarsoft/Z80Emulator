@@ -29,8 +29,12 @@ public class Z80 implements Z80OpCode {
     
     protected Register Alternative = new Register();
 
-    static int offset = 0;
+    static int offset = 0; // Minimalist State Machine
+    
+    Computer currentComp;
+    
     public void reset() { PC = 0; }
+    public void setComputer(Computer theComp) { currentComp = theComp; }
 
     // Getters / Setters
     public byte getA() { return A; }
@@ -144,8 +148,37 @@ public class Z80 implements Z80OpCode {
             case "C":   t = getCF(); break;
         }
 
-        if( t ) PC += d;
+        if( t )
+            PC += d;
 
         return offset = 0;
+    }
+    
+    public int LD_BC_A(byte z, byte y){
+        currentComp.poke(getBC(), A);
+        
+        return 0;
+    }
+
+    public int LD_DE_A(byte z, byte y){
+        return 0;
+    }
+    public int LD_nn_HL(byte z, byte y){
+        return 0;
+    }
+    public int LD_nn_A(byte z, byte y){
+        return 0;
+    }
+    public int LD_A_BC(byte z, byte y){
+        return 0;
+    }
+    public int LD_A_DE(byte z, byte y){
+        return 0;
+    }
+    public int LD_HL_nn(byte z, byte y){
+        return 0;
+    }
+    public int LD_A_nn(byte z, byte y) {
+        return 0;
     }
 }

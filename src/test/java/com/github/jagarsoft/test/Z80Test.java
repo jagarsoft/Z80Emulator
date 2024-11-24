@@ -1,8 +1,11 @@
 package com.github.jagarsoft.test;
 
-import org.junit.jupiter.api.Test;
+import com.github.jagarsoft.Computer;
+import com.github.jagarsoft.RAMMemory;
 
+import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class Z80Test {
 
@@ -52,5 +55,23 @@ public class Z80Test {
 
         assertEquals(0, (int)cpu.getB(), "DJNZ Failed: B=0 (B=" + cpu.getB() + ")");
         assertEquals(0x8000, cpu.getPC(), "DJNZ Failed: PC was modified (PC=" + cpu.getPC() + ")");
+    }
+    
+    @Test
+    void testLD_BC_A(){
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(new RAMMemory(1));
+        cpu.setComputer(compTest);
+        compTest.poke(0, (byte)0x80);
+        
+        cpu.setBC((short)0);
+        cpu.setA((byte)0xFF);
+        
+        cpu.LD_BC_A((byte) 0, (byte)0);
+        
+        assertEquals((byte)0xFF, (byte)compTest.peek(0) , "LD (BC), A Failed: (BC)<>0xFF ((BC)=" + compTest.peek(0) + ")");
+        assertNotEquals((byte)0x80, (byte)compTest.peek(0) , "LD (BC), A Failed: (BC) still 0x80 ((BC)=" + compTest.peek(0) + ")");
     }
 }

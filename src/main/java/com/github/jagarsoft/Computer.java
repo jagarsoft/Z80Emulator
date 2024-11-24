@@ -8,23 +8,24 @@ public class Computer {
 
     Dispatcher d;
 
-    Computer(){
+    public Computer(){
         d = new Dispatcher(new Z80());
     }
 
-    void addCPU(Z80 cpu){
+    public void addCPU(Z80 cpu){
         this.cpu = cpu;
     }
 
-    void addMemory(Memory memory) {
+    public void addMemory(Memory memory) {
         banks.add(memory);
     }
 
-    void reset(){
+    public void reset(){
+        cpu.setComputer(this);
         cpu.reset();
     }
 
-    void run(){
+    public void run(){
         for (;;) {
             int operands = d.execute(this.peek(cpu.getPC())); // peek opCode
             while(operands-- > 0) {
@@ -33,7 +34,7 @@ public class Computer {
         }
     }
 
-    private byte peek(int addr) {
+    public byte peek(int addr) {
         int d = addr;
         Memory mm = null;
 
@@ -47,5 +48,21 @@ public class Computer {
         }
 
         return mm.peek(d);
+    }
+    
+    public void poke(int addr, byte data) {
+        int d = addr;
+        Memory mm = null;
+
+        for (Memory m : this.banks) {
+            if( d > m.getSize() ) {
+                d -= m.getSize();
+            } else {
+                mm = m;
+                break;
+            }
+        }
+
+        mm.poke(d, data);
     }
 }

@@ -20,6 +20,17 @@ public class Dispatcher {
         opCodes[0][0][5] = opC::JR_cc;
         opCodes[0][0][6] = opC::JR_cc;
         opCodes[0][0][7] = opC::JR_cc;
+        // z = 1 skipped
+        // z = 2
+        opCodes[0][2][0b000] = opC::LD_BC_A;
+        opCodes[0][2][0b010] = opC::LD_DE_A;
+        opCodes[0][2][0b100] = opC::LD_nn_HL;
+        opCodes[0][2][0b110] = opC::LD_nn_A;
+        opCodes[0][2][0b001] = opC::LD_A_BC;
+        opCodes[0][2][0b011] = opC::LD_A_DE;
+        opCodes[0][2][0b101] = opC::LD_HL_nn;
+        opCodes[0][2][0b111] = opC::LD_A_nn;
+
     }
 
     int execute(byte opC){
