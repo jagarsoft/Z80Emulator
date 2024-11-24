@@ -161,6 +161,8 @@ public class Z80 implements Z80OpCode {
     }
 
     public int LD_DE_A(byte z, byte y){
+        currentComp.poke(getDE(), A);
+        
         return 0;
     }
     public int LD_nn_HL(byte z, byte y){

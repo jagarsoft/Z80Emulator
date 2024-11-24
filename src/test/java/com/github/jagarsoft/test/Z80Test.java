@@ -74,4 +74,22 @@ public class Z80Test {
         assertEquals((byte)0xFF, (byte)compTest.peek(0) , "LD (BC), A Failed: (BC)<>0xFF ((BC)=" + compTest.peek(0) + ")");
         assertNotEquals((byte)0x80, (byte)compTest.peek(0) , "LD (BC), A Failed: (BC) still 0x80 ((BC)=" + compTest.peek(0) + ")");
     }
+    
+    @Test
+    void testLD_DE_A(){
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(new RAMMemory(1));
+        cpu.setComputer(compTest);
+        compTest.poke(0, (byte)0x80);
+        
+        cpu.setDE((short)0);
+        cpu.setA((byte)0xFF);
+        
+        cpu.LD_DE_A((byte) 0, (byte)0);
+        
+        assertEquals((byte)0xFF, (byte)compTest.peek(0) , "LD (DE), A Failed: (DE)<>0xFF ((DE)=" + compTest.peek(0) + ")");
+        assertNotEquals((byte)0x80, (byte)compTest.peek(0) , "LD (DE), A Failed: (DE) still 0x80 ((DE)=" + compTest.peek(0) + ")");
+    }
 }
