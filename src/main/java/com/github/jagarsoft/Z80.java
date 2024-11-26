@@ -30,10 +30,8 @@ public class Z80 implements Z80OpCode {
     private byte W;
     private byte Z;
     
-    protected Register Alternative = new Register();
+    protected Register alternative = new Register();
 
-    static int offset = 0; // Minimalist State Machine
-    
     Computer currentComp;
     
     public void reset() { PC = 0; }
@@ -64,9 +62,9 @@ public class Z80 implements Z80OpCode {
     public byte getF() { return F.toByteArray()[0]; }
     public void setF(byte f) { F = BitSet.valueOf(new byte[]{f}); }
 
-    public byte getF_() { return Alternative.F.toByteArray()[0]; }
+    public byte getF_() { return alternative.F.toByteArray()[0]; }
 
-    public void setF_(byte f) { Alternative.F = BitSet.valueOf(new byte[]{f}); }
+    public void setF_(byte f) { alternative.F = BitSet.valueOf(new byte[]{f}); }
     
     public boolean getSF(){ return F.get(7); }
     public boolean getZF(){ return F.get(6); }
@@ -85,7 +83,16 @@ public class Z80 implements Z80OpCode {
     public void setPF(){ F.set(2); }
     public void setNF(){ F.set(1); }
     public void setCF(){ F.set(0); }
-    
+
+    public void resSF(){ F.clear(7); }
+    public void resZF(){ F.clear(6); }
+    public void resxF(){ F.clear(5); }
+    public void resHF(){ F.clear(4); }
+    public void resyF(){ F.clear(3); }
+    public void resPF(){ F.clear(2); }
+    public void resNF(){ F.clear(1); }
+    public void resCF(){ F.clear(0); }
+
     // Words
     public short getHL(){ return (short)((short)(H << 8) | L); }
     public short getBC(){ return (short)((short)(B << 8) | C); }
@@ -106,94 +113,77 @@ public class Z80 implements Z80OpCode {
      * Instructions
      */
 
-    public int NOP(byte z, byte y) {
-        return 0;
+    public void NOP(byte z, byte y) {
+        /* No Operation */ ;
     }
 
-    public int EX_AF_AF_(byte z, byte y) {
+    public void EX_AF_AF_(byte z, byte y) {
         z = A;
-        A = Alternative.A;
-        Alternative.A = z;
+        A = alternative.A;
+        alternative.A = z;
 
         y = getF();
         setF(getF_());
         setF_(y);
-        return 0;
     }
 
-    public int DJNZ(byte y, byte d) {
-        if( offset == 0 ){
-            return ++offset;
-        }
+    public void DJNZ(byte y, byte z) {
+        byte d = currentComp.peek(PC++);
 
         if( --B != 0 )
-            PC += d;
-
-        return offset = 0;
+            PC += (short)d;
     }
 
-    public int JR(byte y, byte d) {
-        if( offset == 0 ){
-            return ++offset;
-        }
+    public void JR(byte y, byte z) {
+        byte d = currentComp.peek(PC++);
 
-        PC += d;
-
-        return offset = 0;
+        PC += (short)d;
     }
 
-    public int JR_cc(byte y, byte d) {
-        boolean t = false; // True?
-        if( offset == 0 ){
-            return ++offset;
-        }
+    public void JR_cc(byte y, byte z) {
+        boolean ccSet = false;
+        byte d = currentComp.peek(PC++);
 
         switch (cc[y-4]) {
-            case "NZ":  t = ! getZF(); break;
-            case "Z":   t = getZF(); break;
-            case "NC":  t = ! getCF(); break;
-            case "C":   t = getCF(); break;
+            case "NZ":  ccSet = ! getZF(); break;
+            case "Z":   ccSet = getZF(); break;
+            case "NC":  ccSet = ! getCF(); break;
+            case "C":   ccSet = getCF(); break;
         }
 
-        if( t )
-            PC += d;
-
-        return offset = 0;
+        if( ccSet )
+            PC += (short)d;
     }
     
-    public int LD_BC_A(byte z, byte y){
+    public void LD_BC_A(byte z, byte y){
         currentComp.poke(getBC(), A);
-        
-        return 0;
     }
 
-    public int LD_DE_A(byte z, byte y){
+    public void LD_DE_A(byte z, byte y){
         currentComp.poke(getDE(), A);
-        
-        return 0;
     }
-    public int LD_nn_HL(byte z, byte y){
+
+    public void LD_nn_HL(byte z, byte y){
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
         currentComp.poke(getWZ(), L);
         currentComp.poke(getWZ()+1, H);
+    }
 
-        return 0;
+    public void LD_nn_A(byte z, byte y){
+        return;
     }
-    public int LD_nn_A(byte z, byte y){
-        return 0;
+    public void LD_A_BC(byte z, byte y){
+        return;
     }
-    public int LD_A_BC(byte z, byte y){
-        return 0;
+    public void LD_A_DE(byte z, byte y){
+        return;
     }
-    public int LD_A_DE(byte z, byte y){
-        return 0;
+    public void LD_HL_nn(byte z, byte y){
+        return;
     }
-    public int LD_HL_nn(byte z, byte y){
-        return 0;
-    }
-    public int LD_A_nn(byte z, byte y) {
-        return 0;
+    public void LD_A_nn(byte z, byte y) {
+        return;
     }
 }

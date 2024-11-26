@@ -27,10 +27,7 @@ public class Computer {
 
     public void run(){
         for (;;) {
-            int operands = d.execute(this.peek(cpu.getPC())); // peek opCode
-            while(operands-- > 0) {
-                d.execute(this.peek(cpu.getPC())); // peek data
-            }
+            d.execute(this.peek(cpu.getPC())); // fetch opCode
         }
     }
 

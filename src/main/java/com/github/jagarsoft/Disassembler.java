@@ -1,42 +1,24 @@
 package com.github.jagarsoft;
 
 public class Disassembler extends Z80 implements Z80OpCode {
-    static int offset = 0;
 
-    public int NOP(byte z, byte y) {
+    public void NOP(byte z, byte y) {
         System.out.println("NOP");
-        return 0;
     }
 
-    public int EX_AF_AF_(byte z, byte y) {
+    public void EX_AF_AF_(byte z, byte y) {
         System.out.println("EX AF, AF'");
-        return 0;
     }
 
-    public int DJNZ(byte y, byte d) {
-        if( offset == 0 ){
-            return ++offset;
-        }
-
+    public void DJNZ(byte y, byte d) {
         System.out.println("DJNZ " + d);
-        return offset = 0;
     }
 
-    public int JR(byte y, byte d) {
-        if( offset == 0 ){
-            return ++offset;
-        }
-        
+    public void JR(byte y, byte d) {
         System.out.println("JR " + d);
-        return offset = 0;
     }
 
-    public int JR_cc(byte y, byte d) {
-        if( offset == 0 ){
-            return ++offset;
-        }
-        
+    public void JR_cc(byte y, byte d) {
         System.out.println("JR " + cc[y-4] + ", " + d);
-        return offset = 0;
     }
 }

@@ -33,21 +33,13 @@ public class Dispatcher {
 
     }
 
-    int execute(byte opC){
-            if( offset == 0 ) {
-                x = (byte) ((opC & (byte)0b11000000) >> 6);
-                y = (byte) ((opC & (byte)0b00111000) >> 3);
-                z = (byte) (opC & (byte)0b111);
+    void execute(byte opC){
+        x = (byte) ((opC & (byte)0b11000000) >> 6);
+        y = (byte) ((opC & (byte)0b00111000) >> 3);
+        z = (byte) (opC & (byte)0b111);
 
-                if (opCodes[x][z][y] != null) {
-                    offset = opCodes[x][z][y].execute(z, y);
-                }
-                // else: ignore opCode
-            } else {
-                opCodes[x][z][y].execute(y, opC); // opC === data
-                offset--;
-            }
-
-            return offset;
+        if (opCodes[x][z][y] != null) {
+            opCodes[x][z][y].execute(z, y);
         }
+    }
 }
