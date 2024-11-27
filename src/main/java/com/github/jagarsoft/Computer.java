@@ -6,10 +6,7 @@ public class Computer {
     Z80 cpu;
     ArrayList<Memory> banks = new ArrayList<Memory>();
 
-    Dispatcher d;
-
     public Computer(){
-        d = new Dispatcher(new Z80());
     }
 
     public void addCPU(Z80 cpu){
@@ -27,7 +24,7 @@ public class Computer {
 
     public void run(){
         for (;;) {
-            d.execute(this.peek(cpu.getPC())); // fetch opCode
+            cpu.fetch(this.peek(cpu.getPC())); // fetch opCode
         }
     }
 

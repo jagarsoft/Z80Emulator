@@ -18,7 +18,7 @@ public class Z80Test {
         cpu.setA_((byte)0x03);
         cpu.setF_((byte)0x04);
 
-        cpu.EX_AF_AF_((byte)0,(byte)0);
+        cpu.EX_AF_AF_();
 
         assertAll("EX_AF_AF' Group",
             () -> assertEquals(0x03, cpu.getA(), "EX_AF_AF_ Failed (A)"),
@@ -42,7 +42,7 @@ public class Z80Test {
         cpu.setB((byte)0xFF);
         cpu.setPC(0x0001);
 
-        cpu.DJNZ((byte) 0, (byte) 0);
+        cpu.DJNZ();
 
         assertAll("DJNZ Group",
             () -> assertEquals((byte)0xFE, cpu.getB(), "DJNZ Failed: B<>0 (B=" + cpu.getB() + ")"),
@@ -62,7 +62,7 @@ public class Z80Test {
         cpu.setB((byte)1);
         cpu.setPC(0x0001);
 
-        cpu.DJNZ((byte) 0, (byte) 0);
+        cpu.DJNZ();
 
         assertAll("DJNZ Group",
             () -> assertEquals(0, (int)cpu.getB(), "DJNZ Failed: B=0 (B=" + cpu.getB() + ")"),
@@ -77,11 +77,11 @@ public class Z80Test {
         compTest.addCPU(cpu);
         compTest.addMemory(new RAMMemory(2));
         cpu.setComputer(compTest);
-        compTest.poke(0x0001, (byte)-0x0001);
+        compTest.poke(0x0001, (byte)-1);
 
         cpu.setPC(0x0001);
 
-        cpu.JR((byte) 0, (byte) 0);
+        cpu.JR();
 
         assertEquals(0x0001, cpu.getPC(), "JR Failed: PC was not modified (PC=" + cpu.getPC() + ")");
     }
@@ -98,28 +98,28 @@ public class Z80Test {
         cpu.setPC(0x0001);
         cpu.resZF();
 
-        cpu.JR_cc((byte) 4, (byte) 0); // NZ
+        cpu.fetch((byte) 0x20); // JR NZ
 
         assertEquals(0x0001, cpu.getPC(), "JR NZ Failed: PC was not modified (PC=" + cpu.getPC() + ")");
 
         cpu.setPC(0x0001);
         cpu.setZF();
 
-        cpu.JR_cc((byte) 5, (byte) 0); // Z
+        cpu.fetch((byte)0x28); // JR Z
 
         assertEquals(0x0001, cpu.getPC(), "JR Z Failed: PC was not modified (PC=" + cpu.getPC() + ")");
 
         cpu.setPC(0x0001);
         cpu.resCF();
 
-        cpu.JR_cc((byte) 6, (byte) 0); // NC
+        cpu.fetch((byte)0x30); // JR NC
 
         assertEquals(0x0001, cpu.getPC(), "JR NC Failed: PC was not modified (PC=" + cpu.getPC() + ")");
 
         cpu.setPC(0x0001);
         cpu.setCF();
 
-        cpu.JR_cc((byte) 7, (byte) 0); // C
+        cpu.fetch((byte)0x38); // JR C
 
         assertEquals(0x0001, cpu.getPC(), "JR C Failed: PC was not modified (PC=" + cpu.getPC() + ")");
     }
@@ -131,33 +131,33 @@ public class Z80Test {
         compTest.addCPU(cpu);
         compTest.addMemory(new RAMMemory(2));
         cpu.setComputer(compTest);
-        compTest.poke(0x0001, (byte)-0x0001);
+        compTest.poke(0x0001, (byte)-1);
 
         cpu.setPC(0x0001);
         cpu.setZF();
 
-        cpu.JR_cc((byte) 4, (byte) 0); // NZ
+        cpu.fetch((byte) 0x20); // JR NZ
 
         assertEquals(0x0002, cpu.getPC(), "JR NZ Failed: PC was modified (PC=" + cpu.getPC() + ")");
 
         cpu.setPC(0x0001);
         cpu.resZF();
 
-        cpu.JR_cc((byte) 5, (byte) 0); // Z
+        cpu.fetch((byte)0x28); // JR Z
 
         assertEquals(0x0002, cpu.getPC(), "JR Z Failed: PC was modified (PC=" + cpu.getPC() + ")");
 
         cpu.setPC(0x0001);
         cpu.setCF();
 
-        cpu.JR_cc((byte) 6, (byte) 0); // NC
+        cpu.fetch((byte)0x30); // JR NC
 
         assertEquals(0x0002, cpu.getPC(), "JR NC Failed: PC was modified (PC=" + cpu.getPC() + ")");
 
         cpu.setPC(0x0001);
         cpu.resCF();
 
-        cpu.JR_cc((byte) 7, (byte) 0); // C
+        cpu.fetch((byte)0x38); // JR C
 
         assertEquals(0x0002, cpu.getPC(), "JR C Failed: PC was modified (PC=" + cpu.getPC() + ")");
     }
@@ -174,7 +174,7 @@ public class Z80Test {
         cpu.setBC((short)0);
         cpu.setA((byte)0xFF);
         
-        cpu.LD_BC_A((byte) 0, (byte)0);
+        cpu.LD_BC_A();
         
         assertAll("LD (BC), A Group",
             () -> assertEquals((byte)0xFF, (byte)compTest.peek(0) , "LD (BC), A Failed: (BC)<>0xFF ((BC)=" + compTest.peek(0) + ")"),
@@ -194,7 +194,7 @@ public class Z80Test {
         cpu.setDE((short)0);
         cpu.setA((byte)0xFF);
         
-        cpu.LD_DE_A((byte) 0, (byte)0);
+        cpu.LD_DE_A();
         
         assertAll("LD (DE), A Group",
             () -> assertEquals((byte)0xFF, (byte)compTest.peek(0) , "LD (DE), A Failed: (DE)<>0xFF ((DE)=" + compTest.peek(0) + ")"),
@@ -214,10 +214,10 @@ public class Z80Test {
         compTest.poke(0x0002, (byte)0x56);
         compTest.poke(0x0003, (byte)0x78);
 
-        cpu.setPC(0);
+        cpu.setPC(0x0000);
         cpu.setHL((short)0x1234);
 
-        cpu.LD_nn_HL((byte) 0, (byte)0); // LD (0x0002), HL
+        cpu.LD_nn_HL(); // LD (0x0002), HL
 
         assertAll("LD_nn_HL Group",
             () -> assertEquals((byte)0x34, (byte)compTest.peek(2) , "LD (0x0002), HL Failed: (0x0002)<>0x34=" + Integer.toHexString(compTest.peek(2)) ),

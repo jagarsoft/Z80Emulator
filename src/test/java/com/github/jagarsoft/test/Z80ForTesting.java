@@ -6,6 +6,10 @@ import com.github.jagarsoft.Z80;
  * Support class to access to Alternative Register Set for testing purpose only
  */
 class Z80ForTesting extends Z80 {
+    Z80ForTesting() {
+        super();
+    }
+
     public byte getA_() { return alternative.A; }
     public void setA_(byte a) { alternative.A = a; }
     
