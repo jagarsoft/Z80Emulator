@@ -1,21 +1,17 @@
 package com.github.jagarsoft;
 
-import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
 
 public class Computer {
     Z80 cpu;
-    ArrayList<Memory> banks = new ArrayList<Memory>();
+    HashMap<Integer, Memory> banks = new HashMap<Integer, Memory>();
+    short sizeMask = 0;
 
     public Computer(){
     }
 
-    public void addCPU(Z80 cpu){
-        this.cpu = cpu;
-    }
 
-    public void addMemory(Memory memory) {
-        banks.add(memory);
-    }
 
     public void reset(){
         cpu.setComputer(this);
@@ -28,35 +24,43 @@ public class Computer {
         }
     }
 
+    public void addCPU(Z80 cpu){
+        this.cpu = cpu;
+    }
+
+    public void addMemory(int base, Memory memory) {
+        short s = memory.getSize();
+        if( ! powerOf2(s) )
+            throw new IllegalArgumentException("Size must be a power of 2. "+s+" given");
+
+        if( sizeMask == 0 )
+            sizeMask = makeSizeMask(s);
+        else if( sizeMask != makeSizeMask(s) )
+            throw new IllegalArgumentException("All banks must be the same size as the first one. "+s+" given");
+
+        int key = base2key(base);
+
+        banks.put(key, memory);
+    }
+
+    private boolean powerOf2(short size){
+        BitSet s = BitSet.valueOf(new long[]{size});
+        return s.cardinality() == 1;
+    }
+
+    private short makeSizeMask(short s) {
+        return (short) ~(s - 1);
+    }
+
+    private int base2key(int addr) {
+        return addr & sizeMask;
+    }
+
     public byte peek(int addr) {
-        int d = addr;
-        Memory mm = null;
-
-        for (Memory m : this.banks) {
-            if( d > m.getSize() ) {
-                d -= m.getSize();
-            } else {
-                mm = m;
-                break;
-            }
-        }
-
-        return mm.peek(d);
+        return banks.get(addr & sizeMask).peek(addr);
     }
     
     public void poke(int addr, byte data) {
-        int d = addr;
-        Memory mm = null;
-
-        for (Memory m : this.banks) {
-            if( d > m.getSize() ) {
-                d -= m.getSize();
-            } else {
-                mm = m;
-                break;
-            }
-        }
-
-        mm.poke(d, data);
+        banks.get(addr & sizeMask).poke(addr, data);
     }
 }

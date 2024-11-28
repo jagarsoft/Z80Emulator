@@ -18,5 +18,5 @@ class ROMMemory implements Memory {
     public byte peek(int addr){ return rom[addr]; }
     
     @Override
-    public int getSize() { return rom.length; }
+    public short getSize() { return (short)rom.length; }
 }

@@ -34,7 +34,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(2));
+        compTest.addMemory(0x0000, new RAMMemory(2));
         cpu.setComputer(compTest);
         compTest.poke(0x0001, (byte) -1);
 
@@ -55,7 +55,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(2));
+        compTest.addMemory(0x0000, new RAMMemory(2));
         cpu.setComputer(compTest);
         compTest.poke(0x0001, (byte) -10);
 
@@ -75,7 +75,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(2));
+        compTest.addMemory(0x0000, new RAMMemory(2));
         cpu.setComputer(compTest);
         compTest.poke(0x0001, (byte) -1);
 
@@ -91,7 +91,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(2));
+        compTest.addMemory(0x0000, new RAMMemory(2));
         cpu.setComputer(compTest);
         compTest.poke(0x0001, (byte) -1);
 
@@ -129,7 +129,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(2));
+        compTest.addMemory(0x0000, new RAMMemory(2));
         cpu.setComputer(compTest);
         compTest.poke(0x0001, (byte) -1);
 
@@ -167,7 +167,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(1));
+        compTest.addMemory(0x0000, new RAMMemory(1));
         cpu.setComputer(compTest);
         compTest.poke(0, (byte) 0x80);
 
@@ -187,7 +187,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(1));
+        compTest.addMemory(0x0000, new RAMMemory(1));
         cpu.setComputer(compTest);
         compTest.poke(0, (byte) 0x80);
 
@@ -207,7 +207,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(4));
+        compTest.addMemory(0x0000, new RAMMemory(4));
         cpu.setComputer(compTest);
         compTest.poke(0x0000, (byte) 0x02);
         compTest.poke(0x0001, (byte) 0x00);
@@ -233,7 +233,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(3));
+        compTest.addMemory(0x0000, new RAMMemory(4));
         cpu.setComputer(compTest);
         compTest.poke(0x0000,(byte)0x02);
         compTest.poke(0x0001,(byte)0x00);
@@ -255,7 +255,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(1));
+        compTest.addMemory(0x0000, new RAMMemory(1));
         cpu.setComputer(compTest);
         compTest.poke(0x0000,(byte)0xBB);
 
@@ -275,7 +275,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(1));
+        compTest.addMemory(0x0000, new RAMMemory(1));
         cpu.setComputer(compTest);
         compTest.poke(0x0000,(byte)0xBB);
 
@@ -295,7 +295,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(4));
+        compTest.addMemory(0x0000, new RAMMemory(4));
         cpu.setComputer(compTest);
         compTest.poke(0x0000,(byte)0x02);
         compTest.poke(0x0001,(byte)0x00);
@@ -318,7 +318,7 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
-        compTest.addMemory(new RAMMemory(3));
+        compTest.addMemory(0x0000, new RAMMemory(4));
         cpu.setComputer(compTest);
         compTest.poke(0x0000,(byte)0x02);
         compTest.poke(0x0001,(byte)0x00);
