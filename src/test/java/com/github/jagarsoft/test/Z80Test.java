@@ -292,11 +292,46 @@ public class Z80Test {
 
     @Test
     void testLD_HL_nn(){
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(new RAMMemory(4));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000,(byte)0x02);
+        compTest.poke(0x0001,(byte)0x00);
+        compTest.poke(0x0002,(byte)0x34);
+        compTest.poke(0x0003,(byte)0x12);
+        
+        cpu.setPC(0x0000);
+        cpu.setHL((short) 0x5678);
 
+        cpu.LD_HL_nn();
+
+        assertAll("LD HL, (0x0000) Group",
+            () -> assertEquals((short)0x1234, (short)cpu.getHL(), "LD HL, (0x0000) Failed: HL<>0x1234 = " + Integer.toHexString(cpu.getHL())),
+            () -> assertNotEquals((short)0x5678, (short)cpu.getHL(), "LD HL, (0x0000) Failed: HL still 0x1234 = " + Integer.toHexString(cpu.getHL()))
+        );
     }
 
     @Test
     void testLD_A_nn(){
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(new RAMMemory(3));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000,(byte)0x02);
+        compTest.poke(0x0001,(byte)0x00);
+        compTest.poke(0x0002,(byte)0x12);
 
+        cpu.setPC(0x0000);
+        cpu.setA((byte) 0x34);
+
+        cpu.LD_A_nn();
+        
+        assertAll("LD A, (0x0000) Group",
+            () -> assertEquals((byte)0x12, (byte)cpu.getA(), "LD A, (0x0000) Failed: A<>0x12 = " + Integer.toHexString(cpu.getA())),
+            () -> assertNotEquals((byte)0x34, (byte)cpu.getA(), "LD A, (0x0000) Failed: A still 0x34 = " + Integer.toHexString(cpu.getA()))
+        );
     }
 }
