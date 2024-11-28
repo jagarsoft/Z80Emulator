@@ -228,18 +228,31 @@ public class Z80 implements Z80OpCode {
     }
 
     public void LD_nn_A(){
-        return;
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        currentComp.poke(getWZ(), A);
     }
+
     public void LD_A_BC(){
-        return;
+        A = currentComp.peek(getBC());
     }
     public void LD_A_DE(){
-        return;
+        A = currentComp.peek(getDE());
     }
-    public void LD_HL_nn(){
-        return;
+
+    public void LD_HL_nn() {
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        L = currentComp.peek(getWZ());
+        H = currentComp.peek(getWZ()+1);
     }
-    public void LD_A_nn() {
-        return;
+
+    public void LD_A_nn(){
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        A = currentComp.peek(getWZ());
     }
 }
