@@ -24,4 +24,16 @@ public class Disassembler extends Z80 implements Z80OpCode {
         byte d = currentComp.peek(PC++);
         System.out.println("JR " + cc[y-4] + ", " + d);
     }
+
+    @Override
+    public void LD_rp_p_nn() {
+        byte Z = currentComp.peek(PC++);
+        byte W = currentComp.peek(PC++);
+        System.out.println("LD "+rp[p]+", "+getWord(W, Z));
+    }
+
+    @Override
+    public void ADD_HL_rp_p() {
+        System.out.println("ADD HL, "+rp[p]);
+    }
 }

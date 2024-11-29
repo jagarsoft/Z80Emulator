@@ -16,9 +16,11 @@ public class Z80 implements Z80OpCode {
     }
 
     //*** Begin Dispatcher Section
-    static byte x;
-    static byte y;
-    static byte z;
+    static int x;
+    static int y;
+    static int z;
+    static int p;
+    static int q;
 
     // Array to store reference to methods of different implementations
     static OpCode[][][] opCodes = new OpCode[4][8][8];
@@ -34,7 +36,9 @@ public class Z80 implements Z80OpCode {
         opCodes[0][0][5] = opC::JR_cc;
         opCodes[0][0][6] = opC::JR_cc;
         opCodes[0][0][7] = opC::JR_cc;
-        // z = 1 skipped
+        // z = 1
+        opCodes[0][1][0] = opC::LD_rp_p_nn;
+        opCodes[0][1][1] = opC::ADD_HL_rp_p;
         // z = 2
         opCodes[0][2][0b000] = opC::LD_BC_A;
         opCodes[0][2][0b010] = opC::LD_DE_A;
@@ -48,9 +52,11 @@ public class Z80 implements Z80OpCode {
     }
 
     public void fetch(byte opC){
-        x = (byte) ((opC & (byte)0b11000000) >> 6);
-        y = (byte) ((opC & (byte)0b00111000) >> 3);
-        z = (byte) (opC & (byte)0b111);
+        x = ((opC & 0b11000000) >> 6);
+        y = ((opC & 0b00111000) >> 3);
+        z = (opC & 0b111);
+        p = ((y & 0b110) >> 1);
+        q = (y & 1);
 
         if (opCodes[x][z][y] != null) {
             opCodes[x][z][y].execute();
@@ -66,9 +72,15 @@ public class Z80 implements Z80OpCode {
     protected byte H;
     protected byte L;
     protected BitSet F = new BitSet(8);
+
     protected int PC;
+
+    protected short SP;
+
     protected short IX;
     protected short IY;
+
+    protected byte I;
     protected byte R;
 
     private byte W;
@@ -148,15 +160,19 @@ public class Z80 implements Z80OpCode {
     public void resCF(){ F.clear(0); }
 
     // Words
-    public short getHL(){ return (short)((short)(H << 8) | L); }
     public short getBC(){ return (short)((short)(B << 8) | C); }
     public short getDE(){ return (short)((short)(D << 8) | E); }
 
+    public short getHL(){ return (short)((short)(H << 8) | L); }
+
+    public short getSP(){ return SP; }
+
     private short getWZ(){ return (short)((short)(W << 8) | Z); }
     
-    public void setHL(short hl){ H = (byte)((hl &0xFF00) >> 8); L = (byte)(hl & 0x00FF); }
-    public void setBC(short bc){ B = (byte)((bc &0xFF00) >> 8); C = (byte)(bc & 0x00FF); }
-    public void setDE(short de){ D = (byte)((de &0xFF00) >> 8); E = (byte)(de & 0x00FF); }
+    public void setBC(short bc){ B = (byte)((bc & 0xFF00) >> 8); C = (byte)(bc & 0x00FF); }
+    public void setDE(short de){ D = (byte)((de & 0xFF00) >> 8); E = (byte)(de & 0x00FF); }
+
+    public void setSP(short sp){ SP = sp; }
 
     public String getWord(byte h, byte l) { return Integer.toHexString((short)((short)(h << 8) | (l & 0xFF))); }
     
@@ -170,7 +186,7 @@ public class Z80 implements Z80OpCode {
      */
 
     public void NOP() {
-        /* No Operation */ ;
+        /* No Operation */
     }
 
     public void EX_AF_AF_() {
@@ -210,7 +226,41 @@ public class Z80 implements Z80OpCode {
         if( ccSet )
             PC += (short)d;
     }
-    
+
+    public void LD_rp_p_nn() {
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        switch (rp[p]){
+            case "BC": B = W; C = Z; break;
+            case "DE": D = W; E = Z; break;
+            case "HL": H = W; L = Z; break;
+            case "SP": setSP(getWZ()); break;
+        }
+    }
+
+    @Override
+    public void ADD_HL_rp_p() {
+        short l;
+        short c;
+
+        switch (rp[p]){
+            case "BC": W = B; Z = C; break;
+            case "DE": W = D; Z = E; break;
+            case "HL": W = H; Z = L; break;
+            case "SP":
+                W = (byte)((getSP() & 0xFF00) >> 8);
+                Z = (byte)(getSP() & 0x00FF);
+                break;
+        }
+
+        l = (short) ((((short) L) & 0xFF) + Z);
+        c = (short) (l & 0x0100); // carry
+        L = (byte) (l & 0xFF);
+        H = (byte) (H + W + (c>>8));
+    }
+
+    @Override
     public void LD_BC_A() {
         currentComp.poke(getBC(), A);
     }
