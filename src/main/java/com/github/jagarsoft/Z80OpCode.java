@@ -26,4 +26,8 @@ public interface Z80OpCode {
     void LD_A_DE();
     void LD_HL_nn();
     void LD_A_nn();
+    
+    void INC_rp_p();
+    void DEC_rp_p();
+    
 }

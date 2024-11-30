@@ -334,4 +334,80 @@ public class Z80Test {
             () -> assertNotEquals((byte)0x34, (byte)cpu.getA(), "LD A, (0x0000) Failed: A still 0x34 = " + Integer.toHexString(cpu.getA()))
         );
     }
+
+    @Test
+    void testINC_rp_p() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setBC((short)0x1234);
+        cpu.setDE((short)0x1234);
+        cpu.setHL((short)0x1234);
+        cpu.setSP((short)0x1234);
+
+        cpu.fetch((byte)0x03); // INC BC
+        cpu.fetch((byte)0x13); // INC DE
+        cpu.fetch((byte)0x23); // INC HL
+        cpu.fetch((byte)0x33); // INC SP
+
+        assertAll("INC rp[p] Group",
+                () -> assertEquals((short)0x1235, (short)cpu.getBC(), "INC BC Failed: BC<>0x1235 = " + Integer.toHexString(cpu.getBC())),
+                () -> assertNotEquals((short)0x1234, (short)cpu.getBC(), "INC BC Failed: BC still 0x1234 = " + Integer.toHexString(cpu.getBC())),
+
+                () -> assertEquals((short)0x1235, (short)cpu.getDE(), "INC DE Failed: DE<>0x1235 = " + Integer.toHexString(cpu.getDE())),
+                () -> assertNotEquals((short)0x1234, (short)cpu.getDE(), "INC DE Failed: DE still 0x1234 = " + Integer.toHexString(cpu.getDE())),
+
+                () -> assertEquals((short)0x1235, (short)cpu.getHL(), "INC HL Failed: HL<>0x1235 = " + Integer.toHexString(cpu.getHL())),
+                () -> assertNotEquals((short)0x1234, (short)cpu.getHL(), "INC HL Failed: HL still 0x1234 = " + Integer.toHexString(cpu.getHL())),
+
+                () -> assertEquals((short)0x1235, (short)cpu.getSP(), "INC SP Failed: SP<>0x1235 = " + Integer.toHexString(cpu.getSP())),
+                () -> assertNotEquals((short)0x1234, (short)cpu.getSP(), "INC SP Failed: SP still 0x1234 = " + Integer.toHexString(cpu.getSP()))
+        );
+
+        cpu.setHL((short)0x00FF);
+
+        cpu.fetch((byte)0x23); // INC HL
+
+        assertAll("INC rp[p] Group",
+                () -> assertEquals((short)0x0100, (short)cpu.getHL(), "INC HL Failed: HL<>0x0100 = " + Integer.toHexString(cpu.getHL())),
+                () -> assertNotEquals((short)0x00FF, (short)cpu.getHL(), "INC HL Failed: HL still 0x00FF = " + Integer.toHexString(cpu.getHL()))
+        );
+    }
+
+    @Test
+    void testDEC_rp_p() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setBC((short)0x1234);
+        cpu.setDE((short)0x1234);
+        cpu.setHL((short)0x1234);
+        cpu.setSP((short)0x1234);
+
+        cpu.fetch((byte)0x0B); // DEC BC
+        cpu.fetch((byte)0x1B); // DEC DE
+        cpu.fetch((byte)0x2B); // DEC HL
+        cpu.fetch((byte)0x3B); // DEC SP
+
+        assertAll("DEC rp[p] Group",
+                () -> assertEquals((short)0x1233, (short)cpu.getBC(), "DEC BC Failed: BC<>0x1233 = " + Integer.toHexString(cpu.getBC())),
+                () -> assertNotEquals((short)0x1234, (short)cpu.getBC(), "DEC BC Failed: BC still 0x1234 = " + Integer.toHexString(cpu.getBC())),
+
+                () -> assertEquals((short)0x1233, (short)cpu.getDE(), "DEC DE Failed: DE<>0x1233 = " + Integer.toHexString(cpu.getDE())),
+                () -> assertNotEquals((short)0x1234, (short)cpu.getDE(), "DEC DE Failed: DE still 0x1234 = " + Integer.toHexString(cpu.getDE())),
+
+                () -> assertEquals((short)0x1233, (short)cpu.getHL(), "DEC HL Failed: HL<>0x1233 = " + Integer.toHexString(cpu.getHL())),
+                () -> assertNotEquals((short)0x1234, (short)cpu.getHL(), "DEC HL Failed: HL still 0x1234 = " + Integer.toHexString(cpu.getHL())),
+
+                () -> assertEquals((short)0x1233, (short)cpu.getSP(), "DEC SP Failed: SP<>0x1233 = " + Integer.toHexString(cpu.getSP())),
+                () -> assertNotEquals((short)0x1234, (short)cpu.getSP(), "DEC SP Failed: SP still 0x1234 = " + Integer.toHexString(cpu.getSP()))
+        );
+
+        cpu.setHL((short)0x0200);
+
+        cpu.fetch((byte)0x2B); // DEC HL
+
+        assertAll("INC rp[p] Group",
+                () -> assertEquals((short)0x01FF, (short)cpu.getHL(), "DEC HL Failed: HL<>0x01FF = " + Integer.toHexString(cpu.getHL())),
+                () -> assertNotEquals((short)0x0200, (short)cpu.getHL(), "DEC HL Failed: HL still 0x0200 = " + Integer.toHexString(cpu.getHL()))
+        );
+    }
 }

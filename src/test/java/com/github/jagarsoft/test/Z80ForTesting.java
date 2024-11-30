@@ -31,9 +31,9 @@ class Z80ForTesting extends Z80 {
     public byte getL_() { return alternative.L; }
     public void setL_(byte l) { alternative.L = l; }
     
-    public short getHL_(){ return (short)((short)(alternative.H << 8) | alternative.L); }
-    public short getBC_(){ return (short)((short)(alternative.B << 8) | alternative.C); }
-    public short getDE_(){ return (short)((short)(alternative.D << 8) | alternative.E); }
+    public short getHL_(){ return (short)((short)(alternative.H << 8) | (alternative.L & 0xFF)); }
+    public short getBC_(){ return (short)((short)(alternative.B << 8) | (alternative.C & 0xFF)); }
+    public short getDE_(){ return (short)((short)(alternative.D << 8) | (alternative.E & 0xFF)); }
     
     public void setHL_(short hl){ alternative.H = (byte)((hl & 0xFF00) >> 8); alternative.L = (byte)(hl & 0x00FF); }
     public void setBC_(short bc){ alternative.B = (byte)((bc & 0xFF00) >> 8); alternative.C = (byte)(bc & 0x00FF); }

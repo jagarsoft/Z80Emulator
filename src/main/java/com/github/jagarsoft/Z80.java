@@ -27,7 +27,8 @@ public class Z80 implements Z80OpCode {
 
     private void dispatcher(Z80OpCode opC) {
         // According to http://www.z80.info/decoding.htm
-        //     [x][z][y]
+        // x = 0
+        // z=0 [x][z][y]
         opCodes[0][0][0] = opC::NOP;
         opCodes[0][0][1] = opC::EX_AF_AF_;
         opCodes[0][0][2] = opC::DJNZ;
@@ -36,10 +37,10 @@ public class Z80 implements Z80OpCode {
         opCodes[0][0][5] = opC::JR_cc;
         opCodes[0][0][6] = opC::JR_cc;
         opCodes[0][0][7] = opC::JR_cc;
-        // z = 1
+        // z=1 [x][z][y]
         opCodes[0][1][0] = opC::LD_rp_p_nn;
         opCodes[0][1][1] = opC::ADD_HL_rp_p;
-        // z = 2
+        // z=2 [x][z][y]
         opCodes[0][2][0b000] = opC::LD_BC_A;
         opCodes[0][2][0b010] = opC::LD_DE_A;
         opCodes[0][2][0b100] = opC::LD_nn_HL;
@@ -48,10 +49,19 @@ public class Z80 implements Z80OpCode {
         opCodes[0][2][0b011] = opC::LD_A_DE;
         opCodes[0][2][0b101] = opC::LD_HL_nn;
         opCodes[0][2][0b111] = opC::LD_A_nn;
+        // z=3 [x][z][y]
+        opCodes[0][3][0b000] = opC::INC_rp_p;
+        opCodes[0][3][0b001] = opC::DEC_rp_p;
+        opCodes[0][3][0b010] = opC::INC_rp_p;
+        opCodes[0][3][0b011] = opC::DEC_rp_p;
+        opCodes[0][3][0b100] = opC::INC_rp_p;
+        opCodes[0][3][0b101] = opC::DEC_rp_p;
+        opCodes[0][3][0b110] = opC::INC_rp_p;
+        opCodes[0][3][0b111] = opC::DEC_rp_p;
 
     }
 
-    public void fetch(byte opC){
+    public void fetch(byte opC) {
         x = ((opC & 0b11000000) >> 6);
         y = ((opC & 0b00111000) >> 3);
         z = (opC & 0b111);
@@ -85,7 +95,7 @@ public class Z80 implements Z80OpCode {
 
     private byte W;
     private byte Z;
-    
+
     protected Register alternative = new Register();
 
     protected Computer currentComp;
@@ -99,6 +109,7 @@ public class Z80 implements Z80OpCode {
     }
 
     public void reset() { PC = 0; }
+
     public void setComputer(Computer theComp) { currentComp = theComp; }
 
     //public void fetch(byte opCode) { d.execute(opCode);}
@@ -106,32 +117,32 @@ public class Z80 implements Z80OpCode {
     // Getters / Setters
     public byte getA() { return A; }
     public void setA(byte a) { A = a; }
-    
+
     public byte getB() { return B; }
     public void setB(byte b) { B = b; }
-    
+
     public byte getC() { return C; }
     public void setC(byte c) { C = c; }
-        
+
     public byte getD() {return D; }
     public void setD(byte d) { D = d; }
-    
+
     public byte getE() { return E; }
     public void setE(byte e) { E = e; }
-    
+
     public byte getH() { return H; }
     public void setH(byte h) { H = h; }
-    
+
     public byte getL() { return L; }
     public void setL(byte l) { L = l; }
-    
+
     public byte getF() { return F.toByteArray()[0]; }
     public void setF(byte f) { F = BitSet.valueOf(new byte[]{f}); }
 
     public byte getF_() { return alternative.F.toByteArray()[0]; }
 
     public void setF_(byte f) { alternative.F = BitSet.valueOf(new byte[]{f}); }
-    
+
     public boolean getSF(){ return F.get(7); }
     public boolean getZF(){ return F.get(6); }
     public boolean getxF(){ return F.get(5); }
@@ -160,23 +171,39 @@ public class Z80 implements Z80OpCode {
     public void resCF(){ F.clear(0); }
 
     // Words
-    public short getBC(){ return (short)((short)(B << 8) | C); }
-    public short getDE(){ return (short)((short)(D << 8) | E); }
+    public short getBC() { return (short) ((short) (B << 8) | (C & 0xFF)); }
+    public short getDE() { return (short) ((short) (D << 8) | (E & 0xFF)); }
+    public short getHL() { return (short) ((short) (H << 8) | (L & 0xFF)); }
+    public short getSP() { return SP; }
 
-    public short getHL(){ return (short)((short)(H << 8) | L); }
+    private short getWZ() { return (short) ((short) (W << 8) | (Z & 0xFF)); }
 
-    public short getSP(){ return SP; }
+    public void setBC(short bc) {
+        B = (byte) ((bc & 0xFF00) >> 8);
+        C = (byte) (bc & 0x00FF);
+    }
 
-    private short getWZ(){ return (short)((short)(W << 8) | Z); }
-    
-    public void setBC(short bc){ B = (byte)((bc & 0xFF00) >> 8); C = (byte)(bc & 0x00FF); }
-    public void setDE(short de){ D = (byte)((de & 0xFF00) >> 8); E = (byte)(de & 0x00FF); }
+    public void setDE(short de) {
+        D = (byte) ((de & 0xFF00) >> 8);
+        E = (byte) (de & 0x00FF);
+    }
 
-    public void setSP(short sp){ SP = sp; }
+    public void setHL(short hl) {
+        H = (byte) ((hl & 0xFF00) >> 8);
+        L = (byte) (hl & 0x00FF);
+    }
 
-    public String getWord(byte h, byte l) { return Integer.toHexString((short)((short)(h << 8) | (l & 0xFF))); }
-    
-    public int getPC() { return PC++; }
+    public void setSP(short sp) {
+        SP = sp;
+    }
+
+    public String getWord(byte h, byte l) {
+        return Integer.toHexString((short) ((short) (h << 8) | (l & 0xFF)));
+    }
+
+    public int getPC() {
+        return PC++;
+    }
 
 
     /*
@@ -202,40 +229,59 @@ public class Z80 implements Z80OpCode {
     public void DJNZ() {
         byte d = currentComp.peek(PC++);
 
-        if( --B != 0 )
-            PC += (short)d;
+        if (--B != 0)
+            PC += (short) d;
     }
 
     public void JR() {
         byte d = currentComp.peek(PC++);
 
-        PC += (short)d;
+        PC += (short) d;
     }
 
     public void JR_cc() {
         boolean ccSet = false;
         byte d = currentComp.peek(PC++);
 
-        switch (cc[y-4]) {
-            case "NZ":  ccSet = ! getZF(); break;
-            case "Z":   ccSet = getZF(); break;
-            case "NC":  ccSet = ! getCF(); break;
-            case "C":   ccSet = getCF(); break;
+        switch (cc[y - 4]) {
+            case "NZ":
+                ccSet = !getZF();
+                break;
+            case "Z":
+                ccSet = getZF();
+                break;
+            case "NC":
+                ccSet = !getCF();
+                break;
+            case "C":
+                ccSet = getCF();
+                break;
         }
 
-        if( ccSet )
-            PC += (short)d;
+        if (ccSet)
+            PC += (short) d;
     }
 
     public void LD_rp_p_nn() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-        switch (rp[p]){
-            case "BC": B = W; C = Z; break;
-            case "DE": D = W; E = Z; break;
-            case "HL": H = W; L = Z; break;
-            case "SP": setSP(getWZ()); break;
+        switch (rp[p]) {
+            case "BC":
+                B = W;
+                C = Z;
+                break;
+            case "DE":
+                D = W;
+                E = Z;
+                break;
+            case "HL":
+                H = W;
+                L = Z;
+                break;
+            case "SP":
+                setSP(getWZ());
+                break;
         }
     }
 
@@ -244,20 +290,29 @@ public class Z80 implements Z80OpCode {
         short l;
         short c;
 
-        switch (rp[p]){
-            case "BC": W = B; Z = C; break;
-            case "DE": W = D; Z = E; break;
-            case "HL": W = H; Z = L; break;
+        switch (rp[p]) {
+            case "BC":
+                W = B;
+                Z = C;
+                break;
+            case "DE":
+                W = D;
+                Z = E;
+                break;
+            case "HL":
+                W = H;
+                Z = L;
+                break;
             case "SP":
-                W = (byte)((getSP() & 0xFF00) >> 8);
-                Z = (byte)(getSP() & 0x00FF);
+                W = (byte) ((getSP() & 0xFF00) >> 8);
+                Z = (byte) (getSP() & 0x00FF);
                 break;
         }
 
         l = (short) ((((short) L) & 0xFF) + Z);
         c = (short) (l & 0x0100); // carry
         L = (byte) (l & 0xFF);
-        H = (byte) (H + W + (c>>8));
+        H = (byte) (H + W + (c >> 8));
     }
 
     @Override
@@ -265,7 +320,7 @@ public class Z80 implements Z80OpCode {
         currentComp.poke(getBC(), A);
     }
 
-    public void LD_DE_A(){
+    public void LD_DE_A() {
         currentComp.poke(getDE(), A);
     }
 
@@ -274,20 +329,21 @@ public class Z80 implements Z80OpCode {
         W = currentComp.peek(PC++);
 
         currentComp.poke(getWZ(), L);
-        currentComp.poke(getWZ()+1, H);
+        currentComp.poke(getWZ() + 1, H);
     }
 
-    public void LD_nn_A(){
+    public void LD_nn_A() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
         currentComp.poke(getWZ(), A);
     }
 
-    public void LD_A_BC(){
+    public void LD_A_BC() {
         A = currentComp.peek(getBC());
     }
-    public void LD_A_DE(){
+
+    public void LD_A_DE() {
         A = currentComp.peek(getDE());
     }
 
@@ -296,13 +352,107 @@ public class Z80 implements Z80OpCode {
         W = currentComp.peek(PC++);
 
         L = currentComp.peek(getWZ());
-        H = currentComp.peek(getWZ()+1);
+        H = currentComp.peek(getWZ() + 1);
     }
 
-    public void LD_A_nn(){
+    public void LD_A_nn() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
         A = currentComp.peek(getWZ());
+    }
+
+    public void INC_rp_p() {
+        short z;
+        short c;
+
+        switch (rp[p]) {
+            case "BC":
+                W = B;
+                Z = C;
+                break;
+            case "DE":
+                W = D;
+                Z = E;
+                break;
+            case "HL":
+                W = H;
+                Z = L;
+                break;
+            case "SP":
+                W = (byte) ((getSP() & 0xFF00) >> 8);
+                Z = (byte) (getSP() & 0x00FF);
+                break;
+        }
+
+        z = (short) ((((short) Z) & 0xFF) + 1);
+        c = (short) (z & 0x0100); // carry
+        Z = (byte) (z & 0xFF);
+        W = (byte) (W + (c >> 8));
+
+        switch (rp[p]) {
+            case "BC":
+                B = W;
+                C = Z;
+                break;
+            case "DE":
+                D = W;
+                E = Z;
+                break;
+            case "HL":
+                H = W;
+                L = Z;
+                break;
+            case "SP":
+                setSP(getWZ());
+                break;
+        }
+    }
+
+    public void DEC_rp_p() {
+        short z;
+        short c;
+
+        switch (rp[p]) {
+            case "BC":
+                W = B;
+                Z = C;
+                break;
+            case "DE":
+                W = D;
+                Z = E;
+                break;
+            case "HL":
+                W = H;
+                Z = L;
+                break;
+            case "SP":
+                W = (byte) ((getSP() & 0xFF00) >> 8);
+                Z = (byte) (getSP() & 0x00FF);
+                break;
+        }
+
+        z = (short) ((((short) Z) & 0xFF) - 1);
+        c = (short) ((z == -1) ? 1 : 0); // carry
+        Z = (byte) (z & 0xFF);
+        W = (byte) (W - c);
+
+        switch (rp[p]) {
+            case "BC":
+                B = W;
+                C = Z;
+                break;
+            case "DE":
+                D = W;
+                E = Z;
+                break;
+            case "HL":
+                H = W;
+                L = Z;
+                break;
+            case "SP":
+                setSP(getWZ());
+                break;
+        }
     }
 }
