@@ -58,6 +58,24 @@ public class Z80 implements Z80OpCode {
         opCodes[0][3][0b101] = opC::DEC_rp_p;
         opCodes[0][3][0b110] = opC::INC_rp_p;
         opCodes[0][3][0b111] = opC::DEC_rp_p;
+        // z=4 [x][z][y]
+        opCodes[0][4][0] = opC::INC_r_y;
+        opCodes[0][4][1] = opC::INC_r_y;
+        opCodes[0][4][2] = opC::INC_r_y;
+        opCodes[0][4][3] = opC::INC_r_y;
+        opCodes[0][4][4] = opC::INC_r_y;
+        opCodes[0][4][5] = opC::INC_r_y;
+        opCodes[0][4][6] = opC::INC_r_y;
+        opCodes[0][4][7] = opC::INC_r_y;
+        // z=5 [x][z][y]
+        opCodes[0][5][0] = opC::DEC_r_y;
+        opCodes[0][5][1] = opC::DEC_r_y;
+        opCodes[0][5][2] = opC::DEC_r_y;
+        opCodes[0][5][3] = opC::DEC_r_y;
+        opCodes[0][5][4] = opC::DEC_r_y;
+        opCodes[0][5][5] = opC::DEC_r_y;
+        opCodes[0][5][6] = opC::DEC_r_y;
+        opCodes[0][5][7] = opC::DEC_r_y;
 
     }
 
@@ -453,6 +471,36 @@ public class Z80 implements Z80OpCode {
             case "SP":
                 setSP(getWZ());
                 break;
+        }
+    }
+    
+    public void INC_r_y(){
+        switch(r[y]){
+            case "B": B++; break;
+            case "C": C++; break;
+            case "D": D++; break;
+            case "E": E++; break;
+            case "H": H++; break;
+            case "L": L++; break;
+            case "(HL)":
+                    currentComp.poke(getHL(), (byte)(currentComp.peek(getHL()) + 1) );
+                    break;
+            case "A": A++; break;
+        }
+    }
+    
+    public void DEC_r_y(){
+        switch(r[y]){
+            case "B": B--; break;
+            case "C": C--; break;
+            case "D": D--; break;
+            case "E": E--; break;
+            case "H": H--; break;
+            case "L": L--; break;
+            case "(HL)":
+                currentComp.poke(getHL(), (byte)(currentComp.peek(getHL()) - 1) );
+                break;
+            case "A": A--; break;
         }
     }
 }

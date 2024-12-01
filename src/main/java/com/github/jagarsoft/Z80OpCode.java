@@ -1,6 +1,10 @@
 package com.github.jagarsoft;
 
 public interface Z80OpCode {
+    final String[] r = new String[] {
+            "B", "C", "D", "E", "H", "L", "(HL)", "A"
+    };
+    
     final String[] rp = new String[] {
             "BC", "DE", "HL", "SP"
     };
@@ -29,5 +33,7 @@ public interface Z80OpCode {
     
     void INC_rp_p();
     void DEC_rp_p();
-    
+
+    void INC_r_y();
+    void DEC_r_y();
 }
