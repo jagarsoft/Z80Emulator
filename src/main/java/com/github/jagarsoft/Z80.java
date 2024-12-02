@@ -38,8 +38,14 @@ public class Z80 implements Z80OpCode {
         opCodes[0][0][6] = opC::JR_cc;
         opCodes[0][0][7] = opC::JR_cc;
         // z=1 [x][z][y]
-        opCodes[0][1][0] = opC::LD_rp_p_nn;
-        opCodes[0][1][1] = opC::ADD_HL_rp_p;
+        opCodes[0][1][0b000] = opC::LD_rp_p_nn;
+        opCodes[0][1][0b010] = opC::LD_rp_p_nn;
+        opCodes[0][1][0b100] = opC::LD_rp_p_nn;
+        opCodes[0][1][0b110] = opC::LD_rp_p_nn;
+        opCodes[0][1][0b001] = opC::ADD_HL_rp_p;
+        opCodes[0][1][0b011] = opC::ADD_HL_rp_p;
+        opCodes[0][1][0b101] = opC::ADD_HL_rp_p;
+        opCodes[0][1][0b111] = opC::ADD_HL_rp_p;
         // z=2 [x][z][y]
         opCodes[0][2][0b000] = opC::LD_BC_A;
         opCodes[0][2][0b010] = opC::LD_DE_A;
@@ -327,7 +333,7 @@ public class Z80 implements Z80OpCode {
                 break;
         }
 
-        l = (short) ((((short) L) & 0xFF) + Z);
+        l = (short) ((L & 0x00FF) + (Z & 0x00FF));
         c = (short) (l & 0x0100); // carry
         L = (byte) (l & 0xFF);
         H = (byte) (H + W + (c >> 8));

@@ -193,14 +193,14 @@ public class Z80Test {
             () -> assertEquals((short)0x1234, cpu.getBC(), "LD BC, 0x1234 Failed: BC<>0x1234 BC=" + cpu.getBC() + ")"),
             () -> assertNotEquals((short)0x0000, cpu.getBC(), "LD BC, 0x1234 Failed: BC still 0x0000 BC=" + cpu.getBC() + ")"),
 
-            () -> assertEquals((short)0x1234, cpu.getBC(), "LD BC, 0x1234 Failed: BC<>0x1234 BC=" + cpu.getBC() + ")"),
-            () -> assertNotEquals((short)0x0000, cpu.getBC(), "LD BC, 0x1234 Failed: BC still 0x0000 BC=" + cpu.getBC() + ")"),
+            () -> assertEquals((short)0x5678, cpu.getDE(), "LD DE, 0x5678 Failed: DE<>0x5678 DE=" + cpu.getDE() + ")"),
+            () -> assertNotEquals((short)0x0000, cpu.getDE(), "LD DE, 0x5678 Failed: DE still 0x0000 DE=" + cpu.getDE() + ")"),
 
-            () -> assertEquals((short)0x1234, cpu.getBC(), "LD BC, 0x1234 Failed: BC<>0x1234 BC=" + cpu.getBC() + ")"),
-            () -> assertNotEquals((short)0x0000, cpu.getBC(), "LD BC, 0x1234 Failed: BC still 0x0000 BC=" + cpu.getBC() + ")"),
+            () -> assertEquals((short)0x9ABC, cpu.getHL(), "LD HL, 0x9ABC Failed: HL<>0x9ABC HL=" + cpu.getHL() + ")"),
+            () -> assertNotEquals((short)0x0000, cpu.getHL(), "LD HL, 0x9ABC Failed: HL still 0x0000 HL=" + cpu.getHL() + ")"),
 
-            () -> assertEquals((short)0x1234, cpu.getBC(), "LD BC, 0x1234 Failed: BC<>0x1234 BC=" + cpu.getBC() + ")"),
-            () -> assertNotEquals((short)0x0000, cpu.getBC(), "LD BC, 0x1234 Failed: BC still 0x0000 BC=" + cpu.getBC() + ")")
+            () -> assertEquals((short)0xDEF0, cpu.getSP(), "LD SP, 0xDEF0 Failed: SP<>0xDEF0 SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals((short)0x0000, cpu.getSP(), "LD SP, 0xDEF0 Failed: SP still 0x0000 SP=" + cpu.getSP() + ")")
         );
     }
 
@@ -209,19 +209,30 @@ public class Z80Test {
         Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setHL((short)0x1234);
-        cpu.setBC((short)0x1111);
-        cpu.setDE((short)0x2222);
-        cpu.setSP((short)0x3333);
+        cpu.setBC((short)0x0001);
+        cpu.setDE((short)0x0002);
+        cpu.setSP((short)0x00FF);
 
         cpu.fetch((byte)0x09); // ADD HL, BC
+
+        // assertAll("ADD HL, rp_p Group",
+        assertEquals((short) 0x1235, cpu.getHL(), "ADD HL, BC Failed: HL<>0x1235 HL=" + Integer.toHexString(cpu.getHL()));
+        assertNotEquals((short) 0x1234, cpu.getHL(), "ADD HL, BC Failed: HL Still 0x1234 HL=" + Integer.toHexString(cpu.getHL()));
+
         cpu.fetch((byte)0x19); // ADD HL, DE
+
+        assertEquals((short) 0x1237, cpu.getHL(), "ADD HL, DE Failed: HL<>0x1237 HL=" + Integer.toHexString(cpu.getHL()));
+        assertNotEquals((short) 0x1235, cpu.getHL(), "ADD HL, DE Failed: HL Still 0x1235 HL=" + Integer.toHexString(cpu.getHL()));
+
         cpu.fetch((byte)0x29); // ADD HL, HL
+
+        assertEquals((short) 0x246E, cpu.getHL(), "ADD HL, HL Failed: HL<>0x246E HL=" + Integer.toHexString(cpu.getHL()));
+        assertNotEquals((short) 0x1237, cpu.getHL(), "ADD HL, HL Failed: HL Still 0x1237 HL=" + Integer.toHexString(cpu.getHL()));
+
         cpu.fetch((byte)0x39); // ADD HL, SP
 
-        assertAll("AD HL, rp_p Group",
-                () -> assertEquals((short) 0xFF, 0x2345, "ADD HL, BC Failed: HL<>0x2345 HL=" + Integer.toHexString(cpu.getHL())),
-                () -> assertNotEquals((short) 0x1234, cpu.getBC(), "ADD HL, BC Failed: HL Still 0x0000 HL=" + Integer.toHexString(cpu.getHL()))
-        );
+        assertEquals((short) 0x256D, cpu.getHL(), "ADD HL, SP Failed: HL<>0x256D HL=" + Integer.toHexString(cpu.getHL()));
+        assertNotEquals((short) 0x246E, cpu.getHL(), "ADD HL, SP Failed: HL Still 0x246E HL=" + Integer.toHexString(cpu.getHL()));
     }
 
     @Test
