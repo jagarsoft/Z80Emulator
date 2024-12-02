@@ -564,8 +564,8 @@ public class Z80Test {
         cpu.fetch((byte)0x15); // DEC D
         cpu.fetch((byte)0x1D); // DEC E
         cpu.fetch((byte)0x25); // DEC H
-        // DEC (HL)
         cpu.fetch((byte)0x2D); // DEC L
+        // DEC (HL)
         cpu.fetch((byte)0x3D); // DEC A
 
         assertAll("DEC r[y] Group",
@@ -595,6 +595,75 @@ public class Z80Test {
         assertAll("DEC r[y] Group",
                 () -> assertEquals((short)0x16, compTest.peek(cpu.getHL()), "DEC (HL) Failed: (HL)<>0x16 = " + Integer.toHexString((short)compTest.peek(cpu.getHL()))),
                 () -> assertNotEquals((short)0x17, compTest.peek(cpu.getHL()), "DEC (HL) Failed: (HL) still 0x17 = " + Integer.toHexString(cpu.getSP()))
+        );
+    }
+
+    @Test
+    void testLD_r_y_n() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(8));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000,(byte)0x20);
+        compTest.poke(0x0001,(byte)0x21);
+        compTest.poke(0x0002,(byte)0x22);
+        compTest.poke(0x0003,(byte)0x23);
+        compTest.poke(0x0004,(byte)0x24);
+        compTest.poke(0x0005,(byte)0x25);
+        compTest.poke(0x0006,(byte)0x27);
+        compTest.poke(0x0007,(byte)0x26);
+
+        cpu.setPC(0x0000);
+
+        cpu.setB((byte)0x10);
+        cpu.setC((byte)0x11);
+        cpu.setD((byte)0x12);
+        cpu.setE((byte)0x13);
+        cpu.setH((byte)0x14);
+        cpu.setL((byte)0x15);
+        // (HL) = 0x16
+        cpu.setA((byte)0x17);
+
+        cpu.fetch((byte)0x06); // LD B, n
+        cpu.fetch((byte)0x0E); // LD C, n
+        cpu.fetch((byte)0x16); // LD D, n
+        cpu.fetch((byte)0x1E); // LD E, n
+        cpu.fetch((byte)0x26); // LD H, n
+        cpu.fetch((byte)0x2E); // LD L, n
+        
+        cpu.fetch((byte)0x3E); // LD A, n
+
+        assertAll("LD r[y], n Group",
+                () -> assertEquals((short)0x20, cpu.getB(), "LD B, 0x20 Failed: B<>0x20 = " + Integer.toHexString(cpu.getB())),
+                () -> assertNotEquals((short)0x10, cpu.getB(), "LD B, 0x20 Failed: B still 0x10 = " + Integer.toHexString(cpu.getB())),
+
+                () -> assertEquals((short)0x21, cpu.getC(), "LD C, 0x21 Failed: C<>0x21 = " + Integer.toHexString(cpu.getC())),
+                () -> assertNotEquals((short)0x11, cpu.getC(), "LD C, 0x21 Failed: C still 0x20 = " + Integer.toHexString(cpu.getC())),
+
+                () -> assertEquals((short)0x22, cpu.getD(), "LD D, 0x22 Failed: D<>0x22 = " + Integer.toHexString(cpu.getD())),
+                () -> assertNotEquals((short)0x12, cpu.getD(), "LD D, 0x22 Failed: D still 0x12 = " + Integer.toHexString(cpu.getD())),
+
+                () -> assertEquals((short)0x23, cpu.getE(), "LD E, 0x23 Failed: E<>0x23 = " + Integer.toHexString(cpu.getE())),
+                () -> assertNotEquals((short)0x13, cpu.getE(), "LD E, 0x23 Failed: E still 0x13 = " + Integer.toHexString(cpu.getE())),
+
+                () -> assertEquals((short)0x24, cpu.getH(), "LD H, 0x24 Failed: H<>0x24 = " + Integer.toHexString(cpu.getH())),
+                () -> assertNotEquals((short)0x14, cpu.getH(), "LD H, 0x24 Failed: H still 0x14 = " + Integer.toHexString(cpu.getH())),
+
+                () -> assertEquals((short)0x25, cpu.getL(), "LD L, 0x25 Failed: L<>0x25 = " + Integer.toHexString(cpu.getL())),
+                () -> assertNotEquals((short)0x15, cpu.getL(), "LD L, 0x25 Failed: L still 0x15 = " + Integer.toHexString(cpu.getL())),
+                
+                () -> assertEquals((short)0x27, cpu.getA(), "LD A, 0x27 Failed: A<>0x27 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((short)0x17, cpu.getA(), "LD A, 0x27 Failed: A still 0x17 = " + Integer.toHexString(cpu.getA()))
+        );
+
+        cpu.setHL((short)0x0006);
+
+        cpu.fetch((byte)0x36); // LD (HL), n
+
+        assertAll("LD r[y], n Group",
+            () -> assertEquals((short)0x26, compTest.peek(cpu.getHL()), "LD (HL), 0x26 Failed: (HL)<>0x26 = " + Integer.toHexString(compTest.peek(cpu.getHL()))),
+            () -> assertNotEquals((short)0x16, compTest.peek(cpu.getHL()), "LD (HL), 0x26 Failed: (HL) still 0x16 = " + Integer.toHexString(compTest.peek(cpu.getHL())))
         );
     }
 }

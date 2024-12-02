@@ -83,6 +83,16 @@ public class Z80 implements Z80OpCode {
         opCodes[0][5][6] = opC::DEC_r_y;
         opCodes[0][5][7] = opC::DEC_r_y;
 
+        // z=6 [x][z][y]
+        opCodes[0][6][0] = opC::LD_r_y_n;
+        opCodes[0][6][1] = opC::LD_r_y_n;
+        opCodes[0][6][2] = opC::LD_r_y_n;
+        opCodes[0][6][3] = opC::LD_r_y_n;
+        opCodes[0][6][4] = opC::LD_r_y_n;
+        opCodes[0][6][5] = opC::LD_r_y_n;
+        opCodes[0][6][6] = opC::LD_r_y_n;
+        opCodes[0][6][7] = opC::LD_r_y_n;
+
     }
 
     public void fetch(byte opC) {
@@ -507,6 +517,21 @@ public class Z80 implements Z80OpCode {
                 currentComp.poke(getHL(), (byte)(currentComp.peek(getHL()) - 1) );
                 break;
             case "A": A--; break;
+        }
+    }
+
+    public void LD_r_y_n() {
+        Z = currentComp.peek(PC++);
+
+        switch (r[y]){
+            case "B": setB(Z); break;
+            case "C": setC(Z); break;
+            case "D": setD(Z); break;
+            case "E": setE(Z); break;
+            case "H": setH(Z); break;
+            case "L": setL(Z); break;
+            case "(HL)": currentComp.poke(getHL(), Z); break;
+            case "A": setA(Z); break;
         }
     }
 }

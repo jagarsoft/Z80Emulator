@@ -36,4 +36,7 @@ public interface Z80OpCode {
 
     void INC_r_y();
     void DEC_r_y();
+
+    void LD_r_y_n();
+
 }
