@@ -622,7 +622,7 @@ public class Z80Test {
         cpu.setE((byte)0x13);
         cpu.setH((byte)0x14);
         cpu.setL((byte)0x15);
-        // (HL) = 0x16
+        // (HL)
         cpu.setA((byte)0x17);
 
         cpu.fetch((byte)0x06); // LD B, n
@@ -663,7 +663,201 @@ public class Z80Test {
 
         assertAll("LD r[y], n Group",
             () -> assertEquals((short)0x26, compTest.peek(cpu.getHL()), "LD (HL), 0x26 Failed: (HL)<>0x26 = " + Integer.toHexString(compTest.peek(cpu.getHL()))),
-            () -> assertNotEquals((short)0x16, compTest.peek(cpu.getHL()), "LD (HL), 0x26 Failed: (HL) still 0x16 = " + Integer.toHexString(compTest.peek(cpu.getHL())))
+            () -> assertNotEquals((short)0x27, compTest.peek(cpu.getHL()), "LD (HL), 0x26 Failed: (HL) still 0x27 = " + Integer.toHexString(compTest.peek(cpu.getHL())))
         );
+    }
+
+    @Test
+    void testRLCA() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte) 0x0F);
+
+        cpu.RLCA();
+
+        assertAll("RLCA Group",
+            () -> assertEquals((byte)0x1E, cpu.getA(), "RLCA Failed: A<>0x1E = " + Integer.toHexString(cpu.getA())),
+            () -> assertNotEquals((byte)0x0F, cpu.getA(), "RLCA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
+            () -> assertEquals(false, cpu.getCF(), "RLCA Failed: Carry flag must be OFF")
+        );
+
+        cpu.setA((byte) 0xF0);
+
+        cpu.RLCA();
+
+        assertAll("RLCA Group",
+                () -> assertEquals((byte)0xE1, cpu.getA(), "RLCA Failed: A<>0xE1 = " + Integer.toHexString((byte)(cpu.getA()&0xFF))),
+                () -> assertNotEquals((byte)0xF0, cpu.getA(), "RLCA Failed: A still 0xF0 = " + Integer.toHexString((byte)(cpu.getA()&0xFF))),
+                () -> assertEquals(true, cpu.getCF(), "RLCA Failed: Carry flag must be ON")
+        );
+    }
+
+    @Test
+    void testRRCA() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte) 0x0F);
+
+        cpu.RRCA();
+
+        assertAll("RRCA Group",
+                () -> assertEquals((byte)0x87, cpu.getA(), "RRCA Failed: A<>0x87 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte)0x0F, cpu.getA(), "RRCA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(true, cpu.getCF(), "RRCA Failed: Carry flag must be ON")
+        );
+
+        cpu.setA((byte) 0xF0);
+
+        cpu.RRCA();
+
+        assertAll("RRCA Group",
+                () -> assertEquals((byte)0x78, cpu.getA(), "RRCA Failed: A<>0x78 = " + Integer.toHexString((byte)(cpu.getA()&0xFF))),
+                () -> assertNotEquals((byte)0xF0, cpu.getA(), "RRCA Failed: A still 0xF0 = " + Integer.toHexString((byte)(cpu.getA()&0xFF))),
+                () -> assertEquals(false, cpu.getCF(), "RRCA Failed: Carry flag must be OFF")
+        );
+    }
+    
+    @Test
+    void testRLA() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.resCF();
+        cpu.setA((byte) 0x0F);
+
+        cpu.RLA();
+
+        assertAll("RLA Group: NC & 0x0F",
+                () -> assertEquals((byte) 0x1E, cpu.getA(), "RLA Failed: A<>0x1E = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RLA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(false, cpu.getCF(), "RLA Failed: Carry flag must be OFF" )
+        );
+
+        cpu.setCF();
+        cpu.setA((byte) 0x0F);
+
+        cpu.RLA();
+
+        assertAll("RLA Group: C & 0x0F",
+                () -> assertEquals((byte) 0x1F, cpu.getA(), "RLA Failed: A<>0x1F = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RLA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(false, cpu.getCF(), "RLA Failed: Carry flag must be OFF" )
+        );
+
+        cpu.resCF();
+        cpu.setA((byte) 0xF0);
+
+        cpu.RLA();
+
+        assertAll("RLA Group: NC & 0xF0",
+                () -> assertEquals((byte) 0xE0, cpu.getA(), "RLA Failed: A<>0xE0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0xF0, cpu.getA(), "RLA Failed: A still 0xF0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(true, cpu.getCF(), "RLA Failed: Carry flag must be ON" )
+        );
+
+        cpu.setCF();
+        cpu.setA((byte) 0xF0);
+
+        cpu.RLA();
+
+        assertAll("RLA Group: C & 0xF0",
+                () -> assertEquals((byte) 0xE1, cpu.getA(), "RLA Failed: A<>0xE0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0xF0, cpu.getA(), "RLA Failed: A still 0xF0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(true, cpu.getCF(), "RLA Failed: Carry flag must be ON" )
+        );
+    }
+
+    @Test
+    void testRRA() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.resCF();
+        cpu.setA((byte) 0x0F);
+
+        cpu.RRA();
+
+        assertAll("RRA Group: NC & 0x0F",
+                () -> assertEquals((byte) 0x07, cpu.getA(), "RRA Failed: A<>0x07 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RRA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(true, cpu.getCF(), "RRA Failed: Carry flag must be ON" )
+        );
+
+        cpu.setCF();
+        cpu.setA((byte) 0x0F);
+
+        cpu.RRA();
+
+        assertAll("RRA Group: C & 0x0F",
+                () -> assertEquals((byte) 0x87, cpu.getA(), "RRA Failed: A<>0x87 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RRA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(true, cpu.getCF(), "RRA Failed: Carry flag must be ON" )
+        );
+
+        cpu.resCF();
+        cpu.setA((byte) 0xF0);
+
+        cpu.RRA();
+
+        assertAll("RRA Group: NC & 0xF0",
+                () -> assertEquals((byte) 0x78, cpu.getA(), "RRA Failed: A<>0x78 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0xF0, cpu.getA(), "RRA Failed: A still 0xF0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(false, cpu.getCF(), "RRA Failed: Carry flag must be OFF" )
+        );
+
+        cpu.setCF();
+        cpu.setA((byte) 0xF0);
+
+        cpu.RRA();
+
+        assertAll("RRA Group: C & 0xF0",
+                () -> assertEquals((byte) 0xF8, cpu.getA(), "RRA Failed: A<>0xE0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0xF0, cpu.getA(), "RRA Failed: A still 0xF0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertEquals(false, cpu.getCF(), "RRA Failed: Carry flag must be OFF" )
+        );
+    }
+
+    @Test
+    void testDAA() {
+        // TDDO
+    }
+
+    @Test
+    void CPL() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte) 0x0F);
+
+        cpu.CPL();
+
+        assertAll("CPL Group",
+                () -> assertEquals((byte) 0xF0, cpu.getA(), "CPL Failed: A<>0xF0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0x0F, cpu.getA(), "CPL Failed: A still 0x0F = " + Integer.toHexString(cpu.getA()))
+          //      () -> assertEquals(false, cpu.getCF(), "RRA Failed: Carry flag must be OFF" )
+        );
+    }
+
+    @Test
+    void SCF() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setCF();
+
+        assertEquals(true, cpu.getCF(), "SCF Failed: Carry flag must be ON");
+    }
+
+    @Test
+    void CCF() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setCF();
+
+        cpu.CCF();
+
+        assertEquals(false, cpu.getCF(), "CCF Failed: Carry flag must be OFF");
+
+        cpu.resCF();
+
+        cpu.CCF();
+
+        assertEquals(true, cpu.getCF(), "CCF Failed: Carry flag must be ON");
     }
 }

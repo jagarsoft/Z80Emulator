@@ -82,7 +82,6 @@ public class Z80 implements Z80OpCode {
         opCodes[0][5][5] = opC::DEC_r_y;
         opCodes[0][5][6] = opC::DEC_r_y;
         opCodes[0][5][7] = opC::DEC_r_y;
-
         // z=6 [x][z][y]
         opCodes[0][6][0] = opC::LD_r_y_n;
         opCodes[0][6][1] = opC::LD_r_y_n;
@@ -92,7 +91,15 @@ public class Z80 implements Z80OpCode {
         opCodes[0][6][5] = opC::LD_r_y_n;
         opCodes[0][6][6] = opC::LD_r_y_n;
         opCodes[0][6][7] = opC::LD_r_y_n;
-
+        // z=7 [x][z][y]
+        opCodes[0][7][0] = opC::RLCA;
+        opCodes[0][7][1] = opC::RRCA;
+        opCodes[0][7][2] = opC::RLA;
+        opCodes[0][7][3] = opC::RRA;
+        //opCodes[0][7][4] = opC::DAA;  TODO
+        opCodes[0][7][5] = opC::CPL;
+        opCodes[0][7][6] = opC::SCF;
+        opCodes[0][7][7] = opC::CCF;
     }
 
     public void fetch(byte opC) {
@@ -104,6 +111,8 @@ public class Z80 implements Z80OpCode {
 
         if (opCodes[x][z][y] != null) {
             opCodes[x][z][y].execute();
+        } else {
+            throw new IllegalArgumentException("OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
     //*** End Dispatcher Section
@@ -344,7 +353,7 @@ public class Z80 implements Z80OpCode {
         }
 
         l = (short) ((L & 0x00FF) + (Z & 0x00FF));
-        c = (short) (l & 0x0100); // carry
+        c = (short) (l & 0x0100); // pre-carry
         L = (byte) (l & 0xFF);
         H = (byte) (H + W + (c >> 8));
     }
@@ -420,7 +429,7 @@ public class Z80 implements Z80OpCode {
         }
 
         z = (short) ((((short) Z) & 0xFF) + 1);
-        c = (short) (z & 0x0100); // carry
+        c = (short) (z & 0x0100); // pre-carry
         Z = (byte) (z & 0xFF);
         W = (byte) (W + (c >> 8));
 
@@ -467,7 +476,7 @@ public class Z80 implements Z80OpCode {
         }
 
         z = (short) ((((short) Z) & 0xFF) - 1);
-        c = (short) ((z == -1) ? 1 : 0); // carry
+        c = (short) ((z == -1) ? 1 : 0); // pre-carry
         Z = (byte) (z & 0xFF);
         W = (byte) (W - c);
 
@@ -533,5 +542,82 @@ public class Z80 implements Z80OpCode {
             case "(HL)": currentComp.poke(getHL(), Z); break;
             case "A": setA(Z); break;
         }
+    }
+
+    public void RLCA() {
+        byte c = (byte) (A & 0x80); // pre-carry
+
+        A <<= 1;
+
+        if( c != 0 ) {
+            A |= 1;
+            setCF();
+        } else {
+            resCF();
+        }
+    }
+
+    public void RRCA() {
+        byte c = (byte) (A & 0x01); // pre-carry
+
+        A >>= 1;
+
+        if( c != 0 ) {
+            A |= 0x80;
+            setCF();
+        } else {
+            A &= 0x7F;
+            resCF();
+        }
+    }
+
+    public void RLA() {
+        byte c = (byte) (A & 0x80); // pre-carry
+        boolean oc = getCF(); // old-carry
+        
+        A <<= 1;
+        
+        if( c != 0 ) {
+            setCF();
+        } else {
+            resCF();
+        }
+        
+        if( oc )
+            A |= 1;
+    }
+
+    public void RRA() {
+        byte c = (byte) (A & 0x01); // pre-carry
+        boolean oc = getCF(); // old-carry
+
+        A >>= 1;
+
+        if( c != 0 ) {
+            setCF();
+        } else {
+            resCF();
+        }
+
+        if( oc )
+            A |= 0x80;
+        else
+            A &= 0x7F;
+    }
+
+    public void DAA() {
+        // TODO
+    }
+
+    public void CPL() {
+        A = (byte) ~A;
+    }
+
+    public void SCF() {
+        setCF();
+    }
+
+    public void CCF() {
+        F.flip(0);
     }
 }

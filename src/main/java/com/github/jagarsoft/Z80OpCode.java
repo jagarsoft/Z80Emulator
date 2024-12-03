@@ -39,4 +39,12 @@ public interface Z80OpCode {
 
     void LD_r_y_n();
 
+    void RLCA();
+    void RRCA();
+    void RLA();
+    void RRA();
+    void DAA();
+    void CPL();
+    void SCF();
+    void CCF();
 }
