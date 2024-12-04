@@ -47,4 +47,7 @@ public interface Z80OpCode {
     void CPL();
     void SCF();
     void CCF();
+
+    void LD_r_y_r_z();
+    void HALT();
 }

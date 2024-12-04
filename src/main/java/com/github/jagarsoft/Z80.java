@@ -100,6 +100,9 @@ public class Z80 implements Z80OpCode {
         opCodes[0][7][5] = opC::CPL;
         opCodes[0][7][6] = opC::SCF;
         opCodes[0][7][7] = opC::CCF;
+        // x = 1
+        // z=6 [x][z][y]
+        // Exception: 7 * 7 combinations managed in fetch
     }
 
     public void fetch(byte opC) {
@@ -108,6 +111,14 @@ public class Z80 implements Z80OpCode {
         z = (opC & 0b111);
         p = ((y & 0b110) >> 1);
         q = (y & 1);
+
+        if( x == 1 ) {
+            if( z == 6 && y == 6)
+                ;// HALT(); // TODO
+            else
+                LD_r_y_r_z();
+            return;
+        }
 
         if (opCodes[x][z][y] != null) {
             opCodes[x][z][y].execute();
@@ -619,5 +630,32 @@ public class Z80 implements Z80OpCode {
 
     public void CCF() {
         F.flip(0);
+    }
+
+    public void LD_r_y_r_z() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+        switch (r[y]){
+            case "B": setB(Z); break;
+            case "C": setC(Z); break;
+            case "D": setD(Z); break;
+            case "E": setE(Z); break;
+            case "H": setH(Z); break;
+            case "L": setL(Z); break;
+            case "(HL)": currentComp.poke(getHL(), Z); break;
+            case "A": setA(Z); break;
+        }
+    }
+
+    public void HALT() {
+
     }
 }

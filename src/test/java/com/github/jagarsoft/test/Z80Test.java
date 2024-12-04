@@ -860,4 +860,53 @@ public class Z80Test {
 
         assertEquals(true, cpu.getCF(), "CCF Failed: Carry flag must be ON");
     }
+
+    @Test
+    void LD_r_y_r_z() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setB((byte)0x10);
+        cpu.setC((byte)0x11);
+        cpu.setD((byte)0x12);
+        cpu.setE((byte)0x13);
+        cpu.setH((byte)0x14);
+        cpu.setL((byte)0x15);
+
+        // assertAll("LD A, r[z] Group",
+        cpu.fetch((byte)0x78); // LD A, B
+        assertEquals((byte) 0x10, cpu.getA(), "LD A, B Failed: A<>0x10 = " + Integer.toHexString(cpu.getA()));
+        
+        cpu.fetch((byte)0x79); // LD A, C
+        assertEquals((byte) 0x11, cpu.getA(), "LD A, C Failed: A<>0x11 = " + Integer.toHexString(cpu.getA()));
+        
+        cpu.fetch((byte)0x7A); // LD A, D
+        assertEquals((byte) 0x12, cpu.getA(), "LD A, D Failed: A<>0x12 = " + Integer.toHexString(cpu.getA()));
+        
+        cpu.fetch((byte)0x7B); // LD A, E
+        assertEquals((byte) 0x13, cpu.getA(), "LD A, E Failed: A<>0x13 = " + Integer.toHexString(cpu.getA()));
+        
+        cpu.fetch((byte)0x7C); // LD A, H
+        assertEquals((byte) 0x14, cpu.getA(), "LD A, H Failed: A<>0x14 = " + Integer.toHexString(cpu.getA()));
+        
+        cpu.fetch((byte)0x7D); // LD A, L
+        assertEquals((byte) 0x15, cpu.getA(), "LD A, L Failed: A<>0x15 = " + Integer.toHexString(cpu.getA()));
+
+        cpu.setA((byte)0x20);
+
+        cpu.fetch((byte)0x47); // LD B, A
+        cpu.fetch((byte)0x4F); // LD C, A
+        cpu.fetch((byte)0x57); // LD D, A
+        cpu.fetch((byte)0x5F); // LD E, A
+        cpu.fetch((byte)0x67); // LD H, A
+        cpu.fetch((byte)0x6F); // LD L, A
+
+        assertAll("LD r[y], A Group",
+                () -> assertEquals((byte) 0x20, cpu.getB(), "LD B, A Failed: B<>0x20 = " + Integer.toHexString(cpu.getB())),
+                () -> assertEquals((byte) 0x20, cpu.getC(), "LD C, A Failed: C<>0x20 = " + Integer.toHexString(cpu.getC())),
+                () -> assertEquals((byte) 0x20, cpu.getD(), "LD D, A Failed: D<>0x20 = " + Integer.toHexString(cpu.getD())),
+                () -> assertEquals((byte) 0x20, cpu.getE(), "LD E, A Failed: E<>0x20 = " + Integer.toHexString(cpu.getE())),
+                () -> assertEquals((byte) 0x20, cpu.getH(), "LD H, A Failed: H<>0x20 = " + Integer.toHexString(cpu.getH())),
+                () -> assertEquals((byte) 0x20, cpu.getL(), "LD L, A Failed: L<>0x20 = " + Integer.toHexString(cpu.getL()))
+        );
+    }
 }
