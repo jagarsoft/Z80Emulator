@@ -103,6 +103,32 @@ public class Z80 implements Z80OpCode {
         // x = 1
         // z=6 [x][z][y]
         // Exception: 7 * 7 combinations managed in fetch
+
+        // x = 2, z = 0..7
+        // Exception: iterate over z instead of y are 7 * 7 combinations managed in fetch,
+        // but still opC::PTR is needed
+        //     [x][z][y]
+        opCodes[2][0][0] = opC::ADD_A;
+        opCodes[2][0][1] = opC::ADC_A;
+        opCodes[2][0][2] = opC::SUB;
+        opCodes[2][0][3] = opC::SBC_A;
+        opCodes[2][0][4] = opC::AND;
+        opCodes[2][0][5] = opC::XOR;
+        opCodes[2][0][6] = opC::OR;
+        opCodes[2][0][7] = opC::CP;
+
+        /*
+        // x = 3
+        // z=6 [x][z][y]
+        opCodes[2][6][0] = opC::ADD_A_n;
+        opCodes[2][6][1] = opC::ADC_A_n;
+        opCodes[2][6][2] = opC::SUB_n;
+        opCodes[2][6][3] = opC::SBC_A_n;
+        opCodes[2][6][4] = opC::AND_n;
+        opCodes[2][6][5] = opC::XOR_n;
+        opCodes[2][6][6] = opC::OR_n;
+        opCodes[2][6][7] = opC::CP_n;
+        */
     }
 
     public void fetch(byte opC) {
@@ -117,6 +143,11 @@ public class Z80 implements Z80OpCode {
                 ;// HALT(); // TODO
             else
                 LD_r_y_r_z();
+            return;
+        }
+
+        if( x == 2 ) {
+            opCodes[x][0][y].execute();
             return;
         }
 
@@ -194,7 +225,6 @@ public class Z80 implements Z80OpCode {
     public void setF(byte f) { F = BitSet.valueOf(new byte[]{f}); }
 
     public byte getF_() { return alternative.F.toByteArray()[0]; }
-
     public void setF_(byte f) { alternative.F = BitSet.valueOf(new byte[]{f}); }
 
     public boolean getSF(){ return F.get(7); }
@@ -656,6 +686,133 @@ public class Z80 implements Z80OpCode {
     }
 
     public void HALT() {
+        // TOD
+    }
 
+    public void ADD_A() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+
+        A += Z;
+    }
+
+    public void ADC_A() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+
+        A += Z;
+
+        if( getCF() ) A++;
+    }
+
+    public void SUB() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+
+        A -= Z;
+    }
+
+    public void SBC_A() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+
+        A -= Z;
+
+        if( getCF() ) A--;
+    }
+
+    public void AND() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+
+        A &= Z;
+    }
+
+    public void XOR() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+
+        A ^= Z;
+    }
+
+    public void OR() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+
+        A |= Z;
+    }
+
+    public void CP() {
+        switch (r[z]){
+            case "B": Z = getB(); break;
+            case "C": Z = getC(); break;
+            case "D": Z = getD(); break;
+            case "E": Z = getE(); break;
+            case "H": Z = getH(); break;
+            case "L": Z = getL(); break;
+            case "(HL)": Z = currentComp.peek(getHL()); break;
+            case "A": Z = getA(); break;
+        }
+
+        if( A == Z )
+            setZF();
+        else
+            resZF();
     }
 }

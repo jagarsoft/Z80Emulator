@@ -902,11 +902,133 @@ public class Z80Test {
 
         assertAll("LD r[y], A Group",
                 () -> assertEquals((byte) 0x20, cpu.getB(), "LD B, A Failed: B<>0x20 = " + Integer.toHexString(cpu.getB())),
+                // () -> assertNotEquals() missing TODO?...
                 () -> assertEquals((byte) 0x20, cpu.getC(), "LD C, A Failed: C<>0x20 = " + Integer.toHexString(cpu.getC())),
                 () -> assertEquals((byte) 0x20, cpu.getD(), "LD D, A Failed: D<>0x20 = " + Integer.toHexString(cpu.getD())),
                 () -> assertEquals((byte) 0x20, cpu.getE(), "LD E, A Failed: E<>0x20 = " + Integer.toHexString(cpu.getE())),
                 () -> assertEquals((byte) 0x20, cpu.getH(), "LD H, A Failed: H<>0x20 = " + Integer.toHexString(cpu.getH())),
                 () -> assertEquals((byte) 0x20, cpu.getL(), "LD L, A Failed: L<>0x20 = " + Integer.toHexString(cpu.getL()))
         );
+    }
+
+    @Test
+    void testADD_A() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte)0x10);
+        cpu.setB((byte)0x20);
+
+        cpu.fetch((byte)0x80);
+
+        assertEquals((byte) 0x30, cpu.getA(), "ADD A, B Failed: A<>0x30 = " + Integer.toHexString(cpu.getA()));
+    }
+
+    @Test
+    void testADC_A() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte)0x10);
+        cpu.setB((byte)0x20);
+        cpu.resCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertEquals((byte) 0x30, cpu.getA(), "ADC A, B; C=0 Failed: A<>0x30 = " + Integer.toHexString(cpu.getA()));
+
+        cpu.setA((byte)0x10);
+        cpu.setB((byte)0x20);
+        cpu.setCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertEquals((byte) 0x31, cpu.getA(), "ADC A, B; C=1 Failed: A<>0x31 = " + Integer.toHexString(cpu.getA()));
+    }
+
+    @Test
+    void testSUB_A() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte)0x20);
+        cpu.setB((byte)0x10);
+
+        cpu.fetch((byte)0x90);
+
+        assertEquals((byte) 0x10, cpu.getA(), "SUB A, B Failed: A<>0x10 = " + Integer.toHexString(cpu.getA()));
+    }
+
+    @Test
+    void testSBC_A() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte)0x20);
+        cpu.setB((byte)0x10);
+        cpu.resCF();
+
+        cpu.fetch((byte)0x98);
+
+        assertEquals((byte) 0x10, cpu.getA(), "SBC A, B; C=0 Failed: A<>0x10 = " + Integer.toHexString(cpu.getA()));
+
+        cpu.setA((byte)0x20);
+        cpu.setB((byte)0x10);
+        cpu.setCF();
+
+        cpu.fetch((byte)0x98);
+
+        assertEquals((byte) 0x0F, cpu.getA(), "SBC A, B; C=1 Failed: A<>0x0F = " + Integer.toHexString(cpu.getA()));
+    }
+
+    @Test
+    void testAND() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte)0xF0);
+        cpu.setB((byte)0x0F);
+
+        cpu.fetch((byte)0xA0);
+
+        assertEquals((byte) 0x00, cpu.getA(), "AND B Failed: A<>0x00 = " + Integer.toHexString(cpu.getA()));
+    }
+
+    @Test
+    void testXOR() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte)0xF0);
+        cpu.setB((byte)0xFF);
+
+        cpu.fetch((byte)0xA8);
+
+        assertEquals((byte) 0x0F, cpu.getA(), "XOR B Failed: A<>0x0F = " + Integer.toHexString(cpu.getA()));
+    }
+
+    @Test
+    void testOR() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte)0xF0);
+        cpu.setB((byte)0x0F);
+
+        cpu.fetch((byte)0xB0);
+
+        assertEquals((byte) 0xFF, cpu.getA(), "OR B Failed: A<>0xFF = " + Integer.toHexString(cpu.getA()));
+    }
+
+    @Test
+    void testCP() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setA((byte)0xF0);
+        cpu.setB((byte)0xF0);
+
+        cpu.fetch((byte)0xB8);
+
+        assertEquals(true, cpu.getZF(), "CP B Failed: Z (true) = " + cpu.getZF());
+
+        cpu.setA((byte)0xF0);
+        cpu.setB((byte)0x0F);
+
+        cpu.fetch((byte)0xB8);
+
+        assertEquals(false, cpu.getZF(), "CP B Failed: NZ (false) = " + cpu.getZF());
     }
 }

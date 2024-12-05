@@ -50,4 +50,14 @@ public interface Z80OpCode {
 
     void LD_r_y_r_z();
     void HALT();
+
+    void ADD_A();
+    void ADC_A();
+    void SUB();
+    void SBC_A();
+    void AND();
+    void XOR();
+    void OR();
+    void CP();
+
 }
