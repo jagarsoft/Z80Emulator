@@ -8,6 +8,10 @@ public interface Z80OpCode {
     final String[] rp = new String[] {
             "BC", "DE", "HL", "SP"
     };
+    
+    final String[] rp2 = new String[] {
+            "BC", "DE", "HL", "AF"
+    };
 
     final String[] cc = new String[] {
             "NZ", "Z", "NC", "C", "PO", "PE", "P", "M"
@@ -60,4 +64,10 @@ public interface Z80OpCode {
     void OR();
     void CP();
 
+    void RET_cc_y();
+    void POP_rp2_p();
+    void RET();
+    void EXX();
+    void JP_HL();
+    void LD_SP_HL();
 }

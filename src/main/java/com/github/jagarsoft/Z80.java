@@ -101,8 +101,9 @@ public class Z80 implements Z80OpCode {
         opCodes[0][7][6] = opC::SCF;
         opCodes[0][7][7] = opC::CCF;
         // x = 1
-        // z=6 [x][z][y]
         // Exception: 7 * 7 combinations managed in fetch
+        // z=6 [x][z][y]
+        opCodes[1][0][0] = opC::LD_r_y_r_z;
 
         // x = 2, z = 0..7
         // Exception: iterate over z instead of y are 7 * 7 combinations managed in fetch,
@@ -117,8 +118,28 @@ public class Z80 implements Z80OpCode {
         opCodes[2][0][6] = opC::OR;
         opCodes[2][0][7] = opC::CP;
 
-        /*
         // x = 3
+        //     [x][z][y]
+        opCodes[3][0][0] = opC::RET_cc_y;
+        opCodes[3][0][1] = opC::RET_cc_y;
+        opCodes[3][0][2] = opC::RET_cc_y;
+        opCodes[3][0][3] = opC::RET_cc_y;
+        opCodes[3][0][4] = opC::RET_cc_y;
+        opCodes[3][0][5] = opC::RET_cc_y;
+        opCodes[3][0][6] = opC::RET_cc_y;
+        opCodes[3][0][7] = opC::RET_cc_y;
+        // z=1 [x][z][y]
+        opCodes[3][1][0b000] = opC::POP_rp2_p;
+        opCodes[3][1][0b010] = opC::POP_rp2_p;
+        opCodes[3][1][0b100] = opC::POP_rp2_p;
+        opCodes[3][1][0b110] = opC::POP_rp2_p;
+        opCodes[3][1][0b001] = opC::RET;
+        opCodes[3][1][0b011] = opC::EXX;
+        opCodes[3][1][0b101] = opC::JP_HL;
+        opCodes[3][1][0b111] = opC::LD_SP_HL;
+
+
+        /*
         // z=6 [x][z][y]
         opCodes[2][6][0] = opC::ADD_A_n;
         opCodes[2][6][1] = opC::ADC_A_n;
@@ -131,6 +152,8 @@ public class Z80 implements Z80OpCode {
         */
     }
 
+    public void fetch() { fetch(currentComp.peek(getPC())); }
+
     public void fetch(byte opC) {
         x = ((opC & 0b11000000) >> 6);
         y = ((opC & 0b00111000) >> 3);
@@ -142,15 +165,15 @@ public class Z80 implements Z80OpCode {
             if( z == 6 && y == 6)
                 ;// HALT(); // TODO
             else
-                LD_r_y_r_z();
+                opCodes[x][0][0].execute();// LD_r_y_r_z
             return;
         }
 
         if( x == 2 ) {
-            opCodes[x][0][y].execute();
+            opCodes[x][0][y].execute(); // Arithmetic & Logical instructions
             return;
         }
-
+        
         if (opCodes[x][z][y] != null) {
             opCodes[x][z][y].execute();
         } else {
@@ -196,8 +219,6 @@ public class Z80 implements Z80OpCode {
     public void reset() { PC = 0; }
 
     public void setComputer(Computer theComp) { currentComp = theComp; }
-
-    //public void fetch(byte opCode) { d.execute(opCode);}
 
     // Getters / Setters
     public byte getA() { return A; }
@@ -339,7 +360,6 @@ public class Z80 implements Z80OpCode {
                 break;
             case "C":
                 ccSet = getCF();
-                break;
         }
 
         if (ccSet)
@@ -365,7 +385,6 @@ public class Z80 implements Z80OpCode {
                 break;
             case "SP":
                 setSP(getWZ());
-                break;
         }
     }
 
@@ -390,7 +409,6 @@ public class Z80 implements Z80OpCode {
             case "SP":
                 W = (byte) ((getSP() & 0xFF00) >> 8);
                 Z = (byte) (getSP() & 0x00FF);
-                break;
         }
 
         l = (short) ((L & 0x00FF) + (Z & 0x00FF));
@@ -466,7 +484,6 @@ public class Z80 implements Z80OpCode {
             case "SP":
                 W = (byte) ((getSP() & 0xFF00) >> 8);
                 Z = (byte) (getSP() & 0x00FF);
-                break;
         }
 
         z = (short) ((((short) Z) & 0xFF) + 1);
@@ -489,7 +506,6 @@ public class Z80 implements Z80OpCode {
                 break;
             case "SP":
                 setSP(getWZ());
-                break;
         }
     }
 
@@ -513,7 +529,6 @@ public class Z80 implements Z80OpCode {
             case "SP":
                 W = (byte) ((getSP() & 0xFF00) >> 8);
                 Z = (byte) (getSP() & 0x00FF);
-                break;
         }
 
         z = (short) ((((short) Z) & 0xFF) - 1);
@@ -536,7 +551,6 @@ public class Z80 implements Z80OpCode {
                 break;
             case "SP":
                 setSP(getWZ());
-                break;
         }
     }
     
@@ -551,7 +565,7 @@ public class Z80 implements Z80OpCode {
             case "(HL)":
                     currentComp.poke(getHL(), (byte)(currentComp.peek(getHL()) + 1) );
                     break;
-            case "A": A++; break;
+            case "A": A++;
         }
     }
     
@@ -566,7 +580,7 @@ public class Z80 implements Z80OpCode {
             case "(HL)":
                 currentComp.poke(getHL(), (byte)(currentComp.peek(getHL()) - 1) );
                 break;
-            case "A": A--; break;
+            case "A": A--;
         }
     }
 
@@ -581,7 +595,7 @@ public class Z80 implements Z80OpCode {
             case "H": setH(Z); break;
             case "L": setL(Z); break;
             case "(HL)": currentComp.poke(getHL(), Z); break;
-            case "A": setA(Z); break;
+            case "A": setA(Z);
         }
     }
 
@@ -671,8 +685,9 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
+        
         switch (r[y]){
             case "B": setB(Z); break;
             case "C": setC(Z); break;
@@ -681,7 +696,7 @@ public class Z80 implements Z80OpCode {
             case "H": setH(Z); break;
             case "L": setL(Z); break;
             case "(HL)": currentComp.poke(getHL(), Z); break;
-            case "A": setA(Z); break;
+            case "A": setA(Z);
         }
     }
 
@@ -698,7 +713,7 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
 
         A += Z;
@@ -713,7 +728,7 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
 
         A += Z;
@@ -730,7 +745,7 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
 
         A -= Z;
@@ -745,7 +760,7 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
 
         A -= Z;
@@ -762,7 +777,7 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
 
         A &= Z;
@@ -777,7 +792,7 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
 
         A ^= Z;
@@ -792,7 +807,7 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
 
         A |= Z;
@@ -807,12 +822,112 @@ public class Z80 implements Z80OpCode {
             case "H": Z = getH(); break;
             case "L": Z = getL(); break;
             case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA(); break;
+            case "A": Z = getA();
         }
 
         if( A == Z )
             setZF();
         else
             resZF();
+    }
+    
+    public void RET_cc_y() {
+        boolean ccSet = false;
+
+        switch (cc[y]) {
+            case "NZ":
+                ccSet = ! getZF();        
+                break;
+            case "Z":
+                ccSet = getZF();
+                break;
+            case "NC":
+                ccSet = ! getCF();
+                break;
+            case "C":
+                ccSet = getCF();
+                break;
+            case "PO":
+                ccSet = ! getPF();
+                break;
+            case "PE":
+                ccSet = getPF();
+                break;
+            case "P":
+                ccSet = ! getSF();
+                break;
+            case "M":
+                ccSet = getSF();
+        }
+
+        if (ccSet) {
+            Z = currentComp.peek(SP++);
+            W = currentComp.peek(SP++);
+
+            PC = getWZ();
+        }
+    }
+        
+    public void POP_rp2_p() {
+        Z = currentComp.peek(SP++);
+        W = currentComp.peek(SP++);
+        
+        switch (rp2[p]) {
+            case "BC":
+                B = W;
+                C = Z;
+                break;
+            case "DE":
+                D = W;
+                E = Z;
+                break;
+            case "HL":
+                H = W;
+                L = Z;
+                break;
+            case "AF":
+                A = W;
+                setF(Z);
+        }
+    }
+    
+    public void RET() {
+        Z = currentComp.peek(SP++);
+        W = currentComp.peek(SP++);
+        
+        PC = getWZ();
+    }
+    
+    public void EXX() {
+        byte tmp;
+        
+        tmp = getB();
+        setB(alternative.B);
+        alternative.B = tmp;
+        tmp = getC();
+        setC(alternative.C);
+        alternative.C = tmp;
+        
+        tmp = getH();
+        setH(alternative.H);
+        alternative.H = tmp;
+        tmp = getL();
+        setL(alternative.L);
+        alternative.L = tmp;
+        
+        tmp = getD();
+        setD(alternative.D);
+        alternative.D = tmp;
+        tmp = getE();
+        setE(alternative.E);
+        alternative.E = tmp;
+    }
+    
+    public void JP_HL() {
+        PC = getHL();
+    }
+    
+    public void LD_SP_HL() {
+        SP = getHL();
     }
 }

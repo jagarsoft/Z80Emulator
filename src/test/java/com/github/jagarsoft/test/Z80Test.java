@@ -1031,4 +1031,388 @@ public class Z80Test {
 
         assertEquals(false, cpu.getZF(), "CP B Failed: NZ (false) = " + cpu.getZF());
     }
+    
+    @Test
+    void testRET_cc_y_MustRET() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.resZF();
+        
+        cpu.fetch((byte) 0xC0); // RET NZ
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET NZ Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getPC(), "RET NZ Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0002, cpu.getSP(), "RET NZ Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.setZF();
+        
+        cpu.fetch((byte) 0xC8); // RET Z
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET Z Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getPC(), "RET Z Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0002, cpu.getSP(), "RET Z Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getSP(), "RET Z Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.resCF();
+        
+        cpu.fetch((byte) 0xD0); // RET NC
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET NC Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getPC(), "RET NC Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0002, cpu.getSP(), "RET NC Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getSP(), "RET NC Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.setCF();
+        
+        cpu.fetch((byte) 0xD8); // RET C
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET C Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getPC(), "RET C Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0002, cpu.getSP(), "RET C Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x000, cpu.getSP(), "RET C Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.resPF();
+        
+        cpu.fetch((byte) 0xE0); // RET PO
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET PO Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getPC(), "RET PO Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0002, cpu.getSP(), "RET PO Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getSP(), "RET PO Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.setPF();
+        
+        cpu.fetch((byte) 0xE8); // RET PE
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET PE Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getPC(), "RET PE Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals((short)0x0002, (short)cpu.getSP(), "RET PE Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getSP(), "RET PE Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.resSF();
+        
+        cpu.fetch((byte) 0xF0); // RET P
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET P Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getPC(), "RET P Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0002, cpu.getSP(), "RET P Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getSP(), "RET P Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.setSF();
+        
+        cpu.fetch((byte) 0xF8); // RET M
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET M Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getPC(), "RET M Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0002, cpu.getSP(), "RET M Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getSP(), "RET M Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+    }
+    
+    @Test
+    void testRET_cc_y_MustNotRET() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+        
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+        
+        cpu.setZF();
+        
+        cpu.fetch((byte) 0xC0); // RET NZ
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals(0x0000, cpu.getPC(), "RET NZ Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0xFF00, cpu.getPC(), "RET NZ Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0000, cpu.getSP(), "RET NZ Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0002, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.resZF();
+        
+        cpu.fetch((byte) 0xC8); // RET Z
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals(0x0000, cpu.getPC(), "RET Z Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0xFF00, cpu.getPC(), "RET Z Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0000, cpu.getSP(), "RET Z Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0002, cpu.getSP(), "RET Z Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setCF();
+        
+        cpu.fetch((byte) 0xD0); // RET NC
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals(0x0000, cpu.getPC(), "RET NC Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0xFF00, cpu.getPC(), "RET NC Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0000, cpu.getSP(), "RET NC Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0002, cpu.getSP(), "RET NC Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.resCF();
+        
+        cpu.fetch((byte) 0xD8); // RET C
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals(0x0000, cpu.getPC(), "RET C Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0xFF00, cpu.getPC(), "RET C Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0000, cpu.getSP(), "RET C Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0002, cpu.getSP(), "RET C Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setPF();
+        
+        cpu.fetch((byte) 0xE0); // RET PO
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals(0x0000, cpu.getPC(), "RET PO Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0xFF00, cpu.getPC(), "RET PO Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0000, cpu.getSP(), "RET PO Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0002, cpu.getSP(), "RET PO Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.resPF();
+        
+        cpu.fetch((byte) 0xE8); // RET PE
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals(0x0000, cpu.getPC(), "RET PE Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0xFF00, cpu.getPC(), "RET PE Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0000, cpu.getSP(), "RET PE Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0002, cpu.getSP(), "RET PE Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.setSF();
+        
+        cpu.fetch((byte) 0xF0); // RET P
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals(0x0000, cpu.getPC(), "RET P Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0xFF00, cpu.getPC(), "RET P Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0000, cpu.getSP(), "RET P Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0002, cpu.getSP(), "RET P Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+        
+        cpu.resSF();
+        
+        cpu.fetch((byte) 0xF8); // RET M
+
+        assertAll("RET cc[y] Group",
+            () -> assertEquals(0x0000, cpu.getPC(), "RET M Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+            () -> assertNotEquals(0xFF00, cpu.getPC(), "RET M Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+            () -> assertEquals(0x0000, cpu.getSP(), "RET M Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertNotEquals(0x0002, cpu.getSP(), "RET M Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+    }
+    
+    @Test
+    void testPOP_rp2_p() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+        
+        cpu.setSP((short) 0x0000);
+        
+        cpu.setBC((short) 0x0000);
+        
+        cpu.fetch((byte)0xC1); // POP BC
+        
+        assertAll("POP rp2[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getBC(), "POP BC Failed: BC was not modified (BC=" + cpu.getBC() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getBC(), "POP BC Failed: BC still 0x0000 (BC=" + cpu.getBC() + ")")
+        );
+        
+        cpu.setSP((short) 0x0000);
+        
+        cpu.setDE((short) 0x0000);
+        
+        cpu.fetch((byte)0xD1); // POP DE
+        
+        assertAll("POP rp2[y] Group",
+            () -> assertEquals((short)0xFF00, (short)cpu.getDE(), "POP DE Failed: DE was not modified (DE=" + cpu.getDE() + ")"),
+            () -> assertNotEquals(0x0000, cpu.getDE(), "POP DE Failed: DE still 0x0000 (DE=" + cpu.getDE() + ")")
+        );
+
+        cpu.setSP((short) 0x0000);
+
+        cpu.setHL((short) 0x0000);
+
+        cpu.fetch((byte)0xE1); // POP HL
+
+        assertAll("POP rp2[y] Group",
+                () -> assertEquals((short)0xFF00, (short)cpu.getHL(), "POP HL Failed: HL was not modified (HL=" + cpu.getHL() + ")"),
+                () -> assertNotEquals(0x0000, cpu.getHL(), "POP HL Failed: HL still 0x0000 (HL=" + cpu.getHL() + ")")
+        );
+
+        cpu.setSP((short) 0x0000);
+
+        cpu.setA((byte) 0x00);
+        cpu.setF((byte) 0x00);
+
+        cpu.fetch((byte)0xF1); // POP AF
+
+        assertAll("POP rp2[y] Group",
+                () -> assertEquals((byte)0xFF, cpu.getA(), "POP AF Failed: AF was not modified (A=" + Integer.toHexString(cpu.getA()) + ")")
+                //() -> assertEquals((byte)0x00, cpu.getF(), "POP AF Failed: AF was not modified (F=" + Integer.toHexString(cpu.getF()) + ")")
+        );
+    }
+    
+    @Test
+    void testRET() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+
+        cpu.setPC(0x0000);
+        cpu.setSP((short) 0x0000);
+
+        cpu.fetch((byte)0xC9); // RET
+
+        assertAll("RET Group",
+                () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals(0x0000, cpu.getPC(), "RET Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals(0x0002, cpu.getSP(), "RET NZ Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals(0x0000, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")")
+        );
+    }
+    
+    @Test
+    void testEXX() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setBC((short) 0x0102);
+        cpu.setDE((short) 0x0304);
+        cpu.setHL((short) 0x0506);
+
+        cpu.setBC_((short) 0x0708);
+        cpu.setDE_((short) 0x090A);
+        cpu.setHL_((short) 0x0B0C);
+
+        cpu.EXX();
+
+        assertAll("EXX Group",
+                () -> assertEquals((short)0x0708, cpu.getBC(), "EXX Failed (BC="+ Integer.toHexString(cpu.getBC())+")"),
+                () -> assertEquals((short)0x090A, cpu.getDE(), "EXX Failed (DE="+ Integer.toHexString(cpu.getDE())+")"),
+                () -> assertEquals((short)0x0B0C, cpu.getHL(), "EXX Failed (HL="+ Integer.toHexString(cpu.getHL())+")"),
+
+                () -> assertNotEquals((short)0x0102, cpu.getBC(), "EXX Failed (BC="+ Integer.toHexString(cpu.getBC())+")"),
+                () -> assertNotEquals((short)0x0304, cpu.getDE(), "EXX Failed (DE="+ Integer.toHexString(cpu.getDE())+")"),
+                () -> assertNotEquals((short)0x0506, cpu.getHL(), "EXX Failed (HL="+ Integer.toHexString(cpu.getHL())+")"),
+
+                () -> assertNotEquals((short)0x0708, cpu.getBC_(), "EXX Failed (BC'="+ Integer.toHexString(cpu.getBC_())+")"),
+                () -> assertNotEquals((short)0x090A, cpu.getDE_(), "EXX Failed (DE'="+ Integer.toHexString(cpu.getDE_())+")"),
+                () -> assertNotEquals((short)0x0B0C, cpu.getHL_(), "EXX Failed (HL'="+ Integer.toHexString(cpu.getHL_())+")"),
+
+                () -> assertEquals((short)0x0102, cpu.getBC_(), "EXX Failed (BC'="+ Integer.toHexString(cpu.getBC_())+")"),
+                () -> assertEquals((short)0x0304, cpu.getDE_(), "EXX Failed (DE'="+ Integer.toHexString(cpu.getDE_())+")"),
+                () -> assertEquals((short)0x0506, cpu.getHL_(), "EXX Failed (HL'="+ Integer.toHexString(cpu.getHL_())+")")
+        );
+    }
+    
+    @Test
+    void testJP_HL() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setPC((short) 0x0102);
+        cpu.setHL((short) 0x0304);
+
+        cpu.JP_HL();
+
+        assertAll("JP (HL) Group",
+                () -> assertEquals((short)0x0304, cpu.getPC(), "JP (HL) Failed: not was modified (PC="+ Integer.toHexString(cpu.getPC())+")"),
+                () -> assertNotEquals((short)0x0102, cpu.getPC(), "JP (HL) Failed: still is 0x0102 (PC="+ Integer.toHexString(cpu.getPC())+")")
+        );
+    }
+    
+    @Test
+    void testLD_SP_HL() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setSP((short) 0x0102);
+        cpu.setHL((short) 0x0304);
+
+        cpu.LD_SP_HL();
+
+        assertAll("LD SP, HL Group",
+                () -> assertEquals((short)0x0304, cpu.getSP(), "LD SP, HL Failed: not was modified (SP="+ Integer.toHexString(cpu.getSP())+")"),
+                () -> assertNotEquals((short)0x0102, cpu.getSP(), "LD SP, HL Failed: still is 0x0102 (SP="+ Integer.toHexString(cpu.getSP())+")")
+        );
+    }
 }
