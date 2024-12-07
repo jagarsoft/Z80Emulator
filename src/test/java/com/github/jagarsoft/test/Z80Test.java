@@ -678,7 +678,7 @@ public class Z80Test {
         assertAll("RLCA Group",
             () -> assertEquals((byte)0x1E, cpu.getA(), "RLCA Failed: A<>0x1E = " + Integer.toHexString(cpu.getA())),
             () -> assertNotEquals((byte)0x0F, cpu.getA(), "RLCA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
-            () -> assertEquals(false, cpu.getCF(), "RLCA Failed: Carry flag must be OFF")
+            () -> assertFalse(cpu.getCF(), "RLCA Failed: Carry flag must be OFF")
         );
 
         cpu.setA((byte) 0xF0);
@@ -688,7 +688,7 @@ public class Z80Test {
         assertAll("RLCA Group",
                 () -> assertEquals((byte)0xE1, cpu.getA(), "RLCA Failed: A<>0xE1 = " + Integer.toHexString((byte)(cpu.getA()&0xFF))),
                 () -> assertNotEquals((byte)0xF0, cpu.getA(), "RLCA Failed: A still 0xF0 = " + Integer.toHexString((byte)(cpu.getA()&0xFF))),
-                () -> assertEquals(true, cpu.getCF(), "RLCA Failed: Carry flag must be ON")
+                () -> assertTrue(cpu.getCF(), "RLCA Failed: Carry flag must be ON")
         );
     }
 
@@ -703,7 +703,7 @@ public class Z80Test {
         assertAll("RRCA Group",
                 () -> assertEquals((byte)0x87, cpu.getA(), "RRCA Failed: A<>0x87 = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte)0x0F, cpu.getA(), "RRCA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(true, cpu.getCF(), "RRCA Failed: Carry flag must be ON")
+                () -> assertTrue(cpu.getCF(), "RRCA Failed: Carry flag must be ON")
         );
 
         cpu.setA((byte) 0xF0);
@@ -713,7 +713,7 @@ public class Z80Test {
         assertAll("RRCA Group",
                 () -> assertEquals((byte)0x78, cpu.getA(), "RRCA Failed: A<>0x78 = " + Integer.toHexString((byte)(cpu.getA()&0xFF))),
                 () -> assertNotEquals((byte)0xF0, cpu.getA(), "RRCA Failed: A still 0xF0 = " + Integer.toHexString((byte)(cpu.getA()&0xFF))),
-                () -> assertEquals(false, cpu.getCF(), "RRCA Failed: Carry flag must be OFF")
+                () -> assertFalse(cpu.getCF(), "RRCA Failed: Carry flag must be OFF")
         );
     }
     
@@ -729,7 +729,7 @@ public class Z80Test {
         assertAll("RLA Group: NC & 0x0F",
                 () -> assertEquals((byte) 0x1E, cpu.getA(), "RLA Failed: A<>0x1E = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RLA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(false, cpu.getCF(), "RLA Failed: Carry flag must be OFF" )
+                () -> assertFalse(cpu.getCF(), "RLA Failed: Carry flag must be OFF")
         );
 
         cpu.setCF();
@@ -740,7 +740,7 @@ public class Z80Test {
         assertAll("RLA Group: C & 0x0F",
                 () -> assertEquals((byte) 0x1F, cpu.getA(), "RLA Failed: A<>0x1F = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RLA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(false, cpu.getCF(), "RLA Failed: Carry flag must be OFF" )
+                () -> assertFalse(cpu.getCF(), "RLA Failed: Carry flag must be OFF")
         );
 
         cpu.resCF();
@@ -751,7 +751,7 @@ public class Z80Test {
         assertAll("RLA Group: NC & 0xF0",
                 () -> assertEquals((byte) 0xE0, cpu.getA(), "RLA Failed: A<>0xE0 = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0xF0, cpu.getA(), "RLA Failed: A still 0xF0 = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(true, cpu.getCF(), "RLA Failed: Carry flag must be ON" )
+                () -> assertTrue(cpu.getCF(), "RLA Failed: Carry flag must be ON")
         );
 
         cpu.setCF();
@@ -762,7 +762,7 @@ public class Z80Test {
         assertAll("RLA Group: C & 0xF0",
                 () -> assertEquals((byte) 0xE1, cpu.getA(), "RLA Failed: A<>0xE0 = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0xF0, cpu.getA(), "RLA Failed: A still 0xF0 = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(true, cpu.getCF(), "RLA Failed: Carry flag must be ON" )
+                () -> assertTrue(cpu.getCF(), "RLA Failed: Carry flag must be ON")
         );
     }
 
@@ -778,7 +778,7 @@ public class Z80Test {
         assertAll("RRA Group: NC & 0x0F",
                 () -> assertEquals((byte) 0x07, cpu.getA(), "RRA Failed: A<>0x07 = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RRA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(true, cpu.getCF(), "RRA Failed: Carry flag must be ON" )
+                () -> assertTrue(cpu.getCF(), "RRA Failed: Carry flag must be ON")
         );
 
         cpu.setCF();
@@ -789,7 +789,7 @@ public class Z80Test {
         assertAll("RRA Group: C & 0x0F",
                 () -> assertEquals((byte) 0x87, cpu.getA(), "RRA Failed: A<>0x87 = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RRA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(true, cpu.getCF(), "RRA Failed: Carry flag must be ON" )
+                () -> assertTrue(cpu.getCF(), "RRA Failed: Carry flag must be ON")
         );
 
         cpu.resCF();
@@ -800,7 +800,7 @@ public class Z80Test {
         assertAll("RRA Group: NC & 0xF0",
                 () -> assertEquals((byte) 0x78, cpu.getA(), "RRA Failed: A<>0x78 = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0xF0, cpu.getA(), "RRA Failed: A still 0xF0 = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(false, cpu.getCF(), "RRA Failed: Carry flag must be OFF" )
+                () -> assertFalse(cpu.getCF(), "RRA Failed: Carry flag must be OFF")
         );
 
         cpu.setCF();
@@ -811,7 +811,7 @@ public class Z80Test {
         assertAll("RRA Group: C & 0xF0",
                 () -> assertEquals((byte) 0xF8, cpu.getA(), "RRA Failed: A<>0xE0 = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0xF0, cpu.getA(), "RRA Failed: A still 0xF0 = " + Integer.toHexString(cpu.getA())),
-                () -> assertEquals(false, cpu.getCF(), "RRA Failed: Carry flag must be OFF" )
+                () -> assertFalse(cpu.getCF(), "RRA Failed: Carry flag must be OFF")
         );
     }
 
@@ -841,7 +841,7 @@ public class Z80Test {
 
         cpu.setCF();
 
-        assertEquals(true, cpu.getCF(), "SCF Failed: Carry flag must be ON");
+        assertTrue(cpu.getCF(), "SCF Failed: Carry flag must be ON");
     }
 
     @Test
@@ -852,13 +852,13 @@ public class Z80Test {
 
         cpu.CCF();
 
-        assertEquals(false, cpu.getCF(), "CCF Failed: Carry flag must be OFF");
+        assertFalse(cpu.getCF(), "CCF Failed: Carry flag must be OFF");
 
         cpu.resCF();
 
         cpu.CCF();
 
-        assertEquals(true, cpu.getCF(), "CCF Failed: Carry flag must be ON");
+        assertTrue(cpu.getCF(), "CCF Failed: Carry flag must be ON");
     }
 
     @Test
@@ -1022,14 +1022,14 @@ public class Z80Test {
 
         cpu.fetch((byte)0xB8);
 
-        assertEquals(true, cpu.getZF(), "CP B Failed: Z (true) = " + cpu.getZF());
+        assertTrue(cpu.getZF(), "CP B Failed: Z (true) = " + cpu.getZF());
 
         cpu.setA((byte)0xF0);
         cpu.setB((byte)0x0F);
 
         cpu.fetch((byte)0xB8);
 
-        assertEquals(false, cpu.getZF(), "CP B Failed: NZ (false) = " + cpu.getZF());
+        assertFalse(cpu.getZF(), "CP B Failed: NZ (false) = " + cpu.getZF());
     }
     
     @Test
@@ -1128,7 +1128,7 @@ public class Z80Test {
             () -> assertEquals((short)0xFF00, (short)cpu.getPC(), "RET PE Failed: PC was modified (PC=" + cpu.getPC() + ")"),
             () -> assertNotEquals(0x0000, cpu.getPC(), "RET PE Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
 
-            () -> assertEquals((short)0x0002, (short)cpu.getSP(), "RET PE Failed: SP was modified (SP=" + cpu.getSP() + ")"),
+            () -> assertEquals((short)0x0002, cpu.getSP(), "RET PE Failed: SP was modified (SP=" + cpu.getSP() + ")"),
             () -> assertNotEquals(0x0000, cpu.getSP(), "RET PE Failed: SP was pop (SP=" + cpu.getSP() + ")")
         );
         
@@ -1290,7 +1290,7 @@ public class Z80Test {
         cpu.fetch((byte)0xC1); // POP BC
         
         assertAll("POP rp2[y] Group",
-            () -> assertEquals((short)0xFF00, (short)cpu.getBC(), "POP BC Failed: BC was not modified (BC=" + cpu.getBC() + ")"),
+            () -> assertEquals((short)0xFF00, cpu.getBC(), "POP BC Failed: BC was not modified (BC=" + cpu.getBC() + ")"),
             () -> assertNotEquals(0x0000, cpu.getBC(), "POP BC Failed: BC still 0x0000 (BC=" + cpu.getBC() + ")")
         );
         
@@ -1301,7 +1301,7 @@ public class Z80Test {
         cpu.fetch((byte)0xD1); // POP DE
         
         assertAll("POP rp2[y] Group",
-            () -> assertEquals((short)0xFF00, (short)cpu.getDE(), "POP DE Failed: DE was not modified (DE=" + cpu.getDE() + ")"),
+            () -> assertEquals((short)0xFF00, cpu.getDE(), "POP DE Failed: DE was not modified (DE=" + cpu.getDE() + ")"),
             () -> assertNotEquals(0x0000, cpu.getDE(), "POP DE Failed: DE still 0x0000 (DE=" + cpu.getDE() + ")")
         );
 
@@ -1312,7 +1312,7 @@ public class Z80Test {
         cpu.fetch((byte)0xE1); // POP HL
 
         assertAll("POP rp2[y] Group",
-                () -> assertEquals((short)0xFF00, (short)cpu.getHL(), "POP HL Failed: HL was not modified (HL=" + cpu.getHL() + ")"),
+                () -> assertEquals((short)0xFF00, cpu.getHL(), "POP HL Failed: HL was not modified (HL=" + cpu.getHL() + ")"),
                 () -> assertNotEquals(0x0000, cpu.getHL(), "POP HL Failed: HL still 0x0000 (HL=" + cpu.getHL() + ")")
         );
 
@@ -1415,4 +1415,559 @@ public class Z80Test {
                 () -> assertNotEquals((short)0x0102, cpu.getSP(), "LD SP, HL Failed: still is 0x0102 (SP="+ Integer.toHexString(cpu.getSP())+")")
         );
     }
+
+    @Test
+    void testJP_cc_y_nn_MustNotJump() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+
+        cpu.setPC(0x0000);
+
+        cpu.setZF();
+
+        cpu.fetch((byte) 0xC2); // JP NZ, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resZF();
+
+        cpu.fetch((byte)0xCA); // JP Z, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "JP Z, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "JP Z, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setCF();
+
+        cpu.fetch((byte)0xD2); // JP NC, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "JP NC, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "JP NC, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resCF();
+
+        cpu.fetch((byte)0xDA); // JP C, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "JP C, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "JP C, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setPF();
+
+        cpu.fetch((byte)0xE2); // JP PO, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "JP PO, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "JP PO, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resPF();
+
+        cpu.fetch((byte)0xEA); // JP PE, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "JP PE, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "JP PE, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setSF();
+
+        cpu.fetch((byte)0xF2); // JP P, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "JP P, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "JP P, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resSF();
+
+        cpu.fetch((byte)0xFA); // JP M, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "JP M, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "JP M, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+    }
+
+    @Test
+    void testJP_cc_y_nn_MustJump() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+
+        cpu.setPC(0x0000);
+
+        cpu.resZF();
+
+        cpu.fetch((byte) 0xC2); // JP NZ, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setZF();
+
+        cpu.fetch((byte)0xCA); // JP Z, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP Z, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP Z, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resCF();
+
+        cpu.fetch((byte)0xD2); // JP NC, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP NC, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP NC, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setCF();
+
+        cpu.fetch((byte)0xDA); // JP C, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP C, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP C, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resPF();
+
+        cpu.fetch((byte)0xE2); // JP PO, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP PO, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP PO, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setPF();
+
+        cpu.fetch((byte)0xEA); // JP PE, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP PE, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP PE, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resSF();
+
+        cpu.fetch((byte)0xF2); // JP P, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP P, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP P, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setSF();
+
+        cpu.fetch((byte)0xFA); // JP M, 0xFF00
+
+        assertAll("JP cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP M, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP M, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+    }
+
+    @Test
+    void testJP_nn() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+
+        cpu.setPC(0x0000);
+
+        cpu.fetch((byte) 0xC3); // JP 0xFF00
+
+        assertAll("JP nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "JP 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+    }
+
+    @Test
+    void testOUT_n_A() {} // TODO
+
+    @Test
+    void testIN_A_n() {} // TODO
+
+    @Test
+    void testEX_SP_HL() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+
+        cpu.setSP((short) 0x0000);
+        cpu.setHL((short) 0x1234);
+
+        cpu.EX_SP_HL();
+
+        assertAll("EX (SP), HL Group",
+                () -> assertEquals((short)0xFF00, cpu.getHL(), "EX (SP), HL Failed HL="+ Integer.toHexString(cpu.getHL())),
+                () -> assertEquals((byte) 0x34, compTest.peek(0x0000), "EX (SP), HL Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+                () -> assertEquals((byte) 0x12, compTest.peek(0x0001), "EX (SP), HL Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+
+                () -> assertNotEquals((short)0x1234, cpu.getHL(), "EX (SP), HL Failed HL="+ Integer.toHexString(cpu.getHL())),
+                () -> assertNotEquals((byte) 0x00, compTest.peek(0x0000), "EX (SP), HL Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+                () -> assertNotEquals((byte) 0xFF, compTest.peek(0x0001), "EX (SP), HL Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001)))
+        );
+    }
+
+    @Test
+    void testEX_DE_HL() {
+        Z80ForTesting cpu = new Z80ForTesting();
+
+        cpu.setDE((short) 0x1234);
+        cpu.setHL((short) 0x5678);
+
+        cpu.EX_DE_HL();
+
+        assertAll("EXX Group",
+                () -> assertEquals((short)0x5678, cpu.getDE(), "EX DE, HL Failed (DE="+ Integer.toHexString(cpu.getDE())+")"),
+                () -> assertEquals((short)0x1234, cpu.getHL(), "EX DE, HL Failed (HL="+ Integer.toHexString(cpu.getHL())+")"),
+
+                () -> assertNotEquals((short)0x1234, cpu.getDE(), "EX DE, HL Failed (DE="+ Integer.toHexString(cpu.getDE())+")"),
+                () -> assertNotEquals((short)0x5678, cpu.getHL(), "EX DE, HL Failed (HL="+ Integer.toHexString(cpu.getHL())+")")
+        );
+    }
+
+    @Test
+    void testDI() {} // TODO
+
+    @Test
+    void testEI() {} // TODO
+
+    @Test
+    void testCALL_cc_y_nn_MustNotJump() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0);
+        compTest.poke(0x0001, (byte) 0xFF);
+
+        cpu.setPC(0x0000);
+
+        cpu.setZF();
+
+        cpu.fetch((byte) 0xC4); // CALL NZ, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "CALL NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "CALL NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resZF();
+
+        cpu.fetch((byte) 0xCC); // CALL Z, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "CALL Z, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "CALL Z, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setCF();
+
+        cpu.fetch((byte) 0xD4); // CALL NC, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "CALL NC, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "CALL NC, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resCF();
+
+        cpu.fetch((byte) 0xDC); // CALL C, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "CALL C, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "CALL C, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setPF();
+
+        cpu.fetch((byte) 0xE4); // CALL PO, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "CALL PO, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "CALL PO, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resPF();
+
+        cpu.fetch((byte) 0xEC); // CALL PE, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "CALL PE, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "CALL PE, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.setSF();
+
+        cpu.fetch((byte) 0xF4); // CALL P, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "CALL P, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "CALL P, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+
+        cpu.setPC(0x0000);
+
+        cpu.resSF();
+
+        cpu.fetch((byte) 0xFC); // CALL M, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0x0002, cpu.getPC(), "CALL M, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0xFF00, cpu.getPC(), "CALL M, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+        );
+    }
+
+    @Test
+    void testCALL_cc_y_nn_MustJump() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(4));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0x34);
+        compTest.poke(0x0001, (byte) 0x12);
+        compTest.poke(0x0002, (byte) 0);
+        compTest.poke(0x0003, (byte) 0xFF);
+
+        cpu.setPC(0x0002);
+        cpu.setSP((short) 0x0002);
+
+        cpu.resZF();
+
+        cpu.fetch((byte) 0xC4); // CALL NZ, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "CALL NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "CALL NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals((short)0x0000, cpu.getSP(), "CALL NZ, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL NZ, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL NZ, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL NZ, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL NZ, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL NZ, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+        );
+
+        cpu.setPC(0x0002);
+        cpu.setSP((short) 0x0002);
+
+        cpu.setZF();
+
+        cpu.fetch((byte) 0xCC); // CALL Z, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "CALL Z, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "CALL Z, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals((short)0x0000, cpu.getSP(), "CALL Z, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL Z, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL Z, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL Z, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL Z, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL Z, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+        );
+
+        cpu.setPC(0x0002);
+        cpu.setSP((short) 0x0002);
+
+        cpu.resCF();
+
+        cpu.fetch((byte) 0xD4); // CALL NC, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "CALL NC, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "CALL NC, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals((short)0x0000, cpu.getSP(), "CALL NC, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL NC, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL NC, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL NC, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL NC, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL NC, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+        );
+
+        cpu.setPC(0x0002);
+        cpu.setSP((short) 0x0002);
+
+        cpu.setCF();
+
+        cpu.fetch((byte) 0xDC); // CALL C, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "CALL C, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "CALL C, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals((short)0x0000, cpu.getSP(), "CALL C, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL C, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL C, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL C, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL C, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL C, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+        );
+
+        cpu.setPC(0x0002);
+        cpu.setSP((short) 0x0002);
+
+        cpu.resPF();
+
+        cpu.fetch((byte) 0xE4); // CALL PO, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "CALL PO, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "CALL PO, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals((short)0x0000, cpu.getSP(), "CALL PO, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL PO, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL PO, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL PO, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL PO, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL PO, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+        );
+
+        cpu.setPC(0x0002);
+        cpu.setSP((short) 0x0002);
+
+        cpu.setPF();
+
+        cpu.fetch((byte) 0xEC); // CALL PE, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "CALL PE, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "CALL PE, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals((short)0x0000, cpu.getSP(), "CALL PE, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL PE, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL PE, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL PE, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL PE, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL PE, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+        );
+
+        cpu.setPC(0x0002);
+        cpu.setSP((short) 0x0002);
+
+        cpu.resSF();
+
+        cpu.fetch((byte) 0xF4); // CALL P, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "CALL P, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "CALL P, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals((short)0x0000, cpu.getSP(), "CALL P, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL P, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL P, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL P, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL P, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL P, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+        );
+
+        cpu.setPC(0x0002);
+        cpu.setSP((short) 0x0002);
+
+        cpu.setSF();
+
+        cpu.fetch((byte) 0xFC); // CALL M, 0xFF00
+
+        assertAll("CALL cc[y], nn Group",
+                () -> assertEquals((short)0xFF00, cpu.getPC(), "CALL M, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "CALL M, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+
+                () -> assertEquals((short)0x0000, cpu.getSP(), "CALL M, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL M, 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL M, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL M, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL M, 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL M, 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+        );
+    }
+
 }

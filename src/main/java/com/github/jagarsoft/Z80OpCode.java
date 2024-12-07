@@ -70,4 +70,16 @@ public interface Z80OpCode {
     void EXX();
     void JP_HL();
     void LD_SP_HL();
+
+    void JP_cc_y_nn();
+
+    void JP_nn();
+    void OUT_n_A();
+    void IN_A_n();
+    void EX_SP_HL();
+    void EX_DE_HL();
+    void DI();
+    void EI();
+
+    void CALL_cc_y_nn();
 }

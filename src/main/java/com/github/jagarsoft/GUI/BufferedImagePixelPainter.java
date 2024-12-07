@@ -1,3 +1,5 @@
+package com.github.jagarsoft.GUI;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -10,16 +12,16 @@ public class BufferedImagePixelPainter extends JPanel {
         image = new BufferedImage(200, 200, BufferedImage.TYPE_INT_RGB);
 
         // Llenar la imagen con un color de fondo (opcional)
-        fillBackground(Color.WHITE);
+        fillBackground(Color.BLACK);
 
         // Dibujar píxeles individuales
-        drawPixel(50, 50, Color.RED);   // Píxel rojo en (50, 50)
-        drawPixel(100, 100, Color.BLUE); // Píxel azul en (100, 100)
+        drawPixel(50, 50, Color.YELLOW);   // Píxel rojo en (50, 50)
+        drawPixel(100, 100, Color.YELLOW); // Píxel azul en (100, 100)
 
         // Crear un patrón o línea (ejemplo adicional)
-        for (int x = 0; x < 200; x++) {
+        /*for (int x = 0; x < 200; x++) {
             drawPixel(x, x, Color.GREEN); // Línea diagonal verde
-        }
+        }*/
     }
 
     private void fillBackground(Color color) {
@@ -41,7 +43,7 @@ public class BufferedImagePixelPainter extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         // Dibujar el BufferedImage en el panel
-        g.drawImage(image, 0, 0, null);
+        g.drawImage(image, 0, 0, getWidth(), getHeight(), null);
     }
 
     public static void main(String[] args) {

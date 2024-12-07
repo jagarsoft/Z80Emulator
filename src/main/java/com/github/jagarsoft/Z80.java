@@ -119,7 +119,7 @@ public class Z80 implements Z80OpCode {
         opCodes[2][0][7] = opC::CP;
 
         // x = 3
-        //     [x][z][y]
+        // z=0 [x][z][y]
         opCodes[3][0][0] = opC::RET_cc_y;
         opCodes[3][0][1] = opC::RET_cc_y;
         opCodes[3][0][2] = opC::RET_cc_y;
@@ -137,7 +137,33 @@ public class Z80 implements Z80OpCode {
         opCodes[3][1][0b011] = opC::EXX;
         opCodes[3][1][0b101] = opC::JP_HL;
         opCodes[3][1][0b111] = opC::LD_SP_HL;
-
+        // z=2 [x][z][y]
+        opCodes[3][2][0] = opC::JP_cc_y_nn;
+        opCodes[3][2][1] = opC::JP_cc_y_nn;
+        opCodes[3][2][2] = opC::JP_cc_y_nn;
+        opCodes[3][2][3] = opC::JP_cc_y_nn;
+        opCodes[3][2][4] = opC::JP_cc_y_nn;
+        opCodes[3][2][5] = opC::JP_cc_y_nn;
+        opCodes[3][2][6] = opC::JP_cc_y_nn;
+        opCodes[3][2][7] = opC::JP_cc_y_nn;
+        // z=3 [x][z][y]
+        opCodes[3][3][0] = opC::JP_nn;
+        //opCodes[3][3][1] = CB prefix
+        opCodes[3][3][2] = opC::OUT_n_A;
+        opCodes[3][3][3] = opC::IN_A_n;
+        opCodes[3][3][4] = opC::EX_SP_HL;
+        opCodes[3][3][5] = opC::EX_DE_HL;
+        opCodes[3][3][6] = opC::DI;
+        opCodes[3][3][7] = opC::EI;
+        // z=4 [x][z][y]
+        opCodes[3][4][0] = opC::CALL_cc_y_nn;
+        opCodes[3][4][1] = opC::CALL_cc_y_nn;
+        opCodes[3][4][2] = opC::CALL_cc_y_nn;
+        opCodes[3][4][3] = opC::CALL_cc_y_nn;
+        opCodes[3][4][4] = opC::CALL_cc_y_nn;
+        opCodes[3][4][5] = opC::CALL_cc_y_nn;
+        opCodes[3][4][6] = opC::CALL_cc_y_nn;
+        opCodes[3][4][7] = opC::CALL_cc_y_nn;
 
         /*
         // z=6 [x][z][y]
@@ -701,7 +727,7 @@ public class Z80 implements Z80OpCode {
     }
 
     public void HALT() {
-        // TOD
+        // TODO
     }
 
     public void ADD_A() {
@@ -927,7 +953,113 @@ public class Z80 implements Z80OpCode {
         PC = getHL();
     }
     
-    public void LD_SP_HL() {
-        SP = getHL();
+    public void LD_SP_HL() { SP = getHL(); }
+
+    public void JP_cc_y_nn() {
+        boolean ccSet = false;
+
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        switch (cc[y]) {
+            case "NZ":
+                ccSet = ! getZF();
+                break;
+            case "Z":
+                ccSet = getZF();
+                break;
+            case "NC":
+                ccSet = ! getCF();
+                break;
+            case "C":
+                ccSet = getCF();
+                break;
+            case "PO":
+                ccSet = ! getPF();
+                break;
+            case "PE":
+                ccSet = getPF();
+                break;
+            case "P":
+                ccSet = ! getSF();
+                break;
+            case "M":
+                ccSet = getSF();
+        }
+
+        if (ccSet)
+            PC = getWZ();
+    }
+
+    public void JP_nn() {
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        PC = getWZ();
+    }
+
+    public void OUT_n_A() {} // TODO
+    public void IN_A_n() {} // TODO
+
+    public void EX_SP_HL() {
+        Z = currentComp.peek(SP);
+        currentComp.poke(SP, L);
+        L = Z;
+
+        W = currentComp.peek(SP+1);
+        currentComp.poke(SP+1, H);
+        H = W;
+    }
+
+    public void EX_DE_HL() {
+        Z = E;
+        E = L;
+        L = Z;
+
+        W = D;
+        D = H;
+        H = W;
+    }
+
+    public void DI() {} // TODO
+    public void EI() {} // TODO
+
+    public void CALL_cc_y_nn() {
+        boolean ccSet = false;
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        switch (cc[y]) {
+            case "NZ":
+                ccSet = ! getZF();
+                break;
+            case "Z":
+                ccSet = getZF();
+                break;
+            case "NC":
+                ccSet = ! getCF();
+                break;
+            case "C":
+                ccSet = getCF();
+                break;
+            case "PO":
+                ccSet = ! getPF();
+                break;
+            case "PE":
+                ccSet = getPF();
+                break;
+            case "P":
+                ccSet = ! getSF();
+                break;
+            case "M":
+                ccSet = getSF();
+        }
+
+        if (ccSet) {
+            currentComp.poke(--SP, (byte)(PC & 0x00FF));
+            currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
+
+            PC = getWZ();
+        }
     }
 }

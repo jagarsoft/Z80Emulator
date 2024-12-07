@@ -1,4 +1,4 @@
-import javax.swing.SwingUtilities;
+package com.github.jagarsoft.GUI;
 
 public class Z80EmulatorMain {
 		

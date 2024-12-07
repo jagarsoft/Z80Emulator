@@ -1,10 +1,10 @@
+package com.github.jagarsoft.GUI;
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 class MainFrame {
-	JFrame frame = new JFrame("JFrame Example");
+	JFrame frame = new JFrame("Z80Emulator");
 	
 	// Create the main frame
 	public void init(){
