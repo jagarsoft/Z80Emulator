@@ -189,7 +189,14 @@ public class Z80 implements Z80OpCode {
         opCodes[3][6][6] = opC::OR_n;
         opCodes[3][6][7] = opC::CP_n;
         // z=7 [x][z][y]
-        opCodes[3][6][7] = opC::RST_y_8;
+        opCodes[3][7][0] = opC::RST_y_8;
+        opCodes[3][7][1] = opC::RST_y_8;
+        opCodes[3][7][2] = opC::RST_y_8;
+        opCodes[3][7][3] = opC::RST_y_8;
+        opCodes[3][7][4] = opC::RST_y_8;
+        opCodes[3][7][5] = opC::RST_y_8;
+        opCodes[3][7][6] = opC::RST_y_8;
+        opCodes[3][7][7] = opC::RST_y_8;
 
 /*
         // x = 0, z = 0..7
@@ -736,8 +743,8 @@ public class Z80 implements Z80OpCode {
             A &= 0x7F;
     }
 
-    public void DAA() {
-        // TODO
+    public void DAA() { // TODO
+
     }
 
     public void CPL() {
@@ -776,8 +783,8 @@ public class Z80 implements Z80OpCode {
         }
     }
 
-    public void HALT() {
-        // TODO
+    public void HALT() { // TODO
+
     }
 
     public void ADD_A() {
@@ -1106,8 +1113,8 @@ public class Z80 implements Z80OpCode {
         }
 
         if (ccSet) {
-            currentComp.poke(--SP, (byte)(PC & 0x00FF));
             currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
+            currentComp.poke(--SP, (byte)(PC & 0x00FF));
 
             PC = getWZ();
         }
@@ -1132,8 +1139,8 @@ public class Z80 implements Z80OpCode {
                 Z = getF();
         }
 
-        currentComp.poke(--SP, Z);
         currentComp.poke(--SP, W);
+        currentComp.poke(--SP, Z);
     }
 
     public void CALL_nn() {
@@ -1205,8 +1212,8 @@ public class Z80 implements Z80OpCode {
         Z = (byte) (y * 8);
         W = 0x00;
 
-        currentComp.poke(--SP, (byte)(PC & 0x00FF));
         currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
+        currentComp.poke(--SP, (byte)(PC & 0x00FF));
 
         PC = getWZ();
     }
