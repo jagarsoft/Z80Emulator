@@ -17,6 +17,12 @@ public interface Z80OpCode {
             "NZ", "Z", "NC", "C", "PO", "PE", "P", "M"
     };
 
+    void CB_prefix();
+/*
+    void DD_prefix();
+    void ED_prefix();
+    void FD_prefix();
+*/
     void NOP();
     void EX_AF_AF_();
     void DJNZ();
@@ -82,4 +88,18 @@ public interface Z80OpCode {
     void EI();
 
     void CALL_cc_y_nn();
+
+    void PUSH_rp2_p();
+    void CALL_nn();
+
+    void ADD_A_n();
+    void ADC_A_n();
+    void SUB_n();
+    void SBC_A_n();
+    void AND_n();
+    void XOR_n();
+    void OR_n();
+    void CP_n();
+
+    void RST_y_8();
 }

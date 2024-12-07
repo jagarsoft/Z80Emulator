@@ -4,6 +4,11 @@ import java.util.BitSet;
 
 public class Z80 implements Z80OpCode {
 
+    private boolean CB_prefix_seen = false;
+    private boolean DD_prefix_seen = false;
+    private boolean ED_prefix_seen = false;
+    private boolean FD_prefix_seen = false;
+
     protected class Register {
         public byte A;
         public byte B;
@@ -24,6 +29,10 @@ public class Z80 implements Z80OpCode {
 
     // Array to store reference to methods of different implementations
     static OpCode[][][] opCodes = new OpCode[4][8][8];
+    static OpCode[][][] CBopCodes = new OpCode[4][8][8];
+    static OpCode[][][] DDopCodes = new OpCode[4][8][8];
+    static OpCode[][][] EDopCodes = new OpCode[4][8][8];
+    static OpCode[][][] FDopCodes = new OpCode[4][8][8];
 
     private void dispatcher(Z80OpCode opC) {
         // According to http://www.z80.info/decoding.htm
@@ -148,7 +157,7 @@ public class Z80 implements Z80OpCode {
         opCodes[3][2][7] = opC::JP_cc_y_nn;
         // z=3 [x][z][y]
         opCodes[3][3][0] = opC::JP_nn;
-        //opCodes[3][3][1] = CB prefix
+        opCodes[3][3][1] = opC::CB_prefix;
         opCodes[3][3][2] = opC::OUT_n_A;
         opCodes[3][3][3] = opC::IN_A_n;
         opCodes[3][3][4] = opC::EX_SP_HL;
@@ -164,28 +173,58 @@ public class Z80 implements Z80OpCode {
         opCodes[3][4][5] = opC::CALL_cc_y_nn;
         opCodes[3][4][6] = opC::CALL_cc_y_nn;
         opCodes[3][4][7] = opC::CALL_cc_y_nn;
-
-        /*
+        // z=5 [x][z][y]
+        opCodes[3][5][0b000] = opC::PUSH_rp2_p;
+        opCodes[3][5][0b001] = opC::CALL_nn;
+//        opCodes[3][3][0x011] = opC::DD_prefix; TODO
+//        opCodes[3][3][0x101] = opC::ED_prefix;
+//        opCodes[3][3][0x111] = opC::FD_prefix;
         // z=6 [x][z][y]
-        opCodes[2][6][0] = opC::ADD_A_n;
-        opCodes[2][6][1] = opC::ADC_A_n;
-        opCodes[2][6][2] = opC::SUB_n;
-        opCodes[2][6][3] = opC::SBC_A_n;
-        opCodes[2][6][4] = opC::AND_n;
-        opCodes[2][6][5] = opC::XOR_n;
-        opCodes[2][6][6] = opC::OR_n;
-        opCodes[2][6][7] = opC::CP_n;
+        opCodes[3][6][0] = opC::ADD_A_n;
+        opCodes[3][6][1] = opC::ADC_A_n;
+        opCodes[3][6][2] = opC::SUB_n;
+        opCodes[3][6][3] = opC::SBC_A_n;
+        opCodes[3][6][4] = opC::AND_n;
+        opCodes[3][6][5] = opC::XOR_n;
+        opCodes[3][6][6] = opC::OR_n;
+        opCodes[3][6][7] = opC::CP_n;
+        // z=7 [x][z][y]
+        opCodes[3][6][7] = opC::RST_y_8;
+
+/*
+        // x = 0, z = 0..7
+        // Exception: iterate over z instead of y are 7 * 7 combinations managed in fetch,
+        // but still opC::PTR is needed
+        //       [x][z][y]
+        CBopCodes[0][0][0] = opC::RLC;
+        CBopCodes[0][0][1] = opC::RRC;
+        CBopCodes[0][0][2] = opC::RL;
+        CBopCodes[0][0][3] = opC::RR;
+        CBopCodes[0][0][4] = opC::SLA;
+        CBopCodes[0][0][5] = opC::SRA;
+        CBopCodes[0][0][6] = opC::SLL;
+        CBopCodes[0][0][7] = opC::SRL;
         */
     }
 
-    public void fetch() { fetch(currentComp.peek(getPC())); }
-
-    public void fetch(byte opC) {
+    public void CB_prefix() { fetchCB(currentComp.peek(getPC())); }
+/*
+    public void DD_prefix() { fetchCB(currentComp.peek(getPC())); }
+    public void ED_prefix() { ED_prefix_seen = true; }
+    public void FD_prefix() { FD_prefix_seen = true; }
+*/
+    private static void opCMasked(byte opC) {
         x = ((opC & 0b11000000) >> 6);
         y = ((opC & 0b00111000) >> 3);
         z = (opC & 0b111);
         p = ((y & 0b110) >> 1);
         q = (y & 1);
+    }
+
+    public void fetch() { fetch(currentComp.peek(getPC())); }
+
+    public void fetch(byte opC) {
+        opCMasked(opC);
 
         if( x == 1 ) {
             if( z == 6 && y == 6)
@@ -206,6 +245,17 @@ public class Z80 implements Z80OpCode {
             throw new IllegalArgumentException("OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
+
+    private void fetchCB(byte opC) {
+        opCMasked(opC);
+
+        if (CBopCodes[x][z][y] != null) {
+            CBopCodes[x][z][y].execute();
+        } else {
+            throw new IllegalArgumentException("CB+OpCode not implemented yet: " + Integer.toHexString(opC));
+        }
+    }
+
     //*** End Dispatcher Section
 
     protected byte A;
@@ -1061,5 +1111,103 @@ public class Z80 implements Z80OpCode {
 
             PC = getWZ();
         }
+    }
+
+    public void PUSH_rp2_p() {
+        switch (rp2[p]) {
+            case "BC":
+                W = B;
+                Z = C;
+                break;
+            case "DE":
+                W = D;
+                Z = E;
+                break;
+            case "HL":
+                W = H;
+                Z = L;
+                break;
+            case "AF":
+                W = A;
+                Z = getF();
+        }
+
+        currentComp.poke(--SP, Z);
+        currentComp.poke(--SP, W);
+    }
+
+    public void CALL_nn() {
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        currentComp.poke(--SP, (byte)(PC & 0x00FF));
+        currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
+
+        PC = getWZ();
+    }
+
+    public void ADD_A_n() {
+        Z = currentComp.peek(PC++);
+
+        A += Z;
+    }
+
+    public void ADC_A_n() {
+        Z = currentComp.peek(PC++);
+
+        A += Z;
+
+        if( getCF() ) A++;
+    }
+
+    public void SUB_n() {
+        Z = currentComp.peek(PC++);
+
+        A -= Z;
+    }
+
+    public void SBC_A_n() {
+        Z = currentComp.peek(PC++);
+
+        A -= Z;
+
+        if( getCF() ) A--;
+    }
+
+    public void AND_n() {
+        Z = currentComp.peek(PC++);
+
+        A &= Z;
+    }
+
+    public void XOR_n() {
+        Z = currentComp.peek(PC++);
+
+        A ^= Z;
+    }
+
+    public void OR_n() {
+        Z = currentComp.peek(PC++);
+
+        A |= Z;
+    }
+
+    public void CP_n() {
+        Z = currentComp.peek(PC++);
+
+        if( A == Z )
+            setZF();
+        else
+            resZF();
+    }
+
+    public void RST_y_8() {
+        Z = (byte) (y * 8);
+        W = 0x00;
+
+        currentComp.poke(--SP, (byte)(PC & 0x00FF));
+        currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
+
+        PC = getWZ();
     }
 }

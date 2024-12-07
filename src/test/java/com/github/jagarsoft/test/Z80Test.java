@@ -1970,4 +1970,16 @@ public class Z80Test {
         );
     }
 
+    void PUSH_rp2_p();
+    void CALL_nn();
+
+    void ADD_A_n();
+    void ADC_A_n();
+    void SUB_n();
+    void SBC_A_n();
+    void AND_n();
+    void XOR_n();
+    void OR_n();
+    void CP_n();
+    void RST_y_8();
 }
