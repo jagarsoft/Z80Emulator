@@ -6,12 +6,16 @@ import java.util.HashMap;
 public class Computer {
     Z80 cpu;
     HashMap<Integer, Memory> banks = new HashMap<Integer, Memory>();
+
+    //HashMap<Integer, IODevice> IObanks = new HashMap<Integer, IODevice>();
+    //ArrayList<Integer, IODevice> IObanks = new ArrayList<Integer, IODevice>();
+    int[] IObanks;
+    IODevice ioDev;
+
     short sizeMask = 0;
 
     public Computer(){
     }
-
-
 
     public void reset(){
         cpu.setComputer(this);
@@ -20,12 +24,23 @@ public class Computer {
 
     public void run(){
         for (;;) {
-            cpu.fetch(this.peek(cpu.getPC())); // fetch opCode
+            byte opC = this.peek(cpu.getPC());
+            cpu.fetch(opC); // fetch opCode
+            if( opC == 0x76) break; // is HALT?
         }
     }
 
     public void addCPU(Z80 cpu){
         this.cpu = cpu;
+    }
+
+    public void addIODevice(int port, IODevice device) {
+
+    }
+
+    public void addIODevice(int[] ports, IODevice device) {
+        IObanks = ports;
+        ioDev = device;
     }
 
     public void addMemory(int base, Memory memory) {
@@ -60,5 +75,9 @@ public class Computer {
     
     public void poke(int addr, byte data) {
         banks.get(addr & sizeMask).poke(addr, data);
+    }
+
+    public void write(byte data) {
+        ioDev.write(0, (char)data);
     }
 }

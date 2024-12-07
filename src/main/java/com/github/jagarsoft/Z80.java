@@ -1055,7 +1055,10 @@ public class Z80 implements Z80OpCode {
         PC = getWZ();
     }
 
-    public void OUT_n_A() {} // TODO
+    public void OUT_n_A() {
+        currentComp.write(A);
+    }
+
     public void IN_A_n() {} // TODO
 
     public void EX_SP_HL() {
