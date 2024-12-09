@@ -15,13 +15,13 @@ public class BufferedImagePixelPainter extends JPanel {
         fillBackground(Color.BLACK);
 
         // Dibujar píxeles individuales
-        drawPixel(50, 50, Color.YELLOW);   // Píxel rojo en (50, 50)
-        drawPixel(100, 100, Color.YELLOW); // Píxel azul en (100, 100)
+        //drawPixel(50, 50, Color.YELLOW);   // Píxel rojo en (50, 50)
+        //drawPixel(100, 100, Color.YELLOW); // Píxel azul en (100, 100)
 
         // Crear un patrón o línea (ejemplo adicional)
-        /*for (int x = 0; x < 200; x++) {
+        for (int x = 0; x < 200; x++) {
             drawPixel(x, x, Color.GREEN); // Línea diagonal verde
-        }*/
+        }
     }
 
     private void fillBackground(Color color) {
