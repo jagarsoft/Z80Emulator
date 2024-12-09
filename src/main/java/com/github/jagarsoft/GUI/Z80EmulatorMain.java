@@ -10,7 +10,7 @@ public class Z80EmulatorMain {
             public void run() {
                 MainFrame mf = new MainFrame();
 
-                mf.init();
+                mf.init("ZX Spectrum Emulator v0.1");
                 mf.createMenuBar();
                 mf.createPanels();
             }

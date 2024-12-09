@@ -7,20 +7,25 @@ import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 
 class MainFrame {
-    final double xM = 0.8750;
-    final double yM = 0.2916;
+    final double xM = 0.1875;
+    final double yM = 0.3334;
     int width = 256;
     int height = 192;
-    int xMargin = 48; //(int)(width * xM);
-    int yMargin = 56; //(int)(height * yM);
-	JFrame frame = new JFrame("Z80Emulator");
+    int xMargin = (int)(width * xM);
+    int yMargin = (int)(height * yM);
+	JFrame frame = new JFrame();
+    /*
+     * TODO: This image object is Spectrum's VRAM. Must be refactoring along drawPixel method below.
+     * Must be accessible from RAMMemory implementation in order to translate peek into drawPixel
+     */
     BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-	
+
 	// Create the main frame
-	public void init(){
+	public void init(String title){
+        frame.setTitle(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(width + 2 * xMargin, height + 2 * yMargin);
-		
+
 		/*Image icon = new javax.swing.ImageIcon("images/android.png").getImage();
 		frame.setIconImage(icon);
 
@@ -43,14 +48,17 @@ class MainFrame {
         fileMenu.addSeparator();
         fileMenu.add(exitItem);
         menuBar.add(fileMenu);
-		
+
 		// Set layout for the main frame
         frame.setLayout(new BorderLayout());
         frame.setJMenuBar(menuBar);
 
         frame.setVisible(true);
 	}
-
+/*
+ * This method must be refactorings to a specific class ZXSpectrumScreen (TODO)
+ * Need image object
+ */
     public void createPanels() {
         // Crear el JLayeredPane
         JLayeredPane layeredPane = new JLayeredPane();
@@ -78,15 +86,15 @@ class MainFrame {
         frame.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                int width = frame.getWidth();
-                int height = frame.getHeight();
-                int xMargin = 48; //(int) (width * xM);
-                int yMargin = 56; //(int) (height * yM);
+                int width = frame.getWidth() - 16;
+                int height = frame.getHeight() - 55;
+                int xMargin = (int) (width * xM) / 2;
+                int yMargin = (int) (height * yM) / 2;
                 // Ajustar tamaño del panel inferior
                 bottomPanel.setBounds(0, 0, width, height);
-System.out.printf("width = " + width + " height = " + height + "\n");
-System.out.printf("width - 2 * " + xMargin + " = " + (width - 2 * xMargin) + "\n");
-System.out.printf("height - 2 * " + yMargin + " = " + (height - 2 * yMargin) + "\n");
+//System.out.printf("width = " + width + " height = " + height + "\n");
+//System.out.printf("width - 2 * " + xMargin + " = " + (width - 2 * xMargin) + "\n");
+//System.out.printf("height - 2 * " + yMargin + " = " + (height - 2 * yMargin) + "\n");
                 // Ajustar tamaño del panel superior con un margen dinámico
                 topPanel.setBounds(xMargin, yMargin, width - 2 * xMargin, height - 2 * yMargin);
 
@@ -99,9 +107,14 @@ System.out.printf("height - 2 * " + yMargin + " = " + (height - 2 * yMargin) + "
         });
 
         // Crear un patrón o línea (ejemplo adicional)
-        for (int y = 0; y < frame.getHeight(); y++) {
+        /*for (int y = 0; y < frame.getHeight(); y++) {
             drawPixel(y, y, Color.GREEN); // Línea diagonal verde
-        }
+        }*/
+        /*for(int y = 0; y < 192; y++)
+            for(int x = 0; x < 256; x++) {
+                drawPixel(x, y, Color.GREEN);
+            }
+        */
     }
 
     private void drawPixel(int x, int y, Color color) {
@@ -122,7 +135,7 @@ System.out.printf("height - 2 * " + yMargin + " = " + (height - 2 * yMargin) + "
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            g.drawImage(image, 0, 0, width - 2 * xMargin, height - 2 * yMargin,null);
+            g.drawImage(image, 0, 0, width, height,null);
         }
 
         public void updateImageBounds(int width, int height) {
