@@ -1,13 +1,13 @@
 package com.github.jagarsoft;
 
-class ROMMemory implements Memory {
+public class ROMMemory implements Memory {
     private byte[] rom;
 
-    ROMMemory(int size){
+    public ROMMemory(int size){
         this.rom = new byte[size];
     }
 
-    ROMMemory(byte[] bank){
+    public ROMMemory(byte[] bank){
         this.rom = bank;
     }
 

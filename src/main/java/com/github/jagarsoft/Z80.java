@@ -894,6 +894,11 @@ public class Z80 implements Z80OpCode {
         }
 
         A |= Z;
+
+        if( A == 0 )
+            setZF();
+        else
+            resZF();
     }
 
     public void CP() {
@@ -1056,7 +1061,9 @@ public class Z80 implements Z80OpCode {
     }
 
     public void OUT_n_A() {
-        currentComp.write(A);
+        Z = currentComp.peek(PC++);
+        W = A;
+        currentComp.write(getWZ(), A);
     }
 
     public void IN_A_n() {} // TODO

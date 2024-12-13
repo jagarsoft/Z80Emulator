@@ -71,13 +71,13 @@ public class Computer {
         return addr & sizeMask;
     }
 
-    public byte peek(int addr) { return banks.get(addr & sizeMask).peek(addr); }
+    public byte peek(int addr) { return banks.get(addr & sizeMask).peek(addr - (addr & sizeMask)); }
     
     public void poke(int addr, byte data) {
-        banks.get(addr & sizeMask).poke(addr, data);
+        banks.get(addr & sizeMask).poke(addr - (addr & sizeMask), data);
     }
 
-    public void write(byte data) {
-        ioDev.write(0, (char)data);
+    public void write(short addr, byte data) {
+        ioDev.write(addr, (char)data);
     }
 }
