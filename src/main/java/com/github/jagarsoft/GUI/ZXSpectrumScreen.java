@@ -7,40 +7,50 @@ import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 
 class ZXSpectrumScreen implements Screen {
-    final double xM = 0.1875;
-    final double yM = 0.3334;
+    final double xM = 0.1875/2;
+    final double yM = 0.3334/2;
     int width = 256;
     int height = 192;
 
-/*
-     * TODO: This image object is Spectrum's VRAM. Must be refactoring along with drawPixel method below.
-     * Must be accessible from RAMMemory implementation in order to translate poke into drawPixel
-     */
+    // This image object is Spectrum's VRAM.
     private BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-    
-    
+    static private Color[] attr = new Color[8];
+
+    static {
+        attr[0] = Color.BLACK;
+        attr[1] = Color.BLUE;
+        attr[2] = Color.RED;
+        attr[3] = Color.MAGENTA;
+        attr[4] = Color.GREEN;
+        attr[5] = Color.CYAN;
+        attr[6] = Color.YELLOW;
+        attr[7] = Color.WHITE;
+     }
+
     public void drawPixel(int x, int y, Color color) {
         if (x >= 0 && x < image.getWidth() && y >= 0 && y < image.getHeight()) {
+            //image.setRGB(x, y, attr[color].getRGB());
             image.setRGB(x, y, color.getRGB());
         }
     }
 
+    //@Override
+    /* public void drawPixel(int x, int y) { this.drawPixel(x, y, Color.RED); } */
+
     @Override
-    public void drawPixel(int x, int y) {
-        this.drawPixel(x, y, Color.RED);
+    public void drawAttr(byte data) {
+
     }
 
     public void createScreen(JFrame frame) {
-        // Crear el JLayeredPane
+        // Screen is made of two panes: bottom for the border and top for the main
         JLayeredPane layeredPane = new JLayeredPane();
         frame.add(layeredPane);
 
-        // Crear el panel inferior
         JPanel bottomPanel = new JPanel();
         bottomPanel.setBackground(Color.BLUE);
         bottomPanel.setBounds(0, 0, frame.getWidth(), frame.getHeight());
 
-        // Crear el panel superior
         TopPanel topPanel = new TopPanel(image);
 
         //topPanel.setBackground(Color.RED);
@@ -49,11 +59,11 @@ class ZXSpectrumScreen implements Screen {
         //height = frame.getHeight();
         //topPanel.setBounds(margin, margin, width - 2 * margin, height - 2 * margin);
 
-        // Añadir los paneles al JLayeredPane
-        layeredPane.add(bottomPanel, Integer.valueOf(0)); // Capa inferior
-        layeredPane.add(topPanel, Integer.valueOf(1));   // Capa superior
+        // add panes at JLayeredPane
+        layeredPane.add(bottomPanel, Integer.valueOf(0)); // bottom layer
+        layeredPane.add(topPanel, Integer.valueOf(1));   // top layer
 
-        // Listener para ajustar el tamaño de los paneles dinámicamente
+        // Listener to dynamically adjust both panes size together
         frame.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {

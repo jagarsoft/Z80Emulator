@@ -1066,7 +1066,11 @@ public class Z80 implements Z80OpCode {
         currentComp.write(getWZ(), A);
     }
 
-    public void IN_A_n() {} // TODO
+    public void IN_A_n() { // TODO test pending
+        Z = currentComp.peek(PC++);
+        W = A;
+        currentComp.read(getWZ());
+    }
 
     public void EX_SP_HL() {
         Z = currentComp.peek(SP);

@@ -5,12 +5,12 @@ import java.util.HashMap;
 
 public class Computer {
     Z80 cpu;
-    HashMap<Integer, Memory> banks = new HashMap<Integer, Memory>();
-
-    //HashMap<Integer, IODevice> IObanks = new HashMap<Integer, IODevice>();
+    HashMap<Integer, Memory>   banks   = new HashMap<Integer, Memory>();
+    HashMap<Integer, IODevice> ioBanks = new HashMap<Integer, IODevice>();
+    
     //ArrayList<Integer, IODevice> IObanks = new ArrayList<Integer, IODevice>();
-    int[] IObanks;
-    IODevice ioDev;
+    //int[] ioBanks;
+    //IODevice ioDev;
 
     short sizeMask = 0;
 
@@ -35,12 +35,13 @@ public class Computer {
     }
 
     public void addIODevice(int port, IODevice device) {
-
+        int[] ports = new int[]{port};
+                
+        bindPortsToDevice(ports, device);
     }
 
     public void addIODevice(int[] ports, IODevice device) {
-        IObanks = ports;
-        ioDev = device;
+        bindPortsToDevice(ports, device);
     }
 
     public void addMemory(int base, Memory memory) {
@@ -70,6 +71,12 @@ public class Computer {
     private int base2key(int addr) {
         return addr & sizeMask;
     }
+    
+    private void bindPortsToDevice(int[] ports, IODevice device) {
+        for(int port : ports) {
+            ioBanks.put(port, device);
+        }
+    }
 
     public byte peek(int addr) { return banks.get(addr & sizeMask).peek(addr - (addr & sizeMask)); }
     
@@ -77,7 +84,11 @@ public class Computer {
         banks.get(addr & sizeMask).poke(addr - (addr & sizeMask), data);
     }
 
+    public void read(short addr) {
+        ioBanks.get(addr).read(addr);
+    }
+
     public void write(short addr, byte data) {
-        ioDev.write(addr, (char)data);
+        ioBanks.get(addr).write(addr, (char)data);
     }
 }

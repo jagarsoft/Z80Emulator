@@ -14,8 +14,8 @@ class MainFrame {
 
 	// Create the main frame
 	public void init(String title){
-        final double xM = 0.1875;
-        final double yM = 0.3334;
+        final double xM = 0.1875/2;
+        final double yM = 0.3334/2;
         int width = 256;
         int height = 192;
         int xMargin = (int)(width * xM);
@@ -25,9 +25,9 @@ class MainFrame {
         frame.setSize(width + 2 * xMargin, height + 2 * yMargin);
 
 		/*Image icon = new javax.swing.ImageIcon("images/android.png").getImage();
-		frame.setIconImage(icon);
+		frame.setIconImage(icon);*/
 
-		String iconPath = "/net/codejava/swing/jframe/android.png";
+		/*String iconPath = "/net/codejava/swing/jframe/android.png";
 		Image icon = new ImageIcon(getClass().getResource(iconPath)).getImage();
 		frame.setIconImage(icon);*/
 	}
@@ -50,10 +50,14 @@ class MainFrame {
 		// Set layout for the main frame
         frame.setLayout(new BorderLayout());
         frame.setJMenuBar(menuBar);
+    }
 
+    public  void show() {
+        //frame.pack();
         frame.setVisible(true);
-	}
-/*
+    }
+
+    /*
  * This method must be refactorings to a specific class ZXSpectrumScreen (TODO)
  * Need image object
  */

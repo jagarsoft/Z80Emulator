@@ -3,27 +3,89 @@ package com.github.jagarsoft.GUI;
 import com.github.jagarsoft.Computer;
 import com.github.jagarsoft.ROMMemory;
 import com.github.jagarsoft.VRAM;
+import com.github.jagarsoft.IODevice;
 import com.github.jagarsoft.Z80;
 
 import javax.swing.*;
 
 public class ZXSpectrumEmulator {
     static byte[] rom = new byte[16 * 1024];
-    static int[] data = new int[] {
+    /*static int[] data = new int[] {
             0x21, 0x00, 0x40,   // 0000 LD HL, 0x4000
             0x01, 0x00, 0xC0,   // 0003 LD BC, 256*192 // 0xC000
             0x16, 0xFF,         // 0006 LD D, 255
             0x72,               // 0008 LOOP_X: LD (HL), D
+
             0x15,               // 0009 DEC D
             0x23,               // 000A INC HL
+
             0x0B,               // 000B DEC BC
             0x78,               // 000C LD A, B
             0xB1,               // 000D OR C
             0xC2, 0x08, 0x00,   // 000E JP NZ, LOOP_X
             0x76                // 0011 HALT
-    };
+    };*/
+    /*static int[] data = new int[] {
+            0x21, 0xEF, 0x48,   // 0000 LD HL, 0x48EF ; 18671
+            0x11, 0x0F, 0x50,   // 0003 LD DE, 0x500F ; 20495
+            0x3E, 0x80,         // 0006 LD A, 0x80
+            0x06, 0x04,         // 0008 LD B, 4
+            0x77,               // 000A LOOP:  LD (HL), A
+            0x00,               // 000B NOP; LD (DE), A
+            0x24,               // 000C INC H
+            0x14,               // 000D INC D
+            0x10, 0xFA,         // 000E DJNZ -6
+            0X76                // 0010 HALT
+    };*/
 
-     static {
+    /*static int[] data = new int[] {
+            0x21, 0x00, 0x40,   // 0000 LD HL, 0x4000
+            0x3E, 0x80,         // 0003 LD A, 0x80
+            0x06, 0x1F,         // 0005 LD B, 0x1F
+            0x48,               // 0007 L2: LD C, B
+            0x06, 0x08,         // 0006 LD B, 8
+            0x77,               // 0008 L1: LD (HL), A
+            0x1F,               // 0009 RRA
+            0x10, 0xFC,         // 000A DJNZ L1
+            0x2C,               // INC L
+            0x1F,               // 000C RRA
+            0x41,               // 000E LD B, C
+            0x10, 0xF4,         // 000A DJNZ L2
+            0x45,               // 000B LD B, L
+            0x04,               // INC B
+            0x48,               // L4: LD C, B
+            0x06, 0x08,         // 0006 LD B, 8
+            0x77,               // 0008 L3: LD (HL), A
+            0x17,               // RLA
+            0x10, 0xFC,         // DJNZ L3
+            0x17,               // RLA
+            0x3D,               // DEC L
+            0x41,               // LD B, C
+            0x1, 0xF4,          // DJNZ L4
+            0xC3, 0, 0,         // JMP L0
+            0x76                // 0010 HALT
+            // KEYPRESS: XOR A
+            // IN A, (0xFE)
+            // CPL
+            // AND 0x1F
+            // RET
+
+            // K0: CALL KEYPRESS
+            // JR Z, K0
+            // K1: CALL KEYPRESS
+            // JR NZ, K1
+            // K2: CALL KEYPRESS
+            // JR Z, K2
+    };*/
+
+    static int[] data = new int[] {
+  0x21, 0x20, 0x40, 0x3e, 0x80, 0x06, 0x1f, 0x48, 0x06, 0x08, 0x77, 0xcd, 0x43, 0x20, 0x28, 0xfb
+, 0xcd, 0x43, 0x20, 0x20, 0xfb, 0xcd, 0x43, 0x20, 0x28, 0xfb, 0x1f, 0x10, 0xed, 0x2c, 0x1f, 0x41
+, 0x10, 0xe5, 0x45, 0x04, 0x48, 0x06, 0x08, 0x77, 0xcd, 0x43, 0x20, 0x28, 0xfb, 0xcd, 0x43, 0x20
+, 0x20, 0xfb, 0xcd, 0x43, 0x20, 0x28, 0xfb, 0x17, 0x10, 0xed, 0x17, 0x2d, 0x41, 0x10, 0xe5, 0xc3
+, 0x20, 0x20, 0x76, 0xf5, 0xaf, 0xdb, 0xfe, 0x2f, 0xe6, 0x1f, 0xd1, 0x7a, 0xc9 };
+
+    static {
          for(int i=0; i<data.length; i++){
             rom[i] = (byte) data[i];
          }
@@ -31,14 +93,15 @@ public class ZXSpectrumEmulator {
     
     public static void main(String[] args) {
         ZXSpectrumScreen screen = new ZXSpectrumScreen();
+        IODevice keyboard = new ZXSpectrumKeyboard();
 
         Computer spectrum = new Computer();
         spectrum.addCPU(new Z80());
-        //spectrum.addIODevice(new int[]{0}, new Console());
         spectrum.addMemory(0x0000, new ROMMemory(rom));
         spectrum.addMemory(0x4000, new VRAM(screen));
         /*spectrum.addMemory(0x8000, new ROMMemory(16 * 1024))
         spectrum.addMemory(0xC000, new ROMMemory(16 * 1024))*/
+        spectrum.addIODevice(0xFE, keyboard); // new ZXSpectrumIO(new ZXSpectrumKeyboard(), new ZXSpectrumBeeperTapeAndBorder())
 
         spectrum.reset();
 
@@ -46,9 +109,10 @@ public class ZXSpectrumEmulator {
             @Override
             public void run() {
                 MainFrame mf = new MainFrame(screen);
-                mf.init("ZX Spectrum Emulator v0.1" /*, zx*/);
+                mf.init("ZX Spectrum Emulator v0.2" /*, zx*/);
                 mf.createMenuBar();
                 mf.createPanels();
+                mf.show();
 
                 /*Computer zx = createZXSpectrum(screen);*/
             }
