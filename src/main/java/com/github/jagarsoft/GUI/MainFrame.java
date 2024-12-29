@@ -2,14 +2,17 @@ package com.github.jagarsoft.GUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyListener;
 
 class MainFrame {
     
 	JFrame frame = new JFrame();
     Screen screen;
+    KeyListener keyboard;
     
-    MainFrame(Screen screen) {
+    MainFrame(Screen screen, KeyListener keyboard) {
         this.screen = screen;
+        this.keyboard = keyboard;
     }        
 
 	// Create the main frame
@@ -30,6 +33,8 @@ class MainFrame {
 		/*String iconPath = "/net/codejava/swing/jframe/android.png";
 		Image icon = new ImageIcon(getClass().getResource(iconPath)).getImage();
 		frame.setIconImage(icon);*/
+
+        frame.addKeyListener(keyboard);
 	}
 
     // Create a menu bar

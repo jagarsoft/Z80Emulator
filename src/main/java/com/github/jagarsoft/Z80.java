@@ -299,7 +299,7 @@ public class Z80 implements Z80OpCode {
         dispatcher(opC);
     }
 
-    public void reset() { PC = 0; }
+    public void reset() { PC = 0; SP = (short) 0xB000; }
 
     public void setComputer(Computer theComp) { currentComp = theComp; }
 
@@ -723,6 +723,8 @@ public class Z80 implements Z80OpCode {
         
         if( oc )
             A |= 1;
+        else
+            A &= 0xFE;
     }
 
     public void RRA() {
@@ -1069,7 +1071,9 @@ public class Z80 implements Z80OpCode {
     public void IN_A_n() { // TODO test pending
         Z = currentComp.peek(PC++);
         W = A;
-        currentComp.read(getWZ());
+System.out.println("IN port:"+Integer.toHexString(getWZ()));
+        A = currentComp.read(getWZ());
+System.out.println("IN A:"+Integer.toHexString(A));
     }
 
     public void EX_SP_HL() {
@@ -1158,11 +1162,17 @@ public class Z80 implements Z80OpCode {
     }
 
     public void CALL_nn() {
+System.out.println("CALL_nn");
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-        currentComp.poke(--SP, (byte)(PC & 0x00FF));
+        //currentComp.poke(--SP, (byte)(PC & 0x00FF));
+        //currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
+System.out.println("byte alto");
         currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
+System.out.println("byte bajo");
+        currentComp.poke(--SP, (byte)(PC & 0x00FF));
+System.out.println("CALL "+Integer.toHexString(getWZ())+ " RET "+Integer.toHexString(PC));
 
         PC = getWZ();
     }
@@ -1199,6 +1209,16 @@ public class Z80 implements Z80OpCode {
         Z = currentComp.peek(PC++);
 
         A &= Z;
+
+        if (A == 0)
+            setZF();
+        else
+            resZF();
+
+        if (A < 0)
+            setSF();
+        else
+            resSF();
     }
 
     public void XOR_n() {

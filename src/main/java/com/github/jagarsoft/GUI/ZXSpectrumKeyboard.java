@@ -29,6 +29,7 @@ class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
+        System.out.println("getKeyCode:" + e.getKeyCode());
         switch(e.getKeyCode()) {
             case VK_1: A11.clear(0); break;
             case VK_2: A11.clear(1); break;
@@ -93,6 +94,7 @@ class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
     
     @Override
     public void keyReleased(KeyEvent e) {
+        System.out.println("keyReleased:" + e.getKeyCode());
         switch(e.getKeyCode()) {
             case VK_1: A11.set(0); break;
             case VK_2: A11.set(1); break;
@@ -164,7 +166,8 @@ class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
     public byte read(int addr) {
         int row = ~((addr & 0xFF00) >> 8);
         int k = 0xFF;
-
+System.out.println("ZXSpectrumKeyboard.read:"+Integer.toHexString(addr));
+System.out.println("ZXSpectrumKeyboard.row:"+Integer.toHexString(row));
         if(( row & ~0xFE) != 0 )
             k &= A8.toByteArray()[0];
 
@@ -188,7 +191,7 @@ class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
 
         if(( row & ~0x7F) != 0 )
             k &= A15.toByteArray()[0];
-
+System.out.println("k:"+Integer.toHexString(k));
         return (byte) k;
     }
 }
