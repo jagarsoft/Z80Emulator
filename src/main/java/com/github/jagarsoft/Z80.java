@@ -162,8 +162,8 @@ public class Z80 implements Z80OpCode {
         opCodes[3][3][3] = opC::IN_A_n;
         opCodes[3][3][4] = opC::EX_SP_HL;
         opCodes[3][3][5] = opC::EX_DE_HL;
-        opCodes[3][3][6] = opC::DI;
-        opCodes[3][3][7] = opC::EI;
+        opCodes[3][3][6] = opC::DI; // TODO
+        opCodes[3][3][7] = opC::EI; // TODO
         // z=4 [x][z][y]
         opCodes[3][4][0] = opC::CALL_cc_y_nn;
         opCodes[3][4][1] = opC::CALL_cc_y_nn;
@@ -175,6 +175,9 @@ public class Z80 implements Z80OpCode {
         opCodes[3][4][7] = opC::CALL_cc_y_nn;
         // z=5 [x][z][y]
         opCodes[3][5][0b000] = opC::PUSH_rp2_p;
+        opCodes[3][5][0b010] = opC::PUSH_rp2_p;
+        opCodes[3][5][0b100] = opC::PUSH_rp2_p;
+        opCodes[3][5][0b110] = opC::PUSH_rp2_p;
         opCodes[3][5][0b001] = opC::CALL_nn;
 //        opCodes[3][3][0x011] = opC::DD_prefix; TODO
 //        opCodes[3][3][0x101] = opC::ED_prefix;
@@ -299,7 +302,7 @@ public class Z80 implements Z80OpCode {
         dispatcher(opC);
     }
 
-    public void reset() { PC = 0; SP = (short) 0xB000; }
+    public void reset() { PC = 0; SP = (short) 0xC000; }
 
     public void setComputer(Computer theComp) { currentComp = theComp; }
 
@@ -1154,7 +1157,7 @@ System.out.println("IN A:"+Integer.toHexString(A));
                 break;
             case "AF":
                 W = A;
-                Z = getF();
+                Z = 0; //getF();    // FIX TODO
         }
 
         currentComp.poke(--SP, W);
@@ -1165,12 +1168,10 @@ System.out.println("IN A:"+Integer.toHexString(A));
 System.out.println("CALL_nn");
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
-
-        //currentComp.poke(--SP, (byte)(PC & 0x00FF));
-        //currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
-System.out.println("byte alto");
+        
+System.out.println("byte alto:"+Integer.toHexString(SP));
         currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
-System.out.println("byte bajo");
+System.out.println("byte bajo:"+Integer.toHexString(SP));
         currentComp.poke(--SP, (byte)(PC & 0x00FF));
 System.out.println("CALL "+Integer.toHexString(getWZ())+ " RET "+Integer.toHexString(PC));
 

@@ -1325,7 +1325,7 @@ public class Z80Test {
 
         assertAll("POP rp2[y] Group",
                 () -> assertEquals((byte)0xFF, cpu.getA(), "POP AF Failed: AF was not modified (A=" + Integer.toHexString(cpu.getA()) + ")")
-                //() -> assertEquals((byte)0x00, cpu.getF(), "POP AF Failed: AF was not modified (F=" + Integer.toHexString(cpu.getF()) + ")")
+                //TODO () -> assertEquals((byte)0x00, cpu.getF(), "POP AF Failed: AF was not modified (F=" + Integer.toHexString(cpu.getF()) + ")")
         );
     }
     
@@ -1990,7 +1990,36 @@ public class Z80Test {
                 () -> assertNotEquals((short)0x0002, cpu.getSP(), "PUSH BC Failed: PC was NOT modified (SP=" + cpu.getSP() + ")")
         );
 
-        // rest of registers TODO?
+        cpu.setSP((short)0x0002);
+        cpu.setDE((short)0x5678);
+
+        cpu.fetch((byte)0xD5); // PUSH DE
+
+        assertAll("PUSH rp2[p] Group",
+                () -> assertEquals((short)0x0000, cpu.getSP(), "PUSH DE Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "PUSH DE Failed: PC was NOT modified (SP=" + cpu.getSP() + ")")
+        );
+
+        cpu.setSP((short)0x0002);
+        cpu.setHL((short)0x5678);
+
+        cpu.fetch((byte)0xE5); // PUSH HL
+
+        assertAll("PUSH rp2[p] Group",
+                () -> assertEquals((short)0x0000, cpu.getSP(), "PUSH HL Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "PUSH HL Failed: PC was NOT modified (SP=" + cpu.getSP() + ")")
+        );
+
+        cpu.setSP((short)0x0002);
+        cpu.setA((byte)0x56);
+        cpu.setF((byte)0x78);
+
+        cpu.fetch((byte)0xF5); // PUSH AF
+
+        assertAll("PUSH rp2[p] Group",
+                () -> assertEquals((short)0x0000, cpu.getSP(), "PUSH AF Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
+                () -> assertNotEquals((short)0x0002, cpu.getSP(), "PUSH AF Failed: PC was NOT modified (SP=" + cpu.getSP() + ")")
+        );
     }
 
     @Test
@@ -2017,8 +2046,8 @@ public class Z80Test {
                 () -> assertEquals((short)0x0000, cpu.getSP(), "CALL 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
                 () -> assertNotEquals((short)0x0002, cpu.getSP(), "CALL 0xFF00 Failed: SP was NOT modified (SP=" + cpu.getSP() + ")"),
 
-                () -> assertEquals((byte) 0x04, compTest.peek(0x0001), "CALL 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
-                () -> assertEquals((byte) 0x00, compTest.peek(0x0000), "CALL 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+                () -> assertEquals((byte) 0x00, compTest.peek(0x0001), "CALL 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                () -> assertEquals((byte) 0x04, compTest.peek(0x0000), "CALL 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
 
                 () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
                 () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))

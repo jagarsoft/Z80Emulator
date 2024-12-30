@@ -17,7 +17,18 @@ class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
     protected BitSet A13 = new BitSet(5);
     protected BitSet A14 = new BitSet(5);
     protected BitSet A15 = new BitSet(5);
-    
+
+    ZXSpectrumKeyboard() {
+        A8.set(0, 5);
+        A9.set(0, 5);
+        A10.set(0, 5);
+        A11.set(0, 5);
+        A12.set(0, 5);
+        A13.set(0, 5);
+        A14.set(0, 5);
+        A15.set(0, 5);
+    }
+
     /*ZXSpectrumKeyboard(InputChannel in, OutputChannel out) {
 
     }*/

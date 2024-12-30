@@ -100,7 +100,7 @@ public class ZXSpectrumEmulator {
         spectrum.addMemory(0x4000, new VRAM(screen));
         spectrum.addMemory(0x8000, new RAMMemory(16 * 1024));
         /*spectrum.addMemory(0xC000, new ROMMemory(16 * 1024))*/
-        spectrum.addIODevice(0xFE, keyboard); // new ZXSpectrumIO(new ZXSpectrumKeyboard(), new ZXSpectrumBeeperTapeAndBorder())
+        spectrum.addIODevice((short)0xFE, keyboard); // new ZXSpectrumIO(new ZXSpectrumKeyboard(), new ZXSpectrumBeeperTapeAndBorder())
 
         spectrum.reset();
 

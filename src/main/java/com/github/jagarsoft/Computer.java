@@ -5,8 +5,8 @@ import java.util.HashMap;
 
 public class Computer {
     Z80 cpu;
-    HashMap<Integer, Memory>   banks   = new HashMap<Integer, Memory>();
-    HashMap<Integer, IODevice> ioBanks = new HashMap<Integer, IODevice>();
+    HashMap<Short, Memory>   banks   = new HashMap<Short, Memory>();
+    HashMap<Short, IODevice> ioBanks = new HashMap<Short, IODevice>();
     
     //ArrayList<Integer, IODevice> IObanks = new ArrayList<Integer, IODevice>();
     //int[] ioBanks;
@@ -36,27 +36,27 @@ System.out.println("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC
         this.cpu = cpu;
     }
 
-    public void addIODevice(int port, IODevice device) {
-        int[] ports = new int[]{port};
+    public void addIODevice(short port, IODevice device) {
+        short[] ports = new short[]{port};
                 
         bindPortsToDevice(ports, device);
     }
 
-    public void addIODevice(int[] ports, IODevice device) {
+    public void addIODevice(short[] ports, IODevice device) {
         bindPortsToDevice(ports, device);
     }
 
     public void addMemory(int base, Memory memory) {
         short s = memory.getSize();
         if( ! powerOf2(s) )
-            throw new IllegalArgumentException("Size must be a power of 2. "+s+" given");
+            throw new IllegalArgumentException("Size must be a power of 2. "+Integer.toHexString(s)+" given");
 
         if( sizeMask == 0 )
             sizeMask = makeSizeMask(s);
         else if( sizeMask != makeSizeMask(s) )
-            throw new IllegalArgumentException("All banks must be the same size as the first one. "+s+" given");
+            throw new IllegalArgumentException("All banks must be the same size as the first one ("+Integer.toHexString(sizeMask)+"). "+Integer.toHexString(s)+" given");
 
-        int key = base2key(base);
+        short key = base2key(base);
 
         banks.put(key, memory);
     }
@@ -70,25 +70,26 @@ System.out.println("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC
         return (short) ~(s - 1);
     }
 
-    private int base2key(int addr) {
-        return addr & sizeMask;
+    private short base2key(int addr) {
+        return (short)(addr & sizeMask);
     }
     
-    private void bindPortsToDevice(int[] ports, IODevice device) {
-        for(int port : ports) {
+    private void bindPortsToDevice(short[] ports, IODevice device) {
+        for(short port : ports) {
             ioBanks.put(port, device);
         }
     }
 
     public byte peek(int addr) {
-        byte data = banks.get(addr & sizeMask).peek(addr - (addr & sizeMask));
-System.out.println("peek addr:"+Integer.toHexString(addr)+" -> "+Integer.toHexString(data));
+System.out.print("peek addr:"+Integer.toHexString(addr));
+        byte data = banks.get(base2key(addr)).peek(addr - (addr & sizeMask));
+System.out.println(" -> "+Integer.toHexString(data));
         return data;
     }
-    
+
     public void poke(int addr, byte data) {
 System.out.println("poke addr:"+Integer.toHexString(addr)+" -> "+Integer.toHexString(data));
-        banks.get(addr & sizeMask).poke(addr - (addr & sizeMask), data);
+        banks.get(base2key(addr)).poke(addr - (addr & sizeMask), data);
     }
 
     public byte read(short addr) {
