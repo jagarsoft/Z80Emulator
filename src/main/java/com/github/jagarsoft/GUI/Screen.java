@@ -8,4 +8,5 @@ public interface Screen {
     void drawPixel(int x, int y, Color color);
     void createScreen(JFrame frame);
     void drawAttr(byte data);
+    void repaint(Rectangle rect);
 }

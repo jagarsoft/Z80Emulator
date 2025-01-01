@@ -1074,9 +1074,9 @@ public class Z80 implements Z80OpCode {
     public void IN_A_n() { // TODO test pending
         Z = currentComp.peek(PC++);
         W = A;
-System.out.println("IN port:"+Integer.toHexString(getWZ()));
+//System.out.println("IN port:"+Integer.toHexString(getWZ()));
         A = currentComp.read(getWZ());
-System.out.println("IN A:"+Integer.toHexString(A));
+//System.out.println("IN A:"+Integer.toHexString(A));
     }
 
     public void EX_SP_HL() {
@@ -1165,15 +1165,15 @@ System.out.println("IN A:"+Integer.toHexString(A));
     }
 
     public void CALL_nn() {
-System.out.println("CALL_nn");
+//System.out.println("CALL_nn");
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
-        
-System.out.println("byte alto:"+Integer.toHexString(SP));
+
+//System.out.println("byte alto:"+Integer.toHexString(SP));
         currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
-System.out.println("byte bajo:"+Integer.toHexString(SP));
+//System.out.println("byte bajo:"+Integer.toHexString(SP));
         currentComp.poke(--SP, (byte)(PC & 0x00FF));
-System.out.println("CALL "+Integer.toHexString(getWZ())+ " RET "+Integer.toHexString(PC));
+//System.out.println("CALL "+Integer.toHexString(getWZ())+ " RET "+Integer.toHexString(PC));
 
         PC = getWZ();
     }

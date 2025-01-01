@@ -3,7 +3,9 @@ package com.github.jagarsoft.GUI;
 import com.github.jagarsoft.*;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyListener;
+import java.util.List;
 
 public class ZXSpectrumEmulator {
     static byte[] rom = new byte[16 * 1024];
@@ -93,11 +95,14 @@ public class ZXSpectrumEmulator {
     public static void main(String[] args) {
         ZXSpectrumScreen screen = new ZXSpectrumScreen();
         IODevice keyboard = new ZXSpectrumKeyboard();
+        Z80 cpu;
+        Memory m;
+        VRAM v;
 
         Computer spectrum = new Computer();
-        spectrum.addCPU(new Z80());
-        spectrum.addMemory(0x0000, new ROMMemory(rom));
-        spectrum.addMemory(0x4000, new VRAM(screen));
+        spectrum.addCPU(cpu = new Z80());
+        spectrum.addMemory(0x0000, m = new ROMMemory(rom));
+        spectrum.addMemory(0x4000, v = new VRAM(screen));
         spectrum.addMemory(0x8000, new RAMMemory(16 * 1024));
         /*spectrum.addMemory(0xC000, new ROMMemory(16 * 1024))*/
         spectrum.addIODevice((short)0xFE, keyboard); // new ZXSpectrumIO(new ZXSpectrumKeyboard(), new ZXSpectrumBeeperTapeAndBorder())
@@ -117,11 +122,29 @@ public class ZXSpectrumEmulator {
             }
         });
 
-        SwingWorker worker = new SwingWorker<Void, Void>() {
+        SwingWorker worker = new SwingWorker<Void, Rectangle>() {
             @Override
             protected Void doInBackground() {
-                spectrum.run();
+                //spectrum.run();
+                for (;;) {
+                    int pc = cpu.getPC();
+                    byte opC = m.peek(pc);
+                    cpu.fetch(opC); // fetch opCode
+                    if( v.r != null ) {
+                        publish(v.r);
+                        v.r = null;
+                    }
+                    if( opC == 0x76) break; // is HALT?
+                }
                 return null;
+            }
+
+            @Override
+            protected void process(List<Rectangle> chunks) {
+System.out.println("Processing " + chunks.size() + " chunks");
+                for (Rectangle rect : chunks) {
+                    screen.repaint(rect);
+                }
             }
         };
 

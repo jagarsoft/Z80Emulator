@@ -11,6 +11,7 @@ class ZXSpectrumScreen implements Screen {
     final double yM = 0.3334/2;
     int width = 256;
     int height = 192;
+    TopPanel topPanel;
 
     // This image object is Spectrum's VRAM.
     private BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -42,6 +43,12 @@ class ZXSpectrumScreen implements Screen {
 
     }
 
+    @Override
+    public void repaint(Rectangle rect) {
+        topPanel.repaint(rect);
+System.out.println("repaint rect: "+rect.toString());
+    }
+
     public void createScreen(JFrame frame) {
         // Screen is made of two panes: bottom for the border and top for the main
         JLayeredPane layeredPane = new JLayeredPane();
@@ -51,7 +58,7 @@ class ZXSpectrumScreen implements Screen {
         bottomPanel.setBackground(Color.BLUE);
         bottomPanel.setBounds(0, 0, frame.getWidth(), frame.getHeight());
 
-        TopPanel topPanel = new TopPanel(image);
+        topPanel = new TopPanel(image);
 
         //topPanel.setBackground(Color.RED);
         //topPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2)); // Borde negro para destacar
@@ -119,7 +126,7 @@ class ZXSpectrumScreen implements Screen {
         public void updateImageBounds(int width, int height) {
             this.width = width;
             this.height = height;
-            repaint(); // Redibujar el panel con la nueva imagen
+            repaint(); // Redraw panel with new image
         }
     }
 }

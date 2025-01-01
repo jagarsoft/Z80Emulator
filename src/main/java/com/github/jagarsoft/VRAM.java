@@ -9,6 +9,7 @@ public class VRAM implements Memory {
     private Screen screen;
     private byte[] ram;
     public short size;
+    public Rectangle r = null;
 
     public VRAM(Screen screen){
         this.screen = screen;
@@ -33,6 +34,10 @@ System.out.println(++k+": HL = "+Integer.toHexString(addr)+" x="+point[0]+" y="+
                     screen.drawPixel(point[0] + i, point[1], c[j]); //attr[0]); // res pixel to Paper
                 System.out.println(j++);
             }
+System.out.println("Antes de repaint");
+            //screen.repaint(new Rectangle(point[0], point[1], 7, 1));
+            this.r = new Rectangle(point[0], point[1], 7, 1);
+System.out.println("Despues de repaint");
         } else if ( addr < 0x5B00 - 0x4000 ) { // attr map
             /*for(int i = 0; i < 8; i++)
                 for(int j = 0; j < 8; j++) {

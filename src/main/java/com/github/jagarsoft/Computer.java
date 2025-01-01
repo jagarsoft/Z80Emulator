@@ -26,7 +26,7 @@ public class Computer {
         for (;;) {
             int pc = cpu.getPC();
             byte opC = this.peek(pc);
-System.out.println("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC));
+//System.out.println("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC));
             cpu.fetch(opC); // fetch opCode
             if( opC == 0x76) break; // is HALT?
         }
@@ -81,19 +81,19 @@ System.out.println("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC
     }
 
     public byte peek(int addr) {
-System.out.print("peek addr:"+Integer.toHexString(addr));
+//System.out.print("peek addr:"+Integer.toHexString(addr));
         byte data = banks.get(base2key(addr)).peek(addr - (addr & sizeMask));
-System.out.println(" -> "+Integer.toHexString(data));
+//System.out.println(" -> "+Integer.toHexString(data));
         return data;
     }
 
     public void poke(int addr, byte data) {
-System.out.println("poke addr:"+Integer.toHexString(addr)+" -> "+Integer.toHexString(data));
+//System.out.println("poke addr:"+Integer.toHexString(addr)+" -> "+Integer.toHexString(data));
         banks.get(base2key(addr)).poke(addr - (addr & sizeMask), data);
     }
 
     public byte read(short addr) {
-System.out.println(("Computer.read:"+Integer.toHexString(addr)));
+//System.out.println(("Computer.read:"+Integer.toHexString(addr)));
         return ioBanks.get(addr).read(addr);
     }
 
