@@ -869,6 +869,16 @@ public class Z80 implements Z80OpCode {
         }
 
         A &= Z;
+
+        if (A == 0)
+            setZF();
+        else
+            resZF();
+
+        if (A < 0)
+            setSF();
+        else
+            resSF();
     }
 
     public void XOR() {

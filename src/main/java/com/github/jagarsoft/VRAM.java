@@ -8,8 +8,8 @@ public class VRAM implements Memory {
     private int k = 0;
     private Screen screen;
     private byte[] ram;
+    private Rectangle r = null;
     public short size;
-    public Rectangle r = null;
 
     public VRAM(Screen screen){
         this.screen = screen;
@@ -34,22 +34,26 @@ System.out.println(++k+": HL = "+Integer.toHexString(addr)+" x="+point[0]+" y="+
                     screen.drawPixel(point[0] + i, point[1], c[j]); //attr[0]); // res pixel to Paper
                 System.out.println(j++);
             }
-System.out.println("Antes de repaint");
-            //screen.repaint(new Rectangle(point[0], point[1], 7, 1));
-            this.r = new Rectangle(point[0], point[1], 7, 1);
-System.out.println("Despues de repaint");
+            this.r = new Rectangle(point[0], point[1], 8, 1);
         } else if ( addr < 0x5B00 - 0x4000 ) { // attr map
             /*for(int i = 0; i < 8; i++)
                 for(int j = 0; j < 8; j++) {
                     OBTENER LA DIR DEL 1ER BYTE DEL BLOQUE Y REPINTAR LOS 64 PIXELES QUE LO COMPONEN
                 }*/
             //screen.drawAttr(data, attr);
+            //this.r = new Rectangle(point[0], point[1], 8, 8);
         }
    }
 
     public short getSize(){ return size; }
 
     public byte peek(int addr) { return ram[addr]; }
+
+    public Rectangle getRectangle() {
+        Rectangle or = r;
+        r = null;
+        return or;
+    }
 
     // Lineal: sin tercios
     private void transform(int addr, int[] point) {

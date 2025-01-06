@@ -17,15 +17,21 @@ class MainFrame {
 
 	// Create the main frame
 	public void init(String title){
-        final double xM = 0.1875/2;
-        final double yM = 0.3334/2;
-        int width = 256;
-        int height = 192;
-        int xMargin = (int)(width * xM);
-        int yMargin = (int)(height * yM);
+        final double xM = 0.1875/2; // ***
+        final double yM = 0.3334/2; // ***
+        final int width = 256;
+        final int height = 192;
+        final double marginHorizontalRatio = 0.09375; // 9.375% del ancho
+        final double marginVerticalRatio = 0.1667; // 16.67% del alto
+        int xMargin = (int)(width * xM); // ***
+        int yMargin = (int)(height * yM); // ***
         frame.setTitle(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(width + 2 * xMargin, height + 2 * yMargin);
+        //frame.setSize(width + 2 * xMargin, height + 2 * yMargin);
+        frame.setSize(
+                (int) (width / (1 - 2 * marginHorizontalRatio)),
+                (int) (height / (1 - 2 * marginVerticalRatio))
+        );
 
 		/*Image icon = new javax.swing.ImageIcon("images/android.png").getImage();
 		frame.setIconImage(icon);*/
