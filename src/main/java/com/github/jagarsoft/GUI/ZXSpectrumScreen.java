@@ -8,10 +8,6 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
 class ZXSpectrumScreen implements Screen {
-    final double xM = 0.1875/2;
-    final double yM = 0.3334/2;
-    int width = 256;
-    int height = 192;
     final double marginHorizontalRatio = 0.09375; // 9.375% del ancho
     final double marginVerticalRatio = 0.1667; // 16.67% del alto
     JFrame frame;
@@ -20,7 +16,7 @@ class ZXSpectrumScreen implements Screen {
     TopPanel topPanel;
 
     // This image object is Spectrum's VRAM.
-    private BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    private BufferedImage image = new BufferedImage(Screen.WIDTH, Screen.HEIGHT, BufferedImage.TYPE_INT_RGB);
     static private Color[] attr = new Color[8];
 
     static {
@@ -45,32 +41,36 @@ class ZXSpectrumScreen implements Screen {
     //@Override
     /* public void drawPixel(int x, int y) { this.drawPixel(x, y, Color.RED); } */
 
-    @Override
+    /*@Override
     public void drawAttr(byte data) {
 
+    }*/
+
+    // Obtener las decoraciones del marco
+    private Dimension usableDimension() {
+        Insets insets = frame.getInsets();
+        return new Dimension(frame.getWidth() - insets.left - insets.right,
+                frame.getHeight() - insets.top - insets.bottom - frame.getJMenuBar().getHeight()
+                );
     }
 
     @Override
     public void repaint(Rectangle rect) {
 System.out.println("repaint rect: "+rect.toString());
-        // Obtener las decoraciones del marco
-        Insets insets = frame.getInsets();
-        int originalWidth = 256;
-        int originalHeight = 192;
-        int usableWidth = frame.getWidth() - insets.left - insets.right;
-        int usableHeight = frame.getHeight() - insets.top - insets.bottom - frame.getJMenuBar().getHeight();;
-        int newWidth = usableWidth;
-        int newHeight = usableHeight;
+        Dimension usableDimension = usableDimension();
 
-        Rectangle adjusted = adjustRectangle(rect, originalWidth, originalHeight, newWidth, newHeight);
+        //Fix TODO: shifts an unpainted gap
+        //Rectangle adjusted = adjustRectangle(rect, Screen.WIDTH, Screen.HEIGHT, usableDimension.width, usableDimension.height);
 
         topPanel.revalidate();
-        topPanel.repaint(adjusted);
+        //topPanel.repaint(adjusted);
+        topPanel.repaint();
         //layeredPane.revalidate();
         //layeredPane.repaint(rect);
 
+        System.out.println("usable Dimension: " + usableDimension);
         System.out.println("Rectángulo original: " + rect);
-        System.out.println("Rectángulo ajustado: " + adjusted);
+        //System.out.println("Rectángulo ajustado: " + adjusted);
     }
 
     public Rectangle adjustRectangle(Rectangle original,
@@ -128,12 +128,12 @@ System.out.println("repaint rect: "+rect.toString());
      * Private Inner Class
      */
     private class TopPanel extends JPanel {
-        private Image image;
+        //private BufferedImage image;
         private int width;
         private int height;
 
-        TopPanel(Image image) {
-            this.image = image;
+        TopPanel(BufferedImage image) {
+            //this.image = image;
             resized();
         }
 
@@ -147,25 +147,23 @@ System.out.println("repaint rect: "+rect.toString());
             bottomPanel.setBounds(0, 0, width, height);
             */
             // Obtener las decoraciones del marco
-            Insets insets = frame.getInsets();
-            int width = frame.getWidth() - insets.left - insets.right;
-            int height = frame.getHeight() - insets.top - insets.bottom -
-                    frame.getJMenuBar().getHeight();
+            Dimension usableDimension = usableDimension();
+
             // Márgenes proporcionales
-            int xMargin = (int) (width * marginHorizontalRatio);
-            int yMargin = (int) (height * marginVerticalRatio);
+            int xMargin = (int) (usableDimension.width * marginHorizontalRatio);
+            int yMargin = (int) (usableDimension.height * marginVerticalRatio);
 //System.out.printf("width = " + width + " height = " + height + "\n");
 //System.out.printf("width - 2 * " + xMargin + " = " + (width - 2 * xMargin) + "\n");
 //System.out.printf("height - 2 * " + yMargin + " = " + (height - 2 * yMargin) + "\n");
             // Calcular dimensiones del topPanel
-            int calculatedTopWidth = width - 2 * xMargin;
-            int calculatedTopHeight = height - 2 * yMargin;
+            int calculatedTopWidth = usableDimension.width - 2 * xMargin;
+            int calculatedTopHeight = usableDimension.height - 2 * yMargin;
 
             // Ajustar tamaño del panel superior con un margen dinámico
             //this.setBounds(xMargin, yMargin, width - 2 * xMargin, height - 2 * yMargin);
             // Configurar los paneles
-            bottomPanel.setBounds(0, 0, width, height);
-            setBounds(
+            bottomPanel.setBounds(0, 0, usableDimension.width, usableDimension.height);
+            this.setBounds(
                     xMargin, yMargin, // Posición dentro de los márgenes
                     calculatedTopWidth, calculatedTopHeight // Dimensiones calculadas
             );
@@ -174,6 +172,8 @@ System.out.println("repaint rect: "+rect.toString());
             this.updateImageBounds(
                     calculatedTopWidth, calculatedTopHeight // Dimensiones calculadas
             );
+
+            //image = this.resizeImage(image, calculatedTopWidth, calculatedTopHeight);
 
             // Revalidar y repintar el layeredPane
             layeredPane.revalidate();
@@ -191,10 +191,22 @@ System.out.println("repaint rect: "+rect.toString());
             System.out.println("Área de repintado: " + clipping);
         }
 
-        public void updateImageBounds(int width, int height) {
+        private void updateImageBounds(int width, int height) {
             this.width = width;
             this.height = height;
-            repaint(); // Redraw panel with new image
+            //repaint(); // Redraw panel with new image
         }
+
+        /*private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
+            Image scaledImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+            BufferedImage resizedBufferedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+            this.width = targetWidth;
+            this.height = targetHeight;
+            Graphics2D g2d = resizedBufferedImage.createGraphics();
+            g2d.drawImage(scaledImage, 0, 0, null);
+            g2d.dispose();
+            repaint();
+            return resizedBufferedImage;
+        }*/
     }
 }

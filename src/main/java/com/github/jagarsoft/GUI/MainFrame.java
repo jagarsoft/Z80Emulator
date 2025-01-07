@@ -25,6 +25,7 @@ class MainFrame {
         final double marginVerticalRatio = 0.1667; // 16.67% del alto
         int xMargin = (int)(width * xM); // ***
         int yMargin = (int)(height * yM); // ***
+
         frame.setTitle(title);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //frame.setSize(width + 2 * xMargin, height + 2 * yMargin);
