@@ -18,11 +18,10 @@ public interface Z80OpCode {
     };
 
     void CB_prefix();
-/*
-    void DD_prefix();
+//void DD_prefix();
     void ED_prefix();
-    void FD_prefix();
-*/
+//    void FD_prefix();
+
     void NOP();
     void EX_AF_AF_();
     void DJNZ();
@@ -36,6 +35,7 @@ public interface Z80OpCode {
     void LD_DE_A();
     void LD_nn_HL();
     void LD_nn_A();
+
     void LD_A_BC();
     void LD_A_DE();
     void LD_HL_nn();
@@ -102,4 +102,8 @@ public interface Z80OpCode {
     void CP_n();
 
     void RST_y_8();
+
+    /* ED prefix */
+    void LD_I_A();
+    void SBC_HL_rp_p();
 }

@@ -1,5 +1,8 @@
 package com.github.jagarsoft;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 public class ROMMemory implements Memory {
     private byte[] rom;
 
@@ -19,4 +22,13 @@ public class ROMMemory implements Memory {
     
     @Override
     public short getSize() { return (short)rom.length; }
+
+    @Override
+    public void load(InputStream dataStream, int dest, int size) {
+        try {
+            dataStream.read(rom, dest, size);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -3,6 +3,7 @@ package com.github.jagarsoft;
 import com.github.jagarsoft.GUI.Screen;
 
 import java.awt.*;
+import java.io.InputStream;
 
 public class VRAM implements Memory {
     private int k = 0;
@@ -46,6 +47,11 @@ System.out.println(++k+": HL = "+Integer.toHexString(addr)+" x="+point[0]+" y="+
    }
 
     public short getSize(){ return size; }
+
+    @Override
+    public void load(InputStream dataStream, int dest, int size) {
+
+    }
 
     public byte peek(int addr) { return ram[addr]; }
 

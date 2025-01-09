@@ -170,7 +170,8 @@ class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
 
     @Override
     public void write(int addr, char data) {
-        /* ignore */;
+        /* ignore */
+        System.out.println("keyboard write: " + addr + " " + data);
     }
 
     @Override

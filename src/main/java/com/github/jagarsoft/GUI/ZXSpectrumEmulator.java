@@ -5,6 +5,9 @@ import com.github.jagarsoft.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyListener;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 public class ZXSpectrumEmulator {
@@ -86,12 +89,12 @@ public class ZXSpectrumEmulator {
 , 0xdb, 0xfe, 0x2f, 0xe6, 0x1f, 0xd1, 0x7a, 0xc9
 };*/
 
-static int[] data = new int[] {
+/*static int[] data = new int[] {
   0x21, 0x00, 0x40, 0x3e, 0x80, 0x77, 0xcd, 0x36, 0x00, 0x28, 0xfb, 0xcd, 0x36, 0x00, 0x20, 0xfb
 , 0xa7, 0x1f, 0x20, 0xf1, 0x2c, 0x7d, 0xfe, 0x20, 0x20, 0xe9, 0x2d, 0x3e, 0x01, 0x77, 0xcd, 0x36
 , 0x00, 0x28, 0xfb, 0xcd, 0x36, 0x00, 0x20, 0xfb, 0xa7, 0x17, 0x20, 0xf1, 0x2d, 0x7d, 0xfe, 0xff
 , 0x20, 0xe9, 0xc3, 0x00, 0x00, 0x76, 0xf5, 0xaf, 0xdb, 0xfe, 0x2f, 0xe6, 0x1f, 0xd1, 0x7a, 0xc9
-};
+};*/
 
 /*static int[] data = new int[] {
       0x21, 0x00, 0x40, 0x3e, 0x80, 0x77, 0xa7, 0x1f, 0x20, 0xfb, 0x2c, 0x7d, 0xfe, 0x20, 0x20, 0xf3
@@ -99,11 +102,11 @@ static int[] data = new int[] {
     , 0x00, 0x76
 };*/
 
-    static {
+    /*static {
          for(int i=0; i<data.length; i++){
             rom[i] = (byte) data[i];
          }
-     }
+     }*/
     
     public static void main(String[] args) {
         ZXSpectrumScreen screen = new ZXSpectrumScreen();
@@ -117,12 +120,18 @@ static int[] data = new int[] {
         spectrum.addMemory(0x0000, m = new ROMMemory(rom));
         spectrum.addMemory(0x4000, v = new VRAM(screen));
         spectrum.addMemory(0x8000, new RAMMemory(16 * 1024));
-        /*spectrum.addMemory(0xC000, new ROMMemory(16 * 1024))*/
-        spectrum.addIODevice((short)0xFE, keyboard); // new ZXSpectrumIO(new ZXSpectrumKeyboard(), new ZXSpectrumBeeperTapeAndBorder())
+        spectrum.addMemory(0xC000, new RAMMemory(16 * 1024));
+        spectrum.addIODevice((short)0xFE, new ZXSpectrumIO(keyboard, new ZXSpectrumBeeperTapeAndBorder()));
+
+        try {
+            spectrum.load(ZXSpectrumEmulator.class.getResourceAsStream("48.rom"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         spectrum.reset();
 
-		SwingUtilities.invokeLater(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 MainFrame mf = new MainFrame(screen, (KeyListener) keyboard);
@@ -139,16 +148,16 @@ static int[] data = new int[] {
             @Override
             protected Void doInBackground() {
                 //spectrum.run();
-                for (;;) {
+                for (; ; ) {
                     int pc = cpu.getPC();
-                    byte opC = m.peek(pc);
+                    byte opC = spectrum.peek(pc);
                     Rectangle r;
                     cpu.fetch(opC); // fetch opCode
                     r = v.getRectangle();
-                    if( r != null ) {
+                    if (r != null) {
                         publish(r);
                     }
-                    if( opC == 0x76) break; // is HALT?
+                    if (opC == 0x76) break; // is HALT?
                 }
                 return null;
             }
@@ -162,6 +171,7 @@ static int[] data = new int[] {
         };
 
         worker.execute();
+
     }
     
     private static /*Computer TODO*/ void createZXSpectrum(Screen screen) {

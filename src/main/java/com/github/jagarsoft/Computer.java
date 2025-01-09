@@ -1,5 +1,7 @@
 package com.github.jagarsoft;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.BitSet;
 import java.util.HashMap;
 
@@ -81,9 +83,9 @@ public class Computer {
     }
 
     public byte peek(int addr) {
-//System.out.print("peek addr:"+Integer.toHexString(addr));
+System.out.print("peek addr:"+Integer.toHexString(addr));
         byte data = banks.get(base2key(addr)).peek(addr - (addr & sizeMask));
-//System.out.println(" -> "+Integer.toHexString(data));
+System.out.println(" -> "+Integer.toHexString(data & 0xFF));
         return data;
     }
 
@@ -93,11 +95,20 @@ public class Computer {
     }
 
     public byte read(short addr) {
-//System.out.println(("Computer.read:"+Integer.toHexString(addr)));
-        return ioBanks.get(addr).read(addr);
+System.out.print(("Computer.read ("+Integer.toHexString(addr)+")"));
+        //byte data = ioBanks.get(addr).read(addr);
+System.out.println(" -> "+Integer.toHexString(0 & 0xFF));
+        return 0; //data;
     }
 
     public void write(short addr, byte data) {
-        ioBanks.get(addr).write(addr, (char)data);
+System.out.println(("Computer.write ("+Integer.toHexString(addr)+"):"+Integer.toHexString(data)));
+System.out.println(" addr: "+Integer.toHexString(addr & 0xFF));
+        //ioBanks.get(addr & 0xFF).write(addr, (char)data);
+    }
+
+    public void load(InputStream dataStream) throws IOException {
+        banks.get(base2key(0)).load(dataStream, 0,16*1024);
+        dataStream.close();
     }
 }

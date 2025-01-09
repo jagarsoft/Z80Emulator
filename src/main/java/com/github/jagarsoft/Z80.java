@@ -179,9 +179,9 @@ public class Z80 implements Z80OpCode {
         opCodes[3][5][0b100] = opC::PUSH_rp2_p;
         opCodes[3][5][0b110] = opC::PUSH_rp2_p;
         opCodes[3][5][0b001] = opC::CALL_nn;
-//        opCodes[3][3][0x011] = opC::DD_prefix; TODO
-//        opCodes[3][3][0x101] = opC::ED_prefix;
-//        opCodes[3][3][0x111] = opC::FD_prefix;
+//        opCodes[3][5][0b011] = opC::DD_prefix; TODO
+        opCodes[3][5][0b101] = opC::ED_prefix;
+//        opCodes[3][5][0b111] = opC::FD_prefix;
         // z=6 [x][z][y]
         opCodes[3][6][0] = opC::ADD_A_n;
         opCodes[3][6][1] = opC::ADC_A_n;
@@ -215,14 +215,29 @@ public class Z80 implements Z80OpCode {
         CBopCodes[0][0][6] = opC::SLL;
         CBopCodes[0][0][7] = opC::SRL;
         */
+
+        // x = 1, z = 7
+        // Exception: iterate over z instead of y are 7 * 7 combinations managed in fetch,
+        // but still opC::PTR is needed
+        //       [x][z][y]
+/*        EDopCodes[0][0][0] = opC::RLC;
+        EDopCodes[0][0][1] = opC::RRC;
+        EDopCodes[0][0][2] = opC::RL;
+        EDopCodes[0][0][3] = opC::RR;
+        EDopCodes[0][0][4] = opC::SLA;
+        EDopCodes[0][0][5] = opC::SRA;*/
+        EDopCodes[1][2][0b000] = opC::SBC_HL_rp_p;
+        EDopCodes[1][2][0b010] = opC::SBC_HL_rp_p;
+        EDopCodes[1][2][0b100] = opC::SBC_HL_rp_p;
+        EDopCodes[1][2][0b110] = opC::SBC_HL_rp_p;
+        EDopCodes[1][7][0] = opC::LD_I_A; // TODO
     }
 
     public void CB_prefix() { fetchCB(currentComp.peek(getPC())); }
-/*
-    public void DD_prefix() { fetchCB(currentComp.peek(getPC())); }
-    public void ED_prefix() { ED_prefix_seen = true; }
-    public void FD_prefix() { FD_prefix_seen = true; }
-*/
+// public void DD_prefix() { fetchCB(currentComp.peek(getPC())); }
+    public void ED_prefix() { fetchED(currentComp.peek(getPC())); }
+//    public void FD_prefix() { FD_prefix_seen = true; }
+
     private static void opCMasked(byte opC) {
         x = ((opC & 0b11000000) >> 6);
         y = ((opC & 0b00111000) >> 3);
@@ -261,6 +276,16 @@ public class Z80 implements Z80OpCode {
 
         if (CBopCodes[x][z][y] != null) {
             CBopCodes[x][z][y].execute();
+        } else {
+            throw new IllegalArgumentException("CB+OpCode not implemented yet: " + Integer.toHexString(opC));
+        }
+    }
+
+    private void fetchED(byte opC) {
+        opCMasked(opC);
+
+        if (EDopCodes[x][z][y] != null) {
+            EDopCodes[x][z][y].execute();
         } else {
             throw new IllegalArgumentException("CB+OpCode not implemented yet: " + Integer.toHexString(opC));
         }
@@ -1077,7 +1102,7 @@ public class Z80 implements Z80OpCode {
 
     public void OUT_n_A() {
         Z = currentComp.peek(PC++);
-        W = A;
+        W = 0; //A; // TODO
         currentComp.write(getWZ(), A);
     }
 
@@ -1261,5 +1286,35 @@ public class Z80 implements Z80OpCode {
         currentComp.poke(--SP, (byte)(PC & 0x00FF));
 
         PC = getWZ();
+    }
+
+    /* ED prefix */
+
+    public void LD_I_A() {
+        I = A; // TODO flag affectation missing
+    }
+
+    public void SBC_HL_rp_p() {
+        switch (rp[p]) {
+            case "BC":
+                W = B;
+                Z = C;
+                break;
+            case "DE":
+                W = D;
+                Z = E;
+                break;
+            case "HL":
+                W = H;
+                Z = L;
+                break;
+            case "SP":
+                W = (byte) ((getSP() & 0xFF00) >> 8);
+                Z = (byte) (getSP() & 0x00FF);
+        }
+
+        setHL((short)(getHL() - getWZ()));
+
+        if( getCF() ) setHL((short) (getHL() - 1));
     }
 }
