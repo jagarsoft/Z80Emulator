@@ -1,5 +1,6 @@
 package com.github.jagarsoft;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.BitSet;
@@ -7,14 +8,14 @@ import java.util.HashMap;
 
 public class Computer {
     Z80 cpu;
-    HashMap<Short, Memory>   banks   = new HashMap<Short, Memory>();
-    HashMap<Short, IODevice> ioBanks = new HashMap<Short, IODevice>();
+    HashMap<Integer, Memory> banks   = new HashMap<Integer, Memory>();
+    HashMap<Byte, IODevice> ioBanks = new HashMap<Byte, IODevice>();
     
     //ArrayList<Integer, IODevice> IObanks = new ArrayList<Integer, IODevice>();
     //int[] ioBanks;
     //IODevice ioDev;
 
-    short sizeMask = 0;
+    int sizeMask = 0;
 
     public Computer(){
     }
@@ -28,9 +29,9 @@ public class Computer {
         for (;;) {
             int pc = cpu.getPC();
             byte opC = this.peek(pc);
-//System.out.println("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC));
+//Logger.info("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC));
             cpu.fetch(opC); // fetch opCode
-            if( opC == 0x76) break; // is HALT?
+            //if( opC == 0x76) break; // is HALT?
         }
     }
 
@@ -38,77 +39,151 @@ public class Computer {
         this.cpu = cpu;
     }
 
-    public void addIODevice(short port, IODevice device) {
-        short[] ports = new short[]{port};
+    public void addIODevice(byte port, IODevice device) {
+        byte[] ports = new byte[]{port};
                 
         bindPortsToDevice(ports, device);
     }
 
-    public void addIODevice(short[] ports, IODevice device) {
+    public void addIODevice(byte[] ports, IODevice device) {
         bindPortsToDevice(ports, device);
     }
 
     public void addMemory(int base, Memory memory) {
-        short s = memory.getSize();
+        int s = memory.getSize();
         if( ! powerOf2(s) )
-            throw new IllegalArgumentException("Size must be a power of 2. "+Integer.toHexString(s)+" given");
-
+            throw new IllegalArgumentException("Size must be a power of 2. "+ s +" given");
+//System.out.println("Size:"+s);
         if( sizeMask == 0 )
             sizeMask = makeSizeMask(s);
         else if( sizeMask != makeSizeMask(s) )
             throw new IllegalArgumentException("All banks must be the same size as the first one ("+Integer.toHexString(sizeMask)+"). "+Integer.toHexString(s)+" given");
 
-        short key = base2key(base);
+        int key = base2key(base);
 
         banks.put(key, memory);
     }
 
-    private boolean powerOf2(short size){
+    private boolean powerOf2(int size){
         BitSet s = BitSet.valueOf(new long[]{size});
         return s.cardinality() == 1;
     }
 
-    private short makeSizeMask(short s) {
-        return (short) ~(s - 1);
+    // https://stackoverflow.com/a/466278/2928048
+    public int upper_power_of_two(int v)
+    {
+        v--;
+        v |= v >> 1;
+        v |= v >> 2;
+        v |= v >> 4;
+        v |= v >> 8;
+        v |= v >> 16;
+        v++;
+        return v;
+
     }
 
-    private short base2key(int addr) {
-        return (short)(addr & sizeMask);
+    private int makeSizeMask(int s) {
+        return ~(s - 1);
+    }
+
+    private int base2key(int addr) {
+        return addr & sizeMask;
     }
     
-    private void bindPortsToDevice(short[] ports, IODevice device) {
-        for(short port : ports) {
+    private void bindPortsToDevice(byte[] ports, IODevice device) {
+        for(byte port : ports) {
             ioBanks.put(port, device);
         }
     }
 
     public byte peek(int addr) {
-System.out.print("peek addr:"+Integer.toHexString(addr));
+addr = addr&0xFFFF;
+//Logger.compMem("peek addr:"+Integer.toHexString(addr));
         byte data = banks.get(base2key(addr)).peek(addr - (addr & sizeMask));
-System.out.println(" -> "+Integer.toHexString(data & 0xFF));
+//Logger.compMem(" -> "+Integer.toHexString(data & 0xFF));
         return data;
     }
 
     public void poke(int addr, byte data) {
-//System.out.println("poke addr:"+Integer.toHexString(addr)+" -> "+Integer.toHexString(data));
-        banks.get(base2key(addr)).poke(addr - (addr & sizeMask), data);
+addr = addr&0xFFFF;
+Logger.compMem("poke addr:"+Integer.toHexString(addr)+" -> "+Integer.toHexString(data));
+        banks.get(base2key(addr&0xFFFF)).poke(addr - (addr & sizeMask), data);
     }
 
     public byte read(short addr) {
-System.out.print(("Computer.read ("+Integer.toHexString(addr)+")"));
-        //byte data = ioBanks.get(addr).read(addr);
-System.out.println(" -> "+Integer.toHexString(0 & 0xFF));
-        return 0; //data;
+Logger.info(("Computer.read ("+Integer.toHexString(addr)+")"));
+        byte data = ioBanks.get((byte)(addr & 0xFF)).read(addr);
+Logger.info(" -> "+Integer.toHexString(0 & 0xFF));
+        return data;
     }
 
     public void write(short addr, byte data) {
-System.out.println(("Computer.write ("+Integer.toHexString(addr)+"):"+Integer.toHexString(data)));
-System.out.println(" addr: "+Integer.toHexString(addr & 0xFF));
-        //ioBanks.get(addr & 0xFF).write(addr, (char)data);
+Logger.info("Computer.write ("+Integer.toHexString(addr)+"):"+Integer.toHexString(data));
+Logger.info(" addr: "+Integer.toHexString(addr & 0xFF));
+        ioBanks.get((byte)(addr & 0x00FF)).write(addr & 0x00FF, data);
     }
 
     public void load(InputStream dataStream) throws IOException {
+assert dataStream != null;
+Logger.info("Computer.load dataStream: "+dataStream.toString());
         banks.get(base2key(0)).load(dataStream, 0,16*1024);
-        dataStream.close();
+    }
+
+    /*
+    public void load(FileInputStream dataStream, long length) throws IOException {
+        assert dataStream != null;
+        Logger.info("Computer.load dataStream: "+dataStream.toString());
+        banks.get(base2key(0)).load(dataStream, 0, (int)length);
+    }
+    */
+
+    public void load(FileInputStream dataStream, long length) throws IOException {
+        assert dataStream != null;
+        Logger.info("Computer.load dataStream: "+dataStream.toString());
+        long left_to_load;
+        int bank_size = banks.get(base2key(0)).getSize();
+        int i = 0;
+        while( length > bank_size ) {
+            left_to_load = length - bank_size;
+            banks.get(base2key(i)).load(dataStream, 0, bank_size);
+            length = left_to_load;
+            i += bank_size;
+        }
+        banks.get(base2key(i)).load(dataStream, 0, (int)length);
+    }
+
+    public boolean isSameBank(short org, short dst, short cont) {
+        return false;
+        /*return base2key(org) == base2key(dst)
+            && base2key(org+cont) == base2key(dst+cont);*/
+    }
+
+    public void movemem(short org, short dst, short cont, Memory.MovememDirection dir) {
+        banks.get(base2key(org)).movemem((short) (org - (org & sizeMask)), (short) (dst - (dst & sizeMask)), cont, dir);
+    }
+
+    public void dump(int org, int count) {
+        int i = 0;
+
+        Logger.info(Integer.toHexString(org)+": ");
+        for(int n = 0; n < count; n++) {
+            Logger.info(Integer.toHexString(this.peek(org+n))+" ");
+
+            if ((n % 8) == 0)
+                Logger.info("\n"+Integer.toHexString(org)+": ");
+        }
+    }
+
+    int getSize() {
+        int size = 0;
+        for(Memory bank : banks.values()) {
+            size += bank.getSize();
+        }
+        return size;
+    }
+
+    public int getMemSize() {
+        return banks.size();
     }
 }

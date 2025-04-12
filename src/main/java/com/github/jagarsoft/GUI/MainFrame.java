@@ -4,13 +4,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyListener;
 
-class MainFrame {
+public class MainFrame {
     
 	JFrame frame = new JFrame();
     Screen screen;
     KeyListener keyboard;
     
-    MainFrame(Screen screen, KeyListener keyboard) {
+    public MainFrame(Screen screen, KeyListener keyboard) {
         this.screen = screen;
         this.keyboard = keyboard;
     }        

@@ -7,7 +7,7 @@ public class Console implements IODevice {
     }*/
 
     @Override
-    public void write(int addr, char data) {
+    public void write(int addr, byte data) {
         System.out.print((char)data);
     }
 

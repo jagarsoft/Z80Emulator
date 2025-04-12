@@ -21,7 +21,7 @@ public class ROMMemory implements Memory {
     public byte peek(int addr){ return rom[addr]; }
     
     @Override
-    public short getSize() { return (short)rom.length; }
+    public int getSize() { return rom.length; }
 
     @Override
     public void load(InputStream dataStream, int dest, int size) {
@@ -31,4 +31,9 @@ public class ROMMemory implements Memory {
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public void movemem(short org, short dst, short cont, MovememDirection dir) {
+        throw new UnsupportedOperationException();
+     }
 }

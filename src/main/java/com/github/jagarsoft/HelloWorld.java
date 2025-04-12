@@ -5,7 +5,7 @@ public class HelloWorld {
     public static void main(String[ ] arg) {
         Computer myComp = new Computer();
         myComp.addCPU(new Z80());
-        myComp.addIODevice(new short[]{0}, new Console());
+        myComp.addIODevice(new byte[]{0}, new Console());
         myComp.addMemory(0x0000, new ROMMemory(new byte[]{
                 0X21, 0x10, 0X00,       // 0000 LD HL, 0x0010
                 0x7E,                   // 0003 LD A, (HL)

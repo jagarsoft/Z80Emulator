@@ -1,5 +1,6 @@
-package com.github.jagarsoft.GUI;
+package com.github.jagarsoft.Zux;
 
+import com.github.jagarsoft.GUI.Screen;
 import com.github.jagarsoft.Logger;
 
 import javax.swing.*;
@@ -9,13 +10,16 @@ import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
-public class ZXSpectrumScreen implements Screen {
+public class ZuxScreen implements Screen {
     final double marginHorizontalRatio = 0.09375; // 9.375% del ancho
     final double marginVerticalRatio = 0.1667; // 16.67% del alto
     JFrame frame;
     JLayeredPane layeredPane;
     JPanel bottomPanel;
     TopPanel topPanel;
+
+    int cursor_x = 0;
+    int cursor_y = 0;
 
     // This image object is Spectrum's VRAM.
     private BufferedImage image = new BufferedImage(Screen.WIDTH, Screen.HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -30,17 +34,17 @@ public class ZXSpectrumScreen implements Screen {
         attr[5] = Color.CYAN;
         attr[6] = Color.YELLOW;
         attr[7] = Color.WHITE;
-     }
+    }
 
     private Color pendingColor;
 
     public void setBorder(byte color) {
         pendingColor = attr[color];
-         if (this.bottomPanel == null) {
-             return;
-         }
-         this.bottomPanel.setBackground(pendingColor);
-     }
+        if (this.bottomPanel == null) {
+            return;
+        }
+        this.bottomPanel.setBackground(pendingColor);
+    }
 
     public void drawPixel(int x, int y, Color color) {
         if (x >= 0 && x < image.getWidth() && y >= 0 && y < image.getHeight()) {
@@ -69,12 +73,12 @@ public class ZXSpectrumScreen implements Screen {
         Insets insets = frame.getInsets();
         return new Dimension(frame.getWidth() - insets.left - insets.right,
                 frame.getHeight() - insets.top - insets.bottom - frame.getJMenuBar().getHeight()
-                );
+        );
     }
 
     @Override
     public void repaint(Rectangle rect) {
-Logger.info("repaint rect: "+rect.toString());
+        Logger.info("repaint rect: "+rect.toString());
         Dimension usableDimension = usableDimension();
 
         //Fix TODO: shifts an unpainted gap
@@ -142,6 +146,34 @@ Logger.info("repaint rect: "+rect.toString());
         Logger.info("LayeredPane size: " + layeredPane.getWidth() + " x " + layeredPane.getHeight());
     }
 
+    public void putchar(byte data) {
+        switch(data) {
+            case '\r': cursor_x = 0; return;
+            case '\n': cursor_y++; return;
+        }
+
+        System.out.print('*');
+        System.out.printf("%c",data);
+        System.out.print('*');
+
+        if( ! (data == '\n' || data == '\r' || (0x20<=data && data<=0x7f) ) ) {
+            return;
+        }
+
+        byte[] c = ZXSpectrumCharset.getChar(data);
+        int pos_x = cursor_x * 8;
+        int pos_y = cursor_y * 8;
+        for(int y = 0; y < c.length; y++) {
+            data = c[y];
+            for(int x = 0; x<8; x++, data<<=1) {
+                if( ((data & 0x1000_0000) != 0) )
+                    drawPixel(pos_x+x, pos_y+y, attr[7]);//attr[1]); // set pixel to Ink Color.RED
+                else
+                    drawPixel(pos_x+x, pos_y+y, attr[0]); //attr[0]); // res pixel to Paper c[j]
+            }
+        }
+        cursor_x++;
+    }
 
     /*
      * Private Inner Class

@@ -1,7 +1,6 @@
 package com.github.jagarsoft.test;
 
-import com.github.jagarsoft.Computer;
-import com.github.jagarsoft.RAMMemory;
+import com.github.jagarsoft.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +25,22 @@ public class Z80Test {
 
                 () -> assertEquals(0x04, cpu.getF(), "EX_AF_AF_ Failed (F)"),
                 () -> assertEquals(0x02, cpu.getF_(), "EX_AF_AF_ Failed (F')")
+        );
+
+        cpu.setA((byte) 0x00);
+        cpu.setF((byte) 0x00); // this case tests a bug implementation in BitSet where all bits are clear
+
+        cpu.setA_((byte) 0x00);
+        cpu.setF_((byte) 0x00);
+
+        cpu.EX_AF_AF_();
+
+        assertAll("EX_AF_AF' Group",
+                () -> assertEquals(0x00, cpu.getA(), "EX_AF_AF_ Failed (A)"),
+                () -> assertEquals(0x00, cpu.getA_(), "EX_AF_AF_ Failed (A')"),
+
+                () -> assertEquals(0x00, cpu.getF(), "EX_AF_AF_ Failed (F)"),
+                () -> assertEquals(0x00, cpu.getF_(), "EX_AF_AF_ Failed (F')")
         );
     }
 
@@ -233,6 +248,16 @@ public class Z80Test {
 
         assertEquals((short) 0x256D, cpu.getHL(), "ADD HL, SP Failed: HL<>0x256D HL=" + Integer.toHexString(cpu.getHL()));
         assertNotEquals((short) 0x246E, cpu.getHL(), "ADD HL, SP Failed: HL Still 0x246E HL=" + Integer.toHexString(cpu.getHL()));
+
+        cpu.setHL((short)0xFFFF);
+        cpu.setDE((short)0x0001);
+
+        cpu.fetch((byte)0x19); // ADD HL, DE
+
+        assertAll(
+                () -> assertEquals((short)0x0000, cpu.getHL(), "ADD HL, DE Failed: HL<>0x0000"+Integer.toHexString(cpu.getHL())),
+                () -> assertTrue(cpu.getCF(), "ADD HL, DE Carry was not affected (C="+cpu.getCF()+")")
+        );
     }
 
     @Test
@@ -491,54 +516,121 @@ public class Z80Test {
         compTest.addCPU(cpu);
         compTest.addMemory(0x0000, new RAMMemory(2));
         cpu.setComputer(compTest);
-        compTest.poke(0x0000,(byte)0x17);
+        compTest.poke(0x0000,(byte)0xFF);
 
-        cpu.setB((byte)0x10);
-        cpu.setC((byte)0x11);
-        cpu.setD((byte)0x12);
-        cpu.setE((byte)0x13);
-        cpu.setH((byte)0x14);
-        cpu.setL((byte)0x15);
-        // (HL) = 0x16
-        cpu.setA((byte)0x16);
-
+        // 1
+        cpu.setB((byte)0x00);
+        cpu.setF((byte)0xFF);
         cpu.fetch((byte)0x04); // INC B
+        assertEquals((short)0x01, cpu.getB(), "INC B Failed: B<>0x01 = " + Integer.toHexString(cpu.getB()));
+        assertNotEquals((short)0x00, cpu.getB(), "INC B Failed: B still 0x00 = " + Integer.toHexString(cpu.getB()));
+        assertTrue(cpu.getCF(), "INC B Failed: C Flag was affected F=" + Integer.toHexString(cpu.getF()));
+        cpu.resCF();
+        cpu.resxF();
+        cpu.resyF();
+        assertEquals(0x00, cpu.getF(), "INC B Failed: : Others bits of Flag were affected F=" + Integer.toHexString(cpu.getF()));
+
+        // 2
+        cpu.setC((byte)0x7F);
+        cpu.setF((byte)0xFF);
         cpu.fetch((byte)0x0C); // INC C
+        assertEquals((byte)0x80, cpu.getC(), "INC C Failed: C<>0x80 = " + Integer.toHexString(cpu.getC()));
+        assertNotEquals((byte)0x7F, cpu.getC(), "INC C Failed: C still 0x7F = " + Integer.toHexString(cpu.getC()));
+        assertTrue(cpu.getSF(), "INC C Failed: S Flag was not affected");
+        assertTrue(cpu.getVF(), "INC C Failed: V Flag was not affected");
+        assertTrue(cpu.getHF(), "INC C Failed: H Flag was not affected");
+        assertFalse(cpu.getNF(), "INC C Failed: N Flag was not affected");
+        assertFalse(cpu.getZF(), "INC C Failed: Z Flag was not affected");
+        assertTrue(cpu.getCF(), "INC C Failed: C Flag was affected F=" + Integer.toHexString(cpu.getF()));
+        cpu.resSF();
+        cpu.resVF();
+        cpu.resHF();
+        cpu.resCF();
+        cpu.resxF();
+        cpu.resyF();
+        assertEquals(0x00, cpu.getF(), "INC C Failed: Others bits of Flag were affected F=" + Integer.toHexString(cpu.getF()));
+
+        // 3
+        cpu.setD((byte)0x80);
+        cpu.setF((byte) 0xFF);
         cpu.fetch((byte)0x14); // INC D
+        assertEquals((byte)0x81, cpu.getD(), "INC D Failed: D<>0x81 = " + Integer.toHexString(cpu.getD()));
+        assertNotEquals((byte)0x80, cpu.getD(), "INC D Failed: D still 0x80 = " + Integer.toHexString(cpu.getD()));
+        assertTrue(cpu.getSF(), "INC C Failed: S Flag was not affected");
+        assertTrue(cpu.getCF(), "INC C Failed: C Flag was affected F=" + Integer.toHexString(cpu.getF()));
+        cpu.resSF();
+        cpu.resCF();
+        cpu.resxF();
+        cpu.resyF();
+        assertEquals(0x00, cpu.getF(), "INC D Failed: Others bits of Flag were affected F=" + Integer.toHexString(cpu.getF()));
+
+        // 4
+        cpu.setE((byte)0xFF);
+        cpu.setF((byte) 0xFF);
         cpu.fetch((byte)0x1C); // INC E
+        assertEquals((byte)0x00, cpu.getE(), "INC E Failed: E<>0x00 = " + Integer.toHexString(cpu.getE()));
+        assertNotEquals((byte)0xFF, cpu.getE(), "INC E Failed: E still 0xFF = " + Integer.toHexString(cpu.getE()));
+        assertTrue(cpu.getZF(), "INC E Failed: Z Flag was not affected");
+        assertTrue(cpu.getHF(), "INC E Failed: H Flag was not affected");
+        assertTrue(cpu.getCF(), "INC C Failed: C Flag was affected F=" + Integer.toHexString(cpu.getF()));
+        cpu.resZF();
+        cpu.resHF();
+        cpu.resCF();
+        cpu.resxF();
+        cpu.resyF();
+        assertEquals(0x00, cpu.getF(), "INC E Failed: Others bits of Flag were affected F=" + Integer.toHexString(cpu.getF()));
+        
+        // 5
+        cpu.setH((byte)0x0F);
+        cpu.setF((byte) 0xFF);
         cpu.fetch((byte)0x24); // INC H
-        // INC (HL)
+        assertEquals((byte)0x10, cpu.getH(), "INC H Failed: H<>0x10 = " + Integer.toHexString(cpu.getH()));
+        assertNotEquals((byte)0x0F, cpu.getH(), "INC H Failed: H still 0x0F = " + Integer.toHexString(cpu.getH()));
+        assertTrue(cpu.getHF(), "INC H Failed: H Flag was not affected");
+        assertTrue(cpu.getCF(), "INC C Failed: C Flag was affected F=" + Integer.toHexString(cpu.getF()));
+        cpu.resHF();
+        cpu.resCF();
+        cpu.resxF();
+        cpu.resyF();
+        assertEquals(0x00, cpu.getF(), "INC H Failed: Others bits of Flag were affected F=" + Integer.toHexString(cpu.getF()));
+        
+        // 6
+        cpu.setL((byte)0x15);
+        cpu.setF((byte) 0xFF);
         cpu.fetch((byte)0x2C); // INC L
+        assertEquals((byte)0x16, cpu.getL(), "INC L Failed: L<>0x16 = " + Integer.toHexString(cpu.getL()));
+        assertNotEquals((byte)0x15, cpu.getL(), "INC L Failed: L still 0x15 = " + Integer.toHexString(cpu.getL()));
+        assertTrue(cpu.getCF(), "INC C Failed: C Flag was affected F=" + Integer.toHexString(cpu.getF()));
+        cpu.resCF();
+        cpu.resxF();
+        cpu.resyF();
+        assertEquals(0x00, cpu.getF(), "INC L Failed: : Others bits of Flag were affected F=" + Integer.toHexString(cpu.getF()));
+
+        cpu.setA((byte)0x16);
+        cpu.setF((byte) 0xFF);
         cpu.fetch((byte)0x3C); // INC A
-
-        assertAll("INC r[y] Group",
-                () -> assertEquals((short)0x11, cpu.getB(), "INC B Failed: B<>0x11 = " + Integer.toHexString(cpu.getB())),
-                () -> assertNotEquals((short)0x10, cpu.getB(), "INC B Failed: B still 0x10 = " + Integer.toHexString(cpu.getB())),
-
-                () -> assertEquals((short)0x12, cpu.getC(), "INC C Failed: C<>0x12 = " + Integer.toHexString(cpu.getC())),
-                () -> assertNotEquals((short)0x11, cpu.getC(), "INC C Failed: C still 0x11 = " + Integer.toHexString(cpu.getC())),
-
-                () -> assertEquals((short)0x13, cpu.getD(), "INC D Failed: D<>0x13 = " + Integer.toHexString(cpu.getD())),
-                () -> assertNotEquals((short)0x12, cpu.getD(), "INC D Failed: D still 0x12 = " + Integer.toHexString(cpu.getD())),
-
-                () -> assertEquals((short)0x14, cpu.getE(), "INC E Failed: E<>0x14 = " + Integer.toHexString(cpu.getE())),
-                () -> assertNotEquals((short)0x13, cpu.getE(), "INC E Failed: E still 0x13 = " + Integer.toHexString(cpu.getE())),
-
-                () -> assertEquals((short)0x15, cpu.getH(), "INC H Failed: H<>0x15 = " + Integer.toHexString(cpu.getH())),
-                () -> assertNotEquals((short)0x14, cpu.getH(), "INC H Failed: H still 0x14 = " + Integer.toHexString(cpu.getH())),
-
-                () -> assertEquals((short)0x16, cpu.getL(), "INC L Failed: L<>0x16 = " + Integer.toHexString(cpu.getL())),
-                () -> assertNotEquals((short)0x15, cpu.getL(), "INC L Failed: L still 0x15 = " + Integer.toHexString(cpu.getL()))
-        );
+        assertEquals((byte)0x17, cpu.getA(), "INC A Failed: A<>0x17 = " + Integer.toHexString(cpu.getA()));
+        assertNotEquals((byte)0x16, cpu.getA(), "INC A Failed: A still 0x16 = " + Integer.toHexString(cpu.getA()));
+        assertTrue(cpu.getCF(), "INC C Failed: C Flag was affected F=" + Integer.toHexString(cpu.getF()));
+        cpu.resCF();
+        cpu.resxF();
+        cpu.resyF();
+        assertEquals(0x00, cpu.getF(), "INC A Failed: : Others bits of Flag were affected F=" + Integer.toHexString(cpu.getF()));
 
         cpu.setHL((short)0x0000);
-
+        cpu.setF((byte) 0xFF);
         cpu.fetch((byte)0x34); // INC (HL)
-
-        assertAll("INC r[y] Group",
-                () -> assertEquals((short)0x18, compTest.peek(cpu.getHL()), "INC (HL) Failed: (HL)<>0x18 = " + Integer.toHexString(compTest.peek(cpu.getHL()))),
-                () -> assertNotEquals((short)0x17, compTest.peek(cpu.getHL()), "INC (HL) Failed: (HL) still 0x17 = " + Integer.toHexString(compTest.peek(cpu.getHL())))
-        );
+        assertEquals((byte)0x00, compTest.peek(cpu.getHL()), "INC (HL) Failed: (HL)<>0x18 = " + Integer.toHexString(compTest.peek(cpu.getHL())));
+        assertNotEquals((byte)0xFF, compTest.peek(cpu.getHL()), "INC (HL) Failed: (HL) still 0x17 = " + Integer.toHexString(compTest.peek(cpu.getHL())));
+        assertTrue(cpu.getZF(), "INC (HL) Failed: Z Flag was not affected");
+        assertTrue(cpu.getHF(), "INC (HL) Failed: H Flag was not affected");
+        assertTrue(cpu.getCF(), "INC C Failed: C Flag was affected F=" + Integer.toHexString(cpu.getF()));
+        cpu.resZF();
+        cpu.resHF();
+        cpu.resCF();
+        cpu.resxF();
+        cpu.resyF();
+        assertEquals(0x00, cpu.getF(), "INC (HL) Failed: Others bits of Flag were affected F=" + Integer.toHexString(cpu.getF()));
     }
 
     @Test
@@ -912,7 +1004,7 @@ public class Z80Test {
     }
 
     @Test
-    void testADD_A() {
+    void testADD_ARz() {
         Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setA((byte)0x10);
@@ -920,11 +1012,89 @@ public class Z80Test {
 
         cpu.fetch((byte)0x80);
 
-        assertEquals((byte) 0x30, cpu.getA(), "ADD A, B Failed: A<>0x30 = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0x30, cpu.getA(), "ADD A, B Failed: A<>0x30 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getNF(), "N flag must be OFF (N=" + cpu.getNF() + ")")
+        );
+
+        cpu.setA((byte)0x7F);
+        cpu.setB((byte)0x01);
+
+        cpu.fetch((byte)0x80);
+
+        assertAll(
+                () -> assertEquals((byte) 0x80, cpu.getA(), "ADD A, B Failed: A<>0x80 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getVF(), "Overflow flag must be ON (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0x04);
+        cpu.setB((byte)0xFE); // -2
+
+        cpu.fetch((byte)0x80);
+
+        assertAll(
+                () -> assertEquals((byte) 0x02, cpu.getA(), "ADD A, B Failed: A<>0x02 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getCF(), "Carry flag must be ON (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0x02);
+        cpu.setB((byte)0xFC); // -4
+
+        cpu.fetch((byte)0x80);
+
+        assertAll(
+                () -> assertEquals((byte) 0xFE, cpu.getA(), "ADD A, B Failed: A<>-2 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0xFE); // -2
+        cpu.setB((byte)0xFC); // -4
+
+        cpu.fetch((byte)0x80);
+
+        assertAll(
+                () -> assertEquals((byte) 0xFA, cpu.getA(), "ADD A, B Failed: A<>-6= " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getCF(), "Carry flag must be ON (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0x81); // -127
+        cpu.setB((byte)0xC2); // -62
+
+        cpu.fetch((byte)0x80);
+
+        assertAll(
+                () -> assertEquals((byte) 0x43, cpu.getA(), "ADD A, B Failed: A<>0x43 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getCF(), "Carry flag must be ON (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getVF(), "Overflow flag must be ON (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0);
+        cpu.setB((byte)0);
+
+        cpu.fetch((byte)0x80);
+
+        assertAll(
+                () -> assertEquals((byte) 0, cpu.getA(), "ADD A, B Failed: A<>0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getZF(), "Zero flag must be ON (Z=" + cpu.getZF() + ")")
+        );
+
+        cpu.setA((byte)0x0F);
+        cpu.setB((byte)1);
+
+        cpu.fetch((byte)0x80);
+
+        assertAll(
+                () -> assertEquals((byte) 0x10, cpu.getA(), "ADD A, B Failed: A<>0x10 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getHF(), "Half-carry flag must be ON (H=" + cpu.getHF() + ")")
+        );
     }
 
     @Test
-    void testADC_A() {
+    void testADC_ARz() {
         Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setA((byte)0x10);
@@ -933,7 +1103,10 @@ public class Z80Test {
 
         cpu.fetch((byte)0x88);
 
-        assertEquals((byte) 0x30, cpu.getA(), "ADC A, B; C=0 Failed: A<>0x30 = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0x30, cpu.getA(), "ADD A, B Failed: A<>0x30 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getNF(), "N flag must be OFF (N=" + cpu.getNF() + ")")
+        );
 
         cpu.setA((byte)0x10);
         cpu.setB((byte)0x20);
@@ -941,23 +1114,179 @@ public class Z80Test {
 
         cpu.fetch((byte)0x88);
 
-        assertEquals((byte) 0x31, cpu.getA(), "ADC A, B; C=1 Failed: A<>0x31 = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0x31, cpu.getA(), "ADD A, B Failed: A<>0x31 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getNF(), "N flag must be OFF (N=" + cpu.getNF() + ")")
+        );
+
+        cpu.setA((byte)0x7F);
+        cpu.setB((byte)0x01);
+        cpu.setCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertAll(
+                () -> assertEquals((byte) 0x81, cpu.getA(), "ADD A, B Failed: A<>0x81 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getVF(), "Overflow flag must be ON (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0x04);
+        cpu.setB((byte)0xFE); // -2
+        cpu.setCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertAll(
+                () -> assertEquals((byte) 0x03, cpu.getA(), "ADD A, B Failed: A<>0x03 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getCF(), "Carry flag must be ON (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0x02);
+        cpu.setB((byte)0xFC); // -4
+        cpu.setCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertAll(
+                () -> assertEquals((byte) 0xFF, cpu.getA(), "ADD A, B Failed: A<>-1 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0xFE); // -2
+        cpu.setB((byte)0xFC); // -4
+        cpu.setCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertAll(
+                () -> assertEquals((byte) 0xFB, cpu.getA(), "ADD A, B Failed: A<>-5= " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getCF(), "Carry flag must be ON (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0x81); // -127
+        cpu.setB((byte)0xC2); // -62
+        cpu.setCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertAll(
+                () -> assertEquals((byte) 0x44, cpu.getA(), "ADD A, B Failed: A<>0x44 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getCF(), "Carry flag must be ON (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getVF(), "Overflow flag must be ON (V=" + cpu.getVF() + ")")
+        );
+
+        cpu.setA((byte)0xFF);
+        cpu.setB((byte)0);
+        cpu.setCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertAll(
+                () -> assertEquals((byte) 0, cpu.getA(), "ADD A, B Failed: A<>0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getZF(), "Zero flag must be ON (Z=" + cpu.getZF() + ")")
+        );
+
+        cpu.setA((byte)0x0F);
+        cpu.setB((byte)0);
+        cpu.setCF();
+
+        cpu.fetch((byte)0x88);
+
+        assertAll(
+                () -> assertEquals((byte) 0x10, cpu.getA(), "ADD A, B Failed: A<>0x10 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getHF(), "Half-carry flag must be ON (H=" + cpu.getHF() + ")")
+        );
     }
 
     @Test
-    void testSUB_A() {
+    void testSUB_rz_A() {
         Z80ForTesting cpu = new Z80ForTesting();
 
-        cpu.setA((byte)0x20);
-        cpu.setB((byte)0x10);
+        cpu.setA((byte) 0x10);
+        cpu.setB((byte) 0x05);
 
-        cpu.fetch((byte)0x90);
+        cpu.fetch((byte) 0x90);
 
-        assertEquals((byte) 0x10, cpu.getA(), "SUB A, B Failed: A<>0x10 = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0x0B, cpu.getA(), "SUB A, B Failed: A<>0x0B = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getZF(), "Zero flag must be OFF (Z=" + cpu.getZF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")"),
+                () -> assertTrue(cpu.getNF(), "Negative flag must be ON (N=" + cpu.getNF() + ")")
+        );
+
+        cpu.setA((byte) 0x10);
+        cpu.setB((byte) 0x10);
+
+        cpu.fetch((byte) 0x90);
+
+        assertAll(
+                () -> assertEquals((byte) 0x00, cpu.getA(), "SUB A, B Failed: A<>0x00 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getZF(), "Zero flag must be ON (Z=" + cpu.getZF() + ")"),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")"),
+                () -> assertTrue(cpu.getNF(), "Negative flag must be ON (N=" + cpu.getNF() + ")")
+        );
+
+        cpu.setA((byte) 0x7F);
+        cpu.setB((byte) 0xFF); // -1
+
+        cpu.fetch((byte) 0x90);
+
+        assertAll(
+                () -> assertEquals((byte) 0x80, cpu.getA(), "SUB A, B Failed: A<>0x80 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getVF(), "Overflow flag must be ON (V=" + cpu.getVF() + ")"),
+                () -> assertTrue(cpu.getSF(), "Sign flag must be ON (S=" + cpu.getSF() + ")"),
+                () -> assertFalse(cpu.getZF(), "Zero flag must be OFF (Z=" + cpu.getZF() + ")"),
+                () -> assertTrue(cpu.getNF(), "Negative flag must be ON (N=" + cpu.getNF() + ")")
+        );
+
+        cpu.setA((byte) 0x10);
+        cpu.setB((byte) 0x20);
+
+        cpu.fetch((byte) 0x90);
+
+        assertAll(
+                () -> assertEquals((byte) 0xF0, cpu.getA(), "SUB A, B Failed: A<>0xF0 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getCF(), "Carry flag must be ON (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getSF(), "Sign flag must be ON (S=" + cpu.getSF() + ")"),
+                () -> assertFalse(cpu.getZF(), "Zero flag must be OFF (Z=" + cpu.getZF() + ")"),
+                () -> assertTrue(cpu.getNF(), "Negative flag must be ON (N=" + cpu.getNF() + ")")
+        );
+
+        cpu.setA((byte) 0x1E);
+        cpu.setB((byte) 0x0F);
+
+        cpu.fetch((byte) 0x90);
+
+        assertAll(
+                () -> assertEquals((byte) 0x0F, cpu.getA(), "SUB A, B Failed: A<>0x0F = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getHF(), "Half-carry flag must be ON (H=" + cpu.getHF() + ")"),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getZF(), "Zero flag must be OFF (Z=" + cpu.getZF() + ")"),
+                () -> assertTrue(cpu.getNF(), "Negative flag must be ON (N=" + cpu.getNF() + ")")
+        );
+
+        cpu.setA((byte) 0x80); // -128
+        cpu.setB((byte) 0x80); // -128
+
+        cpu.fetch((byte) 0x90);
+
+        assertAll(
+                () -> assertEquals((byte) 0x00, cpu.getA(), "SUB A, B Failed: A<>0x00 = " + Integer.toHexString(cpu.getA())),
+                () -> assertTrue(cpu.getZF(), "Zero flag must be ON (Z=" + cpu.getZF() + ")"),
+                () -> assertFalse(cpu.getSF(), "Sign flag must be OFF (S=" + cpu.getSF() + ")"),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getNF(), "Negative flag must be ON (N=" + cpu.getNF() + ")")
+        );
     }
 
     @Test
-    void testSBC_A() {
+    void testSBC_ARz() {
         Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setA((byte)0x20);
@@ -966,7 +1295,13 @@ public class Z80Test {
 
         cpu.fetch((byte)0x98);
 
-        assertEquals((byte) 0x10, cpu.getA(), "SBC A, B; C=0 Failed: A<>0x10 = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0x10, cpu.getA(), "SBC A, B; C=0 Failed: A<>0x10 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getZF(), "Zero flag must be OFF (Z=" + cpu.getZF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")"),
+                () -> assertTrue(cpu.getNF(), "Negative flag must be ON (N=" + cpu.getNF() + ")")
+        );
 
         cpu.setA((byte)0x20);
         cpu.setB((byte)0x10);
@@ -974,11 +1309,17 @@ public class Z80Test {
 
         cpu.fetch((byte)0x98);
 
-        assertEquals((byte) 0x0F, cpu.getA(), "SBC A, B; C=1 Failed: A<>0x0F = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0x0F, cpu.getA(), "SBC A, B; C=1 Failed: A<>0x0F = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getZF(), "Zero flag must be OFF (Z=" + cpu.getZF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag must be OFF (V=" + cpu.getVF() + ")"),
+                () -> assertTrue(cpu.getNF(), "Negative flag must be ON (N=" + cpu.getNF() + ")")
+        );
     }
 
     @Test
-    void testAND() {
+    void testANDRz() {
         Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setA((byte)0xF0);
@@ -986,11 +1327,15 @@ public class Z80Test {
 
         cpu.fetch((byte)0xA0);
 
-        assertEquals((byte) 0x00, cpu.getA(), "AND B Failed: A<>0x00 = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0x00, cpu.getA(), "AND B Failed: A<>0x00 = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "AND B Failed: Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getPF(), "AND B Failed: Parity flag must be ON (P=" + cpu.getPF() + ")")
+        );
     }
 
     @Test
-    void testXOR() {
+    void testXORRz() {
         Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setA((byte)0xF0);
@@ -998,11 +1343,15 @@ public class Z80Test {
 
         cpu.fetch((byte)0xA8);
 
-        assertEquals((byte) 0x0F, cpu.getA(), "XOR B Failed: A<>0x0F = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0x0F, cpu.getA(), "XOR B Failed: A<>0x0F = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "XOR B Failed: Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getPF(), "XOR B Failed: Parity flag must be ON (P=" + cpu.getPF() + ")")
+        );
     }
 
     @Test
-    void testOR() {
+    void testORRz() {
         Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setA((byte)0xF0);
@@ -1010,11 +1359,15 @@ public class Z80Test {
 
         cpu.fetch((byte)0xB0);
 
-        assertEquals((byte) 0xFF, cpu.getA(), "OR B Failed: A<>0xFF = " + Integer.toHexString(cpu.getA()));
+        assertAll(
+                () -> assertEquals((byte) 0xFF, cpu.getA(), "OR B Failed: A<>0xFF = " + Integer.toHexString(cpu.getA())),
+                () -> assertFalse(cpu.getCF(), "OR B Failed: Carry flag must be OFF (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getPF(), "OR B Failed: Parity flag must be ON (P=" + cpu.getPF() + ")")
+        );
     }
 
     @Test
-    void testCP() {
+    void testCPRz() {
         Z80ForTesting cpu = new Z80ForTesting();
 
         cpu.setA((byte)0xF0);
@@ -1022,7 +1375,10 @@ public class Z80Test {
 
         cpu.fetch((byte)0xB8);
 
-        assertTrue(cpu.getZF(), "CP B Failed: Z (true) = " + cpu.getZF());
+        assertAll(
+                () -> assertTrue(cpu.getZF(), "CP B Failed: Z (true) = " + cpu.getZF()),
+                () -> assertTrue(cpu.getNF(), "N flag must be ON (N=" + cpu.getNF() + ")")
+        );
 
         cpu.setA((byte)0xF0);
         cpu.setB((byte)0x0F);
@@ -1324,8 +1680,8 @@ public class Z80Test {
         cpu.fetch((byte)0xF1); // POP AF
 
         assertAll("POP rp2[y] Group",
-                () -> assertEquals((byte)0xFF, cpu.getA(), "POP AF Failed: AF was not modified (A=" + Integer.toHexString(cpu.getA()) + ")")
-                //TODO () -> assertEquals((byte)0x00, cpu.getF(), "POP AF Failed: AF was not modified (F=" + Integer.toHexString(cpu.getF()) + ")")
+                () -> assertEquals((byte)0xFF, cpu.getA(), "POP AF Failed: AF was not modified (A=" + Integer.toHexString(cpu.getA()) + ")"),
+                () -> assertEquals((byte)0x00, cpu.getF(), "POP AF Failed: AF was not modified (F=" + Integer.toHexString(cpu.getF()) + ")")
         );
     }
     
@@ -1635,10 +1991,75 @@ public class Z80Test {
     }
 
     @Test
-    void testOUT_n_A() {} // TODO
+    void testOUT_n_A_IN_n_A() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        ZXSpectrumIOTest iotest = new ZXSpectrumIOTest();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        compTest.addIODevice((byte)0xFF, new ZXSpectrumIO(iotest, iotest));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0xFF);
+
+        cpu.setPC(0x0000);
+        cpu.setA((byte) 0x80);
+
+        cpu.OUT_n_A();
+
+        cpu.setA((byte) 0x00); // sentinel
+
+        cpu.setPC(0x0000);
+        cpu.IN_A_n();
+
+        assertAll("OUT/IN n,A Group",
+                () -> assertEquals((byte) 0x80, cpu.getA(), "OUT (n), A Failed: A<>0x80 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0x00, cpu.getA(), "OUT (n), A Failed: A<>0x80 = " + Integer.toHexString(cpu.getA()))
+        );
+    }
+
+    private static class ZXSpectrumIOTest implements IODevice {
+        private byte data;
+
+        @Override
+        public void write(int addr, byte data) {
+            this.data = data;
+        }
+
+        @Override
+        public byte read(int addr) {
+            return this.data;
+        }
+    }
 
     @Test
-    void testIN_A_n() {} // TODO
+    void OUT_C_r_y_IN_C_r_y() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        ZXSpectrumIOTest iotest = new ZXSpectrumIOTest();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(4));
+        compTest.addIODevice((byte)0xFF, new ZXSpectrumIO(iotest, iotest));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0xED);
+        compTest.poke(0x0001, (byte) 0x79);
+        compTest.poke(0x0002, (byte) 0xED);
+        compTest.poke(0x0003, (byte) 0x78);
+
+        cpu.setPC(0x0000);
+        cpu.setA((byte) 0x80);
+        cpu.setC((byte) 0xFF);
+
+        cpu.fetch(); // OUT (C), A
+
+        cpu.setA((byte) 0x00); // sentinel
+
+        cpu.fetch(); // IN A, (C)
+
+        assertAll("OUT/IN n,A Group",
+                () -> assertEquals((byte) 0x80, cpu.getA(), "OUT (n), A Failed: A<>0x80 = " + Integer.toHexString(cpu.getA())),
+                () -> assertNotEquals((byte) 0x00, cpu.getA(), "OUT (n), A Failed: A<>0x80 = " + Integer.toHexString(cpu.getA()))
+        );
+    }
 
     @Test
     void testEX_SP_HL() {
@@ -1685,10 +2106,59 @@ public class Z80Test {
     }
 
     @Test
-    void testDI() {} // TODO
+    void testDI() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(0x100));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0); // NOP
+
+        // ISR RST 38h
+        compTest.poke(0x0038, (byte) 0xAF); // XOR A
+
+        cpu.reset();
+        cpu.setSP((short) 0x100);
+        cpu.DI();
+        cpu.setA((byte) 1);
+
+        cpu.interrupt(); // RST PC to 38h
+
+        cpu.fetch(); // NOP or XOR A
+
+        assertAll("DI Group",
+                () -> assertEquals((short)0x01, cpu.getA(), "DI Failed: A was modified (A=" + cpu.getA() + ")")
+        );
+
+    }
 
     @Test
-    void testEI() {} // TODO
+    void testEI() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(0x100));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0); // NOP
+
+        // ISR RST 38h
+        compTest.poke(0x0038, (byte) 0xAF); // XOR A
+
+        cpu.reset();
+        cpu.setSP((short) 0x100);
+        cpu.fetch((byte) 0xFB); // EI
+        cpu.setA((byte) 1);
+
+        cpu.fetch((byte) 0); // dummy instruction behind EI is protected against interruptions
+        cpu.interrupt(); // RST PC to 38h
+
+        cpu.fetch(); // NOP or XOR A
+
+        assertAll("EI Group",
+                () -> assertEquals((short)0x00, cpu.getA(), "EI Failed: A was not modified (A=" + cpu.getA() + ")")
+        );
+
+    }
 
     @Test
     void testCALL_cc_y_nn_MustNotJump() {
@@ -2264,6 +2734,152 @@ public class Z80Test {
 
                 () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "RST 0x00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
                 () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "RST 0x00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001)))
+        );
+    }
+
+    @Test
+    void testSBC_HL_rp_p() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(2));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0xED);
+        compTest.poke(0x0001, (byte) 0x52);
+
+        cpu.setPC(0x0000);
+        cpu.setDE((short) 0xFFFF);
+        cpu.setHL((short) 0x3FFF);
+        cpu.resCF(); // Carry = 0
+
+        cpu.fetch(); // SBC_HL_rp_p
+
+        assertAll("SBC_HL_rp_p Group",
+                () -> assertEquals((short)0x4000, cpu.getHL(), "SBC_HL_rp_p Failed: HL was not modified (HL=" + cpu.getHL() + ")"),
+                () -> assertTrue(cpu.getCF(), "Carry flag was not affected (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getZF(), "Zero flag was not affected (Z=" + cpu.getZF() + ")"),
+                () -> assertFalse(cpu.getSF(), "Sign flag was not affected (S=" + cpu.getSF() + ")")
+        );
+
+        cpu.setPC(0x0000);
+        cpu.setDE((short) 0xFFFF);
+        cpu.setHL((short) 0x0000);
+        cpu.setCF(); // Carry = 1
+
+        cpu.fetch(); // SBC_HL_rp_p
+
+        assertAll("SBC_HL_rp_p Group",
+                () -> assertEquals((short)0x0000, cpu.getHL(), "SBC_HL_rp_p Failed: HL was not modified (HL=" + cpu.getHL() + ")"),
+                () -> assertTrue(cpu.getCF(), "Carry flag was not affected (C=" + cpu.getCF() + ")"),
+                () -> assertTrue(cpu.getZF(), "Zero flag was not affected (Z=" + cpu.getZF() + ")"),
+                () -> assertFalse(cpu.getSF(), "Sign flag was not affected (S=" + cpu.getSF() + ")")
+        );
+
+        cpu.setPC(0x0000);
+        cpu.setDE((short) 0xFFFF);
+        cpu.setHL((short) 0x8000);
+        cpu.resCF(); // Carry = 0
+
+        cpu.fetch(); // SBC_HL_rp_p
+
+        assertAll("SBC_HL_rp_p Group",
+                () -> assertEquals((short)0x8001, cpu.getHL(), "SBC_HL_rp_p Failed: HL was not modified (HL=" + cpu.getHL() + ")"),
+                () -> assertTrue(cpu.getCF(), "Carry flag was not affected (C=" + cpu.getCF() + ")"),
+                () -> assertFalse(cpu.getZF(), "Zero flag was not affected (Z=" + cpu.getZF() + ")"),
+                () -> assertTrue(cpu.getSF(), "Sign flag was not affected (S=" + cpu.getSF() + ")"),
+                () -> assertFalse(cpu.getVF(), "Overflow flag was affected (V=" + cpu.getVF() + ")")
+        );
+    }
+
+    @Test
+    void testSET_y_IY_d() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(8));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0xFD);
+        compTest.poke(0x0001, (byte) 0xCB);
+        compTest.poke(0x0002, (byte) 0x04);
+        compTest.poke(0x0003, (byte) 0xCE);
+        compTest.poke(0x0004, (byte) 0x00);
+
+        cpu.setPC(0x0000);
+        cpu.setIY((short) 0x0000);
+
+        cpu.fetch(); // SET 1, (IY + 4);
+    }
+
+    @Test
+    void testInterrupt() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(0x100));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0038, (byte) 0xFB); // EI
+        compTest.poke(0x0001, (byte) 0xC9); // RET
+        compTest.poke(0x0002, (byte) 0x00);
+        compTest.poke(0x0003, (byte) 0x00);
+        compTest.poke(0x0004, (byte) 0x00);
+
+        cpu.reset();
+        cpu.setSP((short) 0x0004);
+
+        cpu.DI();
+
+        cpu.interrupt();
+
+        cpu.fetch((byte) 0xFB); // EI
+
+        cpu.interrupt();
+
+        cpu.fetch((byte) 0x00);
+
+        cpu.interrupt();
+
+
+        cpu.fetch(); // RST 38 -> EI
+        cpu.fetch(); //     39 -> RET
+
+    }
+
+    @Test
+    void testHALT() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(0x100));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0xFB); // EI
+        compTest.poke(0x0001, (byte) 0x76); // HALT
+        compTest.poke(0x0002, (byte) 0xAF); // XOR A
+        // RST 38h
+        compTest.poke(0x0038, (byte) 0xFB); // EI
+        compTest.poke(0x0039, (byte) 0xC9); // RET
+
+        cpu.reset();
+        cpu.setSP((short) 0x0100);
+        cpu.setA((byte) 1); // sentinel
+
+        cpu.fetch(); // EI
+        cpu.fetch(); // HALT CPU until next INT
+        cpu.fetch(); // XOR A must not executed
+
+        cpu.interrupt(); // INT now
+
+        assertAll("HALT Group",
+                () -> assertEquals((short)0x01, cpu.getA(), "HALT Failed: A was modified (A=" + cpu.getA() + ")")
+        );
+
+        // execute ISR now
+        cpu.fetch(); // EI
+        cpu.fetch(); // RET
+
+        cpu.fetch(); // XOR A must be executed now
+
+        assertAll("HALT Group",
+                () -> assertEquals((short)0x00, cpu.getA(), "HALT Failed: A was not modified (A=" + cpu.getA() + ")")
         );
     }
 }

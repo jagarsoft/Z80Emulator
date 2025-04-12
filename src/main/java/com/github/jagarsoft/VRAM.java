@@ -10,7 +10,7 @@ public class VRAM implements Memory {
     private Screen screen;
     private byte[] ram;
     private Rectangle r = null;
-    public short size;
+    public int size;
 
     public VRAM(Screen screen){
         this.screen = screen;
@@ -23,16 +23,18 @@ public class VRAM implements Memory {
         ram[addr] = data;
         if( addr < 0x5800 - 0x4000 ) { // pixels map
             int[] point = new int[2]; // (x, y) of the pixel
-            int[] attr  = new int[2]; // (paper, ink)
             int[] pointLR = new int[2]; // (c, r) of the char
+            int[] attr  = new int[2]; // (paper, ink)
+
             transformZX(addr, point);
-            //transformZXattr(point, attr, pointLR);
-System.out.println(++k+": HL = "+Integer.toHexString(addr)+" x="+point[0]+" y="+point[1]+" -> "+Integer.toHexString(((byte)(data&0xFF))));
+            transformZXattr(point, pointLR, attr);
+System.out.println(++k+": HL = "+Integer.toHexString(0x4000+addr)+" x="+point[0]+" y="+point[1]+" -> "+Integer.toHexString(((byte)(data&0xFF))));
+System.out.println("c="+pointLR[0]+" r="+pointLR[1]+" paper="+attr[0]+" ink="+attr[1]);
             for(int i = 0, j = 0; i<8; i++, data<<=1, j%=4) {
                 if( ((data & 0x1000_0000) != 0) )
-                    screen.drawPixel(point[0] + i, point[1], Color.RED);//attr[1]); // set pixel to Ink
+                    screen.drawPixel(point[0] + i, point[1], attr[1]);//attr[1]); // set pixel to Ink Color.RED
                 else
-                    screen.drawPixel(point[0] + i, point[1], c[j]); //attr[0]); // res pixel to Paper
+                    screen.drawPixel(point[0] + i, point[1], attr[0]); //attr[0]); // res pixel to Paper c[j]
                 System.out.println(j++);
             }
             this.r = new Rectangle(point[0], point[1], 8, 1);
@@ -46,10 +48,25 @@ System.out.println(++k+": HL = "+Integer.toHexString(addr)+" x="+point[0]+" y="+
         }
    }
 
-    public short getSize(){ return size; }
+    public int getSize(){ return size; }
 
     @Override
     public void load(InputStream dataStream, int dest, int size) {
+
+    }
+
+    @Override
+    public void movemem(short org, short dst, short cont, MovememDirection dir) {
+        switch (dir) {
+            case FORWARD:
+                while (cont-- > 0)
+                    ram[dst++] = ram[org++];
+                break;
+            case REVERSE:
+                while (cont-- > 0)
+                    ram[dst--] = ram[org--];
+                break;
+        }
 
     }
 
@@ -76,6 +93,7 @@ System.out.println(++k+": HL = "+Integer.toHexString(addr)+" x="+point[0]+" y="+
         point[0] = x*8;
         point[1] = y;
     }
+
     private void transformZX(int addr, int[] point) {
         int x, y;
         byte h, l;
@@ -109,16 +127,16 @@ System.out.println(++k+": HL = "+Integer.toHexString(addr)+" x="+point[0]+" y="+
             point[1] = y;
     }*/
 
-    private void transformZXattr(int[] point, int[] attr, int[] pointLR) {
+    private void transformZXattr(int[] point, int[] pointLR, int[] attr) {
         int c, r;
 
-            c = point[0] / 32;
-            r = point[1] / 24;
+            c = point[0] / 8;
+            r = point[1] / 8;
 
             pointLR[0] = c;
             pointLR[1] = r;
 
-            attr[0] = ram[0x5B00 + r*32 + c] & 0b0011_1000; // Paper
-            attr[1] = ram[0x5B00 + r*32 + c] & 0b0000_0111; // Ink
+            attr[0] = (ram[0x5800-0x4000 + r*32 + c] & 0b0011_1000) >> 3; // Paper
+            attr[1] = ram[0x5800-0x4000 + r*32 + c] & 0b0000_0111; // Ink
     }
 }

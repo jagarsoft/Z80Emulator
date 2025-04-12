@@ -5,10 +5,10 @@ import com.github.jagarsoft.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyListener;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ZXSpectrumEmulator {
     static byte[] rom = new byte[16 * 1024];
@@ -112,8 +112,10 @@ public class ZXSpectrumEmulator {
         ZXSpectrumScreen screen = new ZXSpectrumScreen();
         IODevice keyboard = new ZXSpectrumKeyboard();
         Z80 cpu;
+        Z80Disassembler disassembler;
         Memory m;
         VRAM v;
+        final AtomicBoolean triggerFlag = new AtomicBoolean(false);
 
         Computer spectrum = new Computer();
         spectrum.addCPU(cpu = new Z80());
@@ -121,62 +123,96 @@ public class ZXSpectrumEmulator {
         spectrum.addMemory(0x4000, v = new VRAM(screen));
         spectrum.addMemory(0x8000, new RAMMemory(16 * 1024));
         spectrum.addMemory(0xC000, new RAMMemory(16 * 1024));
-        spectrum.addIODevice((short)0xFE, new ZXSpectrumIO(keyboard, new ZXSpectrumBeeperTapeAndBorder()));
+        spectrum.addIODevice((byte)0xFE, new ZXSpectrumIO(keyboard, new ZXBorder(screen)));
+        disassembler = new Z80Disassembler(cpu);
+        disassembler.setComputer(spectrum);
 
         try {
-            spectrum.load(ZXSpectrumEmulator.class.getResourceAsStream("48.rom"));
+            InputStream dataStream = ZXSpectrumEmulator.class.getResourceAsStream("/48.rom");
+Logger.info("Reading rom...: " + dataStream);
+            spectrum.load(dataStream);
+            dataStream.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        spectrum.reset();
+    spectrum.reset();
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                MainFrame mf = new MainFrame(screen, (KeyListener) keyboard);
-                mf.init("ZX Spectrum Emulator v0.2" /*, zx*/);
-                mf.createMenuBar();
-                mf.createPanels();
-                mf.show();
+    SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+            MainFrame mf = new MainFrame(screen, (KeyListener) keyboard);
+            mf.init("ZX Spectrum Emulator v0.3" /*, zx*/);
+            mf.createMenuBar();
+            mf.createPanels();
+            mf.show();
 
-                /*Computer zx = createZXSpectrum(screen);*/
-            }
-        });
+            //Computer zx = createZXSpectrum(screen);
+        }
+    });
 
-        SwingWorker worker = new SwingWorker<Void, Rectangle>() {
-            @Override
-            protected Void doInBackground() {
-                //spectrum.run();
-                for (; ; ) {
-                    int pc = cpu.getPC();
-                    byte opC = spectrum.peek(pc);
-                    Rectangle r;
-                    cpu.fetch(opC); // fetch opCode
-                    r = v.getRectangle();
-                    if (r != null) {
-                        publish(r);
-                    }
-                    if (opC == 0x76) break; // is HALT?
+    SwingWorker worker = new SwingWorker<Void, Rectangle>() {
+        @Override
+        protected Void doInBackground() {
+            long startTime, endTime;
+            long startTick, endTick;
+            startTime = startTick = System.nanoTime();
+            //spectrum.run();
+            for (int cont = 0; ; cont++) { // for(;;)
+                int pc = cpu.getPC();
+                Logger.info("fetch ");
+                byte opC = spectrum.peek(pc);
+                disassembler.fetch(opC);
+                cpu.fetch(opC); // fetch opCode
+                Rectangle r = v.getRectangle();
+                if (r != null) {
+                    publish(r);
                 }
-                return null;
-            }
-
-            @Override
-            protected void process(List<Rectangle> chunks) {
-                for (Rectangle rect : chunks) {
-                    screen.repaint(rect);
+                //if (opC == 0x76) break; // is HALT?
+                //if( cpu.getPC2() == 0x129C ) return null;
+                endTime = System.nanoTime();
+                long duration = endTime - startTime;
+                //if (duration > 20_000_000) {
+                if (duration > 19_999_000) {
+                    Logger.tick("Tiempo de ejecución: " + duration + " nanosegundos (" + cont + ")");
+                    Logger.tick("Tiempo de ejecución: " + (duration / 1_000_000.0) + " milisegundos");
+                    cont = 0;
+                    startTime = System.nanoTime();
+                }
+                if (triggerFlag.getAndSet(false)) {
+                    endTick = System.nanoTime();
+                    Logger.tick("TICK !!!");
+                    long durationTick = endTick - startTick;
+                    Logger.tick("Tiempo TICK: " + durationTick + " nanosegundos (" + cont + ")");
+                    Logger.tick("Tiempo TICK: " + (durationTick / 1_000_000.0) + " milisegundos");
+                    startTick = System.nanoTime();
+                    cpu.interrupt();
                 }
             }
-        };
+        }
 
-        worker.execute();
+        @Override
+        protected void process(List<Rectangle> chunks) {
+            for (Rectangle rect : chunks) {
+                screen.repaint(rect);
+            }
+        }
+    };
 
+    SwingWorker<Void, Void> timerWorker = new SwingWorker<Void, Void>() {
+        @Override
+        protected Void doInBackground() throws Exception {
+            while (true) {
+                Thread.sleep(19, 125_000); // 1/50 = 20 ms
+                triggerFlag.set(true); // Trigger INT
+            }
+        }
+    };
+
+    timerWorker.execute();
+    worker.execute();
+/*}*/
     }
     
-    private static /*Computer TODO*/ void createZXSpectrum(Screen screen) {
-
-
-
-    }
+    //private static /*Computer TODO*/ void createZXSpectrum(Screen screen) {}
 }

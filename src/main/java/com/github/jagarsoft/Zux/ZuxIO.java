@@ -1,12 +1,14 @@
-package com.github.jagarsoft;
+package com.github.jagarsoft.Zux;
 
-public class ZXSpectrumIO implements IODevice {
+import com.github.jagarsoft.IODevice;
+
+public class ZuxIO implements IODevice {
     IODevice in;
     IODevice out;
 
-    public ZXSpectrumIO(IODevice keyboard, IODevice zxBorder) {
+    public ZuxIO(IODevice keyboard, IODevice zuxTerminal) {
         in = keyboard;
-        out = zxBorder;
+        out = zuxTerminal;
     }
 
     @Override

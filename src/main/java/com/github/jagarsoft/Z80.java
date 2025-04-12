@@ -4,11 +4,6 @@ import java.util.BitSet;
 
 public class Z80 implements Z80OpCode {
 
-    private boolean CB_prefix_seen = false;
-    private boolean DD_prefix_seen = false;
-    private boolean ED_prefix_seen = false;
-    private boolean FD_prefix_seen = false;
-
     protected class Register {
         public byte A;
         public byte B;
@@ -21,21 +16,24 @@ public class Z80 implements Z80OpCode {
     }
 
     //*** Begin Dispatcher Section
-    static int x;
-    static int y;
-    static int z;
-    static int p;
-    static int q;
+    protected int x; // xx-- ----
+    protected int y; // --yy y---
+    protected int z; // ---- -zzz
+    protected int p; // --pp ----
+    protected int q; // ---- q---
+    protected int d; // displacement for IX and IY
 
     // Array to store reference to methods of different implementations
-    static OpCode[][][] opCodes = new OpCode[4][8][8];
-    static OpCode[][][] CBopCodes = new OpCode[4][8][8];
-    static OpCode[][][] DDopCodes = new OpCode[4][8][8];
-    static OpCode[][][] EDopCodes = new OpCode[4][8][8];
-    static OpCode[][][] FDopCodes = new OpCode[4][8][8];
+    protected OpCode[][][] opCodes   = new OpCode[4][8][8];
+    protected OpCode[][][] CBopCodes = new OpCode[4][8][8];
+    protected OpCode[][][] EDopCodes = new OpCode[4][8][8];
+    protected OpCode[][][] DDopCodes = new OpCode[4][8][8];
+    protected OpCode[][][] FDopCodes = new OpCode[4][8][8];
+    protected OpCode[][][] FDCBopCodes=new OpCode[4][8][8];
 
-    private void dispatcher(Z80OpCode opC) {
+    protected void dispatcher(Z80OpCode opC) {
         // According to http://www.z80.info/decoding.htm
+        // and http://www.z80.info/z80code.txt
         // x = 0
         // z=0 [x][z][y]
         opCodes[0][0][0] = opC::NOP;
@@ -111,21 +109,22 @@ public class Z80 implements Z80OpCode {
         opCodes[0][7][7] = opC::CCF;
         // x = 1
         // Exception: 7 * 7 combinations managed in fetch
-        // z=6 [x][z][y]
+        //     [x][z][y] (z=y=0 is dummy))
         opCodes[1][0][0] = opC::LD_r_y_r_z;
+        opCodes[1][6][6] = opC::HALT;
 
-        // x = 2, z = 0..7
-        // Exception: iterate over z instead of y are 7 * 7 combinations managed in fetch,
+        // x = 2, z = 0..7 Arithmetic & Logical instructions
+        // Exception: iterates over z instead of y are 7 * 7 combinations managed in fetch,
         // but still opC::PTR is needed
-        //     [x][z][y]
-        opCodes[2][0][0] = opC::ADD_A;
-        opCodes[2][0][1] = opC::ADC_A;
-        opCodes[2][0][2] = opC::SUB;
-        opCodes[2][0][3] = opC::SBC_A;
-        opCodes[2][0][4] = opC::AND;
-        opCodes[2][0][5] = opC::XOR;
-        opCodes[2][0][6] = opC::OR;
-        opCodes[2][0][7] = opC::CP;
+        //     [x][z][y] (z=0 is dummy)
+        opCodes[2][0][0] = opC::ADD_A_r_z;
+        opCodes[2][0][1] = opC::ADC_A_r_z;
+        opCodes[2][0][2] = opC::SUB_r_z;
+        opCodes[2][0][3] = opC::SBC_A_r_z;
+        opCodes[2][0][4] = opC::AND_r_z;
+        opCodes[2][0][5] = opC::XOR_r_z;
+        opCodes[2][0][6] = opC::OR_r_z;
+        opCodes[2][0][7] = opC::CP_r_z;
 
         // x = 3
         // z=0 [x][z][y]
@@ -157,13 +156,16 @@ public class Z80 implements Z80OpCode {
         opCodes[3][2][7] = opC::JP_cc_y_nn;
         // z=3 [x][z][y]
         opCodes[3][3][0] = opC::JP_nn;
+
+        /* CB Prefix */
         opCodes[3][3][1] = opC::CB_prefix;
+
         opCodes[3][3][2] = opC::OUT_n_A;
         opCodes[3][3][3] = opC::IN_A_n;
         opCodes[3][3][4] = opC::EX_SP_HL;
         opCodes[3][3][5] = opC::EX_DE_HL;
-        opCodes[3][3][6] = opC::DI; // TODO
-        opCodes[3][3][7] = opC::EI; // TODO
+        opCodes[3][3][6] = opC::DI;
+        opCodes[3][3][7] = opC::EI;
         // z=4 [x][z][y]
         opCodes[3][4][0] = opC::CALL_cc_y_nn;
         opCodes[3][4][1] = opC::CALL_cc_y_nn;
@@ -179,9 +181,16 @@ public class Z80 implements Z80OpCode {
         opCodes[3][5][0b100] = opC::PUSH_rp2_p;
         opCodes[3][5][0b110] = opC::PUSH_rp2_p;
         opCodes[3][5][0b001] = opC::CALL_nn;
-//        opCodes[3][5][0b011] = opC::DD_prefix; TODO
+
+        /* DD Prefix */
+        opCodes[3][5][0b011] = opC::DD_prefix;
+
+        /* ED Prefix */
         opCodes[3][5][0b101] = opC::ED_prefix;
-//        opCodes[3][5][0b111] = opC::FD_prefix;
+
+        /* FD Prefix */
+        opCodes[3][5][0b111] = opC::FD_prefix;
+
         // z=6 [x][z][y]
         opCodes[3][6][0] = opC::ADD_A_n;
         opCodes[3][6][1] = opC::ADC_A_n;
@@ -201,44 +210,250 @@ public class Z80 implements Z80OpCode {
         opCodes[3][7][6] = opC::RST_y_8;
         opCodes[3][7][7] = opC::RST_y_8;
 
-/*
-        // x = 0, z = 0..7
-        // Exception: iterate over z instead of y are 7 * 7 combinations managed in fetch,
-        // but still opC::PTR is needed
-        //       [x][z][y]
-        CBopCodes[0][0][0] = opC::RLC;
-        CBopCodes[0][0][1] = opC::RRC;
-        CBopCodes[0][0][2] = opC::RL;
-        CBopCodes[0][0][3] = opC::RR;
-        CBopCodes[0][0][4] = opC::SLA;
-        CBopCodes[0][0][5] = opC::SRA;
-        CBopCodes[0][0][6] = opC::SLL;
-        CBopCodes[0][0][7] = opC::SRL;
-        */
+        /* Table CB Prefix */
 
-        // x = 1, z = 7
-        // Exception: iterate over z instead of y are 7 * 7 combinations managed in fetch,
+        // x = 0, z = 0..7
+        // Exception: iterates over z instead of y are 7 * 7 combinations managed in fetch,
         // but still opC::PTR is needed
         //       [x][z][y]
-/*        EDopCodes[0][0][0] = opC::RLC;
-        EDopCodes[0][0][1] = opC::RRC;
-        EDopCodes[0][0][2] = opC::RL;
-        EDopCodes[0][0][3] = opC::RR;
-        EDopCodes[0][0][4] = opC::SLA;
-        EDopCodes[0][0][5] = opC::SRA;*/
+        CBopCodes[0][0][0] = opC::RLC_r_z;
+/*        CBopCodes[0][0][1] = opC::RRC_r_z;*/
+        CBopCodes[0][0][2] = opC::RL_r_z;
+/*        CBopCodes[0][0][3] = opC::RR_r_z;
+        CBopCodes[0][0][4] = opC::SLA_r_z;
+        CBopCodes[0][0][5] = opC::SRA_r_z;
+        CBopCodes[0][0][6] = opC::SLL_r_z;
+ */
+        CBopCodes[0][0][7] = opC::SRL_r_z;
+
+        // x = 1
+        // Exception: 7 * 7 combinations managed in fetch
+        //       [x][z][y]
+        CBopCodes[1][0][0] = opC::BIT_y_r_z;
+        // x = 2
+        // Exception: 7 * 7 combinations managed in fetch
+        //       [x][z][y]
+        CBopCodes[2][0][0] = opC::RES_y_r_z;
+        // x = 3
+        // Exception: 7 * 7 combinations managed in fetch
+        //       [x][z][y]
+        CBopCodes[3][0][0] = opC::SET_y_r_z;
+
+        /* Table ED Prefix */
+
+        // x = 1
+        // z=0   [x][z][y]
+        EDopCodes[1][0][0b000] = opC::IN_r_y_C;
+        EDopCodes[1][0][0b001] = opC::IN_r_y_C;
+        EDopCodes[1][0][0b010] = opC::IN_r_y_C;
+        EDopCodes[1][0][0b011] = opC::IN_r_y_C;
+        EDopCodes[1][0][0b100] = opC::IN_r_y_C;
+        EDopCodes[1][0][0b101] = opC::IN_r_y_C;
+        EDopCodes[1][0][0b110] = opC::IN_r_y_C;
+        EDopCodes[1][0][0b111] = opC::IN_r_y_C;
+        // z=1   [x][z][y]
+        EDopCodes[1][1][0b000] = opC::OUT_C_r_y;
+        EDopCodes[1][1][0b001] = opC::OUT_C_r_y;
+        EDopCodes[1][1][0b010] = opC::OUT_C_r_y;
+        EDopCodes[1][1][0b011] = opC::OUT_C_r_y;
+        EDopCodes[1][1][0b100] = opC::OUT_C_r_y;
+        EDopCodes[1][1][0b101] = opC::OUT_C_r_y;
+        EDopCodes[1][1][0b110] = opC::OUT_C_r_y;
+        EDopCodes[1][1][0b111] = opC::OUT_C_r_y;
+        // z=2   [x][z][y]
         EDopCodes[1][2][0b000] = opC::SBC_HL_rp_p;
         EDopCodes[1][2][0b010] = opC::SBC_HL_rp_p;
         EDopCodes[1][2][0b100] = opC::SBC_HL_rp_p;
         EDopCodes[1][2][0b110] = opC::SBC_HL_rp_p;
-        EDopCodes[1][7][0] = opC::LD_I_A; // TODO
+        EDopCodes[1][2][0b001] = opC::ADC_HL_rp_p;
+        EDopCodes[1][2][0b011] = opC::ADC_HL_rp_p;
+        EDopCodes[1][2][0b101] = opC::ADC_HL_rp_p;
+        EDopCodes[1][2][0b111] = opC::ADC_HL_rp_p;
+        // z=3   [x][z][y]
+        EDopCodes[1][3][0b000] = opC::LD_mm_rp_p; // TODO test
+        EDopCodes[1][3][0b010] = opC::LD_mm_rp_p;
+        EDopCodes[1][3][0b100] = opC::LD_mm_rp_p;
+        EDopCodes[1][3][0b110] = opC::LD_mm_rp_p;
+        EDopCodes[1][3][0b001] = opC::LD_rp_p_mm;
+        EDopCodes[1][3][0b011] = opC::LD_rp_p_mm;
+        EDopCodes[1][3][0b101] = opC::LD_rp_p_mm;
+        EDopCodes[1][3][0b111] = opC::LD_rp_p_mm;
+        // z=4   [x][z][y]
+        EDopCodes[1][4][0] = opC::NEG;
+        // z=5     [x][z][y]
+        //EDopCodes[1][5][] = opC::RETN; // TODO IFF1 = IFF2
+        //EDopCodes[1][5][1] = opC::RETI; // TODO
+        // z=6   [x][z][y]
+        EDopCodes[1][6][0b000] = opC::IM_im_y; // TODO test
+        EDopCodes[1][6][0b010] = opC::IM_im_y;
+        EDopCodes[1][6][0b011] = opC::IM_im_y;
+        // z=7   [x][z][y]
+        EDopCodes[1][7][0] = opC::LD_I_A; // TODO test
+        EDopCodes[1][7][1] = opC::LD_R_A;
+        EDopCodes[1][7][2] = opC::LD_A_I;
+        EDopCodes[1][7][3] = opC::LD_A_R;
+        //EDopCodes[1][7][4] = opC::RRD;
+        //EDopCodes[1][7][5] = opC::RLD;
+        EDopCodes[1][7][6] = opC::NOP;
+        EDopCodes[1][7][7] = opC::NOP;
+
+        // x=2
+        // z<=3  [x][z][y]
+        EDopCodes[2][0][0b100] = opC::LDI; // TODO test
+        EDopCodes[2][0][0b101] = opC::LDD;
+        EDopCodes[2][0][0b110] = opC::LDIR;
+        EDopCodes[2][0][0b111] = opC::LDDR;
+        EDopCodes[2][1][0b100] = opC::CPI;
+        EDopCodes[2][1][0b101] = opC::CPD;
+        EDopCodes[2][1][0b110] = opC::CPIR;
+        EDopCodes[2][1][0b111] = opC::CPDR;
+        EDopCodes[2][2][0b100] = opC::INI;
+        EDopCodes[2][2][0b101] = opC::IND;
+        EDopCodes[2][2][0b110] = opC::INIR;
+        EDopCodes[2][2][0b111] = opC::INDR;
+        EDopCodes[2][3][0b100] = opC::OUTI;
+        EDopCodes[2][3][0b101] = opC::OUTD;
+        EDopCodes[2][3][0b110] = opC::OTIR;
+        EDopCodes[2][3][0b111] = opC::OTDR;
+
+        /* Table DD Prefix */
+
+        // x = 0
+        // z=1   [x][z][y]
+        DDopCodes[0][1][0b100] = opC::LD_IX_nn;
+        DDopCodes[0][1][0b001] = opC::ADD_IX_rp_p;
+        DDopCodes[0][1][0b011] = opC::ADD_IX_rp_p;
+        DDopCodes[0][1][0b101] = opC::ADD_IX_rp_p;
+        DDopCodes[0][1][0b111] = opC::ADD_IX_rp_p;
+        // z=3   [x][z][y]
+        DDopCodes[0][3][0b101] = opC::DEC_IX;
+        // z=6   [x][z][y]
+        DDopCodes[1][6][0b000] = opC::LD_r_y_IX_d;
+        DDopCodes[1][6][0b001] = opC::LD_r_y_IX_d;
+        DDopCodes[1][6][0b010] = opC::LD_r_y_IX_d;
+        DDopCodes[1][6][0b011] = opC::LD_r_y_IX_d;
+        DDopCodes[1][6][0b100] = opC::LD_r_y_IX_d;
+        DDopCodes[1][6][0b101] = opC::LD_r_y_IX_d;
+        DDopCodes[1][6][0b110] = opC::LD_r_y_IX_d;
+        DDopCodes[1][6][0b111] = opC::LD_r_y_IX_d;
+
+        // x = 3
+        // z=1
+        DDopCodes[3][1][0b100] = opC::POP_IX;
+        DDopCodes[3][1][0b101] = opC::JP_IX;
+        // z=5 [x][z][y]
+        DDopCodes[3][5][0b100] = opC::PUSH_IX;
+
+        /* Table FD Prefix */
+
+        /* FDCB Prefix */
+        FDopCodes[3][3][1] = opC::FDCB_prefix;
+
+        // x=0
+        //       [x][z][y]
+        FDopCodes[0][1][0b100] = opC::LD_IY_nn;
+        FDopCodes[0][5][0b110] = opC::DEC_IY_d;
+        FDopCodes[0][6][0b110] = opC::LD_IY_d_n; // TODO LD_IY_mm
+
+        // x=1
+        // y=6   [x][z][y]
+        FDopCodes[1][0b000][6] = opC::LD_IY_d_r_z;
+        FDopCodes[1][0b001][6] = opC::LD_IY_d_r_z;
+        FDopCodes[1][0b010][6] = opC::LD_IY_d_r_z;
+        FDopCodes[1][0b011][6] = opC::LD_IY_d_r_z;
+        FDopCodes[1][0b100][6] = opC::LD_IY_d_r_z;
+        FDopCodes[1][0b101][6] = opC::LD_IY_d_r_z;
+        FDopCodes[1][0b110][6] = opC::LD_IY_d_r_z;
+        FDopCodes[1][0b111][6] = opC::LD_IY_d_r_z;
+        // z=5 [x][z][y]
+        FDopCodes[3][5][0b100] = opC::PUSH_IY;
+        // z=6   [x][z][y]
+        FDopCodes[1][6][0b000] = opC::LD_r_y_IY_d;
+        FDopCodes[1][6][0b001] = opC::LD_r_y_IY_d;
+        FDopCodes[1][6][0b010] = opC::LD_r_y_IY_d;
+        FDopCodes[1][6][0b011] = opC::LD_r_y_IY_d;
+        FDopCodes[1][6][0b100] = opC::LD_r_y_IY_d;
+        FDopCodes[1][6][0b101] = opC::LD_r_y_IY_d;
+        FDopCodes[1][6][0b110] = opC::LD_r_y_IY_d;
+        FDopCodes[1][6][0b111] = opC::LD_r_y_IY_d;
+
+        // x=2
+        // z=6   [x][z][y]
+        FDopCodes[2][6][0] = opC::ADD_A_IY_d;
+        FDopCodes[2][6][7] = opC::CP_IY_d;
+        // x=3
+        // z=1
+        FDopCodes[3][1][0b100] = opC::POP_IY;
+        FDopCodes[3][1][0b101] = opC::JP_IY;
+        // z=6
+        FDopCodes[2][6][2] = opC::SUB_IY_d;
+
+        /* FDCB Prefix */
+
+        // x=1
+        // z=6     [x][z][y]
+        FDCBopCodes[1][6][0b000] = opC::BIT_y_IY_d;
+        FDCBopCodes[1][6][0b001] = opC::BIT_y_IY_d;
+        FDCBopCodes[1][6][0b010] = opC::BIT_y_IY_d;
+        FDCBopCodes[1][6][0b011] = opC::BIT_y_IY_d;
+        FDCBopCodes[1][6][0b100] = opC::BIT_y_IY_d;
+        FDCBopCodes[1][6][0b101] = opC::BIT_y_IY_d;
+        FDCBopCodes[1][6][0b110] = opC::BIT_y_IY_d;
+        FDCBopCodes[1][6][0b111] = opC::BIT_y_IY_d;
+
+        // x=2
+        // z=6     [x][z][y]
+        FDCBopCodes[2][6][0b000] = opC::RES_y_IY_d;
+        FDCBopCodes[2][6][0b001] = opC::RES_y_IY_d;
+        FDCBopCodes[2][6][0b010] = opC::RES_y_IY_d;
+        FDCBopCodes[2][6][0b011] = opC::RES_y_IY_d;
+        FDCBopCodes[2][6][0b100] = opC::RES_y_IY_d;
+        FDCBopCodes[2][6][0b101] = opC::RES_y_IY_d;
+        FDCBopCodes[2][6][0b110] = opC::RES_y_IY_d;
+        FDCBopCodes[2][6][0b111] = opC::RES_y_IY_d;
+
+        // x=3
+        // z=6     [x][z][y]
+        FDCBopCodes[3][6][0b000] = opC::SET_y_IY_d;
+        FDCBopCodes[3][6][0b001] = opC::SET_y_IY_d;
+        FDCBopCodes[3][6][0b010] = opC::SET_y_IY_d;
+        FDCBopCodes[3][6][0b011] = opC::SET_y_IY_d;
+        FDCBopCodes[3][6][0b100] = opC::SET_y_IY_d;
+        FDCBopCodes[3][6][0b101] = opC::SET_y_IY_d;
+        FDCBopCodes[3][6][0b110] = opC::SET_y_IY_d;
+        FDCBopCodes[3][6][0b111] = opC::SET_y_IY_d;
     }
 
-    public void CB_prefix() { fetchCB(currentComp.peek(getPC())); }
-// public void DD_prefix() { fetchCB(currentComp.peek(getPC())); }
-    public void ED_prefix() { fetchED(currentComp.peek(getPC())); }
-//    public void FD_prefix() { FD_prefix_seen = true; }
+    public void interrupt() {
+        // interrupted disabled?
+        if( !IFF1 )
+            return;
 
-    private static void opCMasked(byte opC) {
+        // instruction behind EI can't be interrupted
+        if( IFF3 != 0 )
+            return;
+
+        // ISR runs with implicit DI
+        IFF1 = IFF2 = false;
+
+        /*switch (currentIM) {
+            case 0: y = 7; break;
+            case 1: y = 7; break;
+            case 2: y = 7; break;
+        }*/
+        y = 7; // RST 38h
+        RST_y_8();
+
+        isHalted = false;
+    }
+
+    public void CB_prefix() { fetchCB(currentComp.peek(PC++)); }
+    public void DD_prefix() { fetchDD(currentComp.peek(PC++)); }
+    public void ED_prefix() { fetchED(currentComp.peek(PC++)); }
+    public void FD_prefix() { fetchFD(currentComp.peek(PC++)); }
+    public void FDCB_prefix() { fetchFDCB(currentComp.peek(PC++)); }
+
+    protected void opCMasked(byte opC) {
         x = ((opC & 0b11000000) >> 6);
         y = ((opC & 0b00111000) >> 3);
         z = (opC & 0b111);
@@ -246,48 +461,105 @@ public class Z80 implements Z80OpCode {
         q = (y & 1);
     }
 
-    public void fetch() { fetch(currentComp.peek(getPC())); }
+    public void fetch() { fetch(currentComp.peek(PC++)); }
 
     public void fetch(byte opC) {
+        if( PC == 0 /* 0x07e2 0x47CD 0x11DC PC == 0x16D2 || PC == 0x1297 || PC == 0x0D7F*/ ) {
+            IFF1 = false;
+            setA(getA());
+        }
+
+        if( isHalted ) {
+            PC--;
+            NOP();
+            Logger.info("Halted: NOP executed");
+            return;
+        }
+
         opCMasked(opC);
 
         if( x == 1 ) {
             if( z == 6 && y == 6)
-                ;// HALT(); // TODO
+                opCodes[1][6][6].execute();// HALT();
             else
                 opCodes[x][0][0].execute();// LD_r_y_r_z
-            return;
         }
 
         if( x == 2 ) {
             opCodes[x][0][y].execute(); // Arithmetic & Logical instructions
-            return;
         }
-        
-        if (opCodes[x][z][y] != null) {
-            opCodes[x][z][y].execute();
-        } else {
-            throw new IllegalArgumentException("OpCode not implemented yet: " + Integer.toHexString(opC));
+
+        if ( x == 0 || x == 3 ) {
+            if (opCodes[x][z][y] != null) {
+                opCodes[x][z][y].execute();
+            } else {
+                throw new IllegalArgumentException("OpCode not implemented yet: " + Integer.toHexString(opC));
+            }
         }
+
+        if( IFF1 && IFF3 > 0 )
+            IFF3--;
     }
 
-    private void fetchCB(byte opC) {
+    protected void fetchCB(byte opC) {
         opCMasked(opC);
 
-        if (CBopCodes[x][z][y] != null) {
-            CBopCodes[x][z][y].execute();
+        if( x == 0 ) {
+            CBopCodes[x][0][y].execute(); // Roll/Shift
+            return;
+        }
+
+        // x > 0
+        if (CBopCodes[x][0][0] != null) {
+            CBopCodes[x][0][0].execute(); // Bitwise y, r[z]
         } else {
             throw new IllegalArgumentException("CB+OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
 
-    private void fetchED(byte opC) {
+    protected void fetchED(byte opC) {
         opCMasked(opC);
 
         if (EDopCodes[x][z][y] != null) {
             EDopCodes[x][z][y].execute();
         } else {
-            throw new IllegalArgumentException("CB+OpCode not implemented yet: " + Integer.toHexString(opC));
+            throw new IllegalArgumentException("ED+OpCode not implemented yet: " + Integer.toHexString(opC));
+        }
+    }
+
+    protected void fetchDD(byte opC) {
+        opCMasked(opC);
+        Logger.info("AQUI DD:"+Integer.toHexString(opC));
+        if (DDopCodes[x][z][y] != null) {
+            DDopCodes[x][z][y].execute();
+        } else {
+            throw new IllegalArgumentException("DD+OpCode not implemented yet: " + Integer.toHexString(opC));
+        }
+    }
+
+    protected void fetchFD(byte opC) {
+        opCMasked(opC);
+Logger.info("AQUI FD:"+Integer.toHexString(opC));
+        if (FDopCodes[x][z][y] != null) {
+            FDopCodes[x][z][y].execute();
+        } else {
+            throw new IllegalArgumentException("FD+OpCode not implemented yet: " + Integer.toHexString(opC));
+        }
+    }
+
+    protected void fetchFDCB(byte opC) {
+Logger.info("AQUI FDCB disp:"+Integer.toHexString(opC));
+        d = opC; // skip displacement
+
+        opC = currentComp.peek(PC++);
+Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
+
+        opCMasked(opC);
+
+        if (FDCBopCodes[x][z][y] != null) {
+            FDCBopCodes[x][z][y].execute();
+        } else {
+            throw new IllegalArgumentException("FDCB+OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
 
@@ -304,7 +576,7 @@ public class Z80 implements Z80OpCode {
 
     protected int PC;
 
-    protected short SP;
+    protected int SP;
 
     protected short IX;
     protected short IY;
@@ -312,8 +584,16 @@ public class Z80 implements Z80OpCode {
     protected byte I;
     protected byte R;
 
-    private byte W;
-    private byte Z;
+    protected byte W;
+    protected byte Z;
+
+    protected int MEMPTR;
+
+    protected int currentIM;
+    protected boolean IFF1;
+    protected boolean IFF2;
+    private int IFF3;
+    private boolean isHalted;
 
     protected Register alternative = new Register();
 
@@ -327,36 +607,64 @@ public class Z80 implements Z80OpCode {
         dispatcher(opC);
     }
 
-    public void reset() { PC = 0; SP = (short) 0xC000; }
+    // According to Reset Timing at http://www.z80.info/interrup.htm
+    public void reset() {
+        PC = 0; // 0x4C2;
+        setI((byte) 0);
+        setR((byte) 0); // will forget Flags affectation
+        setA((byte) 0xFF);
+        setF((byte) 0xFF);
+        SP = 0xFFFF;
+        IFF1 = IFF2 = false;
+        IFF3 = 2;
+        currentIM = 0;
+        isHalted = false;
+    }
 
     public void setComputer(Computer theComp) { currentComp = theComp; }
 
     // Getters / Setters
     public byte getA() { return A; }
-    public void setA(byte a) { A = a; }
+    public void setA(byte a) { A = a; Logger.reg("A", a); }
 
     public byte getB() { return B; }
-    public void setB(byte b) { B = b; }
+    public void setB(byte b) { B = b; Logger.reg("B", b);}
 
     public byte getC() { return C; }
-    public void setC(byte c) { C = c; }
+    public void setC(byte c) { C = c; Logger.reg("C", c); }
 
     public byte getD() {return D; }
-    public void setD(byte d) { D = d; }
+    public void setD(byte d) { D = d; Logger.reg("D", d); }
 
     public byte getE() { return E; }
-    public void setE(byte e) { E = e; }
+    public void setE(byte e) { E = e; Logger.reg("E", e); }
 
     public byte getH() { return H; }
-    public void setH(byte h) { H = h; }
+    public void setH(byte h) { H = h; Logger.reg("H", h); }
 
     public byte getL() { return L; }
-    public void setL(byte l) { L = l; }
+    public void setL(byte l) { L = l; Logger.reg("L", l); }
 
-    public byte getF() { return F.toByteArray()[0]; }
+    public byte getI() { return I; }
+    public void setI(byte i) { I = i; Logger.reg("I", i); }
+
+    public byte getR() { return R; }
+    public void setR(byte r) { R = r; Logger.reg("R", r); }
+
+    public byte getF() {
+        if( F.cardinality() == 0 ) // Hmmm... BitSet does not support returning 0 if all bits are clear ;-(
+            return 0;
+        return F.toByteArray()[0];
+    }
+
     public void setF(byte f) { F = BitSet.valueOf(new byte[]{f}); }
 
-    public byte getF_() { return alternative.F.toByteArray()[0]; }
+    public byte getF_() {
+        if( alternative.F.cardinality() == 0 )
+            return 0;
+        return alternative.F.toByteArray()[0];
+    }
+
     public void setF_(byte f) { alternative.F = BitSet.valueOf(new byte[]{f}); }
 
     public boolean getSF(){ return F.get(7); }
@@ -365,6 +673,7 @@ public class Z80 implements Z80OpCode {
     public boolean getHF(){ return F.get(4); }
     public boolean getyF(){ return F.get(3); }
     public boolean getPF(){ return F.get(2); }
+    public boolean getVF(){ return F.get(2); } // same getP()
     public boolean getNF(){ return F.get(1); }
     public boolean getCF(){ return F.get(0); }
 
@@ -374,6 +683,7 @@ public class Z80 implements Z80OpCode {
     public void setHF(){ F.set(4); }
     public void setyF(){ F.set(3); }
     public void setPF(){ F.set(2); }
+    public void setVF(){ F.set(2); } // same setPF()
     public void setNF(){ F.set(1); }
     public void setCF(){ F.set(0); }
 
@@ -383,6 +693,7 @@ public class Z80 implements Z80OpCode {
     public void resHF(){ F.clear(4); }
     public void resyF(){ F.clear(3); }
     public void resPF(){ F.clear(2); }
+    public void resVF(){ F.clear(2); } // same resPF()
     public void resNF(){ F.clear(1); }
     public void resCF(){ F.clear(0); }
 
@@ -390,7 +701,9 @@ public class Z80 implements Z80OpCode {
     public short getBC() { return (short) ((short) (B << 8) | (C & 0xFF)); }
     public short getDE() { return (short) ((short) (D << 8) | (E & 0xFF)); }
     public short getHL() { return (short) ((short) (H << 8) | (L & 0xFF)); }
-    public short getSP() { return SP; }
+    public int getSP() { return SP; }
+    public short getIX() { return IX; }
+    public short getIY() { return IY; }
 
     private short getWZ() { return (short) ((short) (W << 8) | (Z & 0xFF)); }
 
@@ -409,18 +722,67 @@ public class Z80 implements Z80OpCode {
         L = (byte) (hl & 0x00FF);
     }
 
-    public void setSP(short sp) {
+    public void setSP(int sp) {
         SP = sp;
     }
 
+    public void setIX(short ix) {
+        IX = ix;
+    }
+
+    public void setIY(short iy) {
+        IY = iy;
+    }
+
     public String getWord(byte h, byte l) {
-        return Integer.toHexString((short) ((short) (h << 8) | (l & 0xFF)));
+        return String.format("%04X", (short) ((h << 8) & 0xFF00 | (l & 0xFF)));
     }
 
-    public int getPC() {
-        return PC++;
+    public int getPC() { return PC++; }
+    public int getPC2() { return PC; }
+
+    private void get_rp_p() {
+        switch (p) {
+            case 0:
+                W = B;
+                Z = C;
+                break;
+            case 1:
+                W = D;
+                Z = E;
+                break;
+            case 2:
+                W = H;
+                Z = L;
+                break;
+            case 3:
+                W = (byte) ((getSP() & 0xFF00) >> 8);
+                Z = (byte) (getSP() & 0x00FF);
+        }
     }
 
+    private void set_rp_p() {
+        switch (p) {
+            case 0:
+                B = W;
+                C = Z;
+                Logger.reg("BC", getBC());
+                break;
+            case 1:
+                D = W;
+                E = Z;
+                Logger.reg("DE", getDE());
+                break;
+            case 2:
+                H = W;
+                L = Z;
+                Logger.reg("HL", getHL());
+                break;
+            case 3:
+                setSP(getWZ());
+                Logger.reg("SP", getSP());
+        }
+    }
 
     /*
      *
@@ -428,20 +790,26 @@ public class Z80 implements Z80OpCode {
      *
      */
 
+	@Override
     public void NOP() {
         /* No Operation */
+        int nop = 0;
+        ++nop;
+        --nop;
     }
 
+	@Override
     public void EX_AF_AF_() {
-        byte tmp = A;
+        W = A;
         A = alternative.A;
-        alternative.A = tmp;
+        alternative.A = W;
 
-        tmp = getF();
+        Z = getF();
         setF(getF_());
-        setF_(tmp);
+        setF_(Z);
     }
 
+	@Override
     public void DJNZ() {
         byte d = currentComp.peek(PC++);
 
@@ -449,12 +817,14 @@ public class Z80 implements Z80OpCode {
             PC += (short) d;
     }
 
+	@Override
     public void JR() {
         byte d = currentComp.peek(PC++);
 
         PC += (short) d;
     }
 
+	@Override
     public void JR_cc() {
         boolean ccSet = false;
         byte d = currentComp.peek(PC++);
@@ -477,55 +847,51 @@ public class Z80 implements Z80OpCode {
             PC += (short) d;
     }
 
+    @Override
     public void LD_rp_p_nn() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-        switch (rp[p]) {
-            case "BC":
-                B = W;
-                C = Z;
-                break;
-            case "DE":
-                D = W;
-                E = Z;
-                break;
-            case "HL":
-                H = W;
-                L = Z;
-                break;
-            case "SP":
-                setSP(getWZ());
-        }
+        set_rp_p();
     }
 
     @Override
     public void ADD_HL_rp_p() {
-        short l;
-        short c;
+        int hl = getHL() & 0xFFFF;
+        int wz;
 
-        switch (rp[p]) {
-            case "BC":
-                W = B;
-                Z = C;
-                break;
-            case "DE":
-                W = D;
-                Z = E;
-                break;
-            case "HL":
-                W = H;
-                Z = L;
-                break;
-            case "SP":
-                W = (byte) ((getSP() & 0xFF00) >> 8);
-                Z = (byte) (getSP() & 0x00FF);
-        }
+        get_rp_p();
+        wz = getWZ() & 0xFFFF;
 
-        l = (short) ((L & 0x00FF) + (Z & 0x00FF));
-        c = (short) (l & 0x0100); // pre-carry
-        L = (byte) (l & 0xFF);
-        H = (byte) (H + W + (c >> 8));
+        hl += wz;
+
+        boolean isHalfCarry = (((getHL() & 0x0FFF) + (getWZ() & 0x0FFF)) & 0xF000) != 0;
+
+        if( (hl & 0xFFFF0000) != 0 )
+            setCF();
+        else
+            resCF();
+
+        if( hl == 0)
+            setZF();
+        else
+            resZF();
+
+        if( iSOverflowADD16(getHL(), getWZ(), hl))
+            setVF();
+        else
+            resVF();
+
+        if(isHalfCarry)
+            setHF();
+        else
+            resHF();
+
+        resNF();
+
+        setHL((short) (hl & 0xFFFF));
+
+        Logger.reg("HL", getHL());
     }
 
     @Override
@@ -533,10 +899,12 @@ public class Z80 implements Z80OpCode {
         currentComp.poke(getBC(), A);
     }
 
+	@Override
     public void LD_DE_A() {
         currentComp.poke(getDE(), A);
     }
 
+	@Override
     public void LD_nn_HL() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
@@ -545,6 +913,7 @@ public class Z80 implements Z80OpCode {
         currentComp.poke(getWZ() + 1, H);
     }
 
+	@Override
     public void LD_nn_A() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
@@ -552,22 +921,27 @@ public class Z80 implements Z80OpCode {
         currentComp.poke(getWZ(), A);
     }
 
+	@Override
     public void LD_A_BC() {
         A = currentComp.peek(getBC());
     }
 
+	@Override
     public void LD_A_DE() {
         A = currentComp.peek(getDE());
     }
 
+	@Override
     public void LD_HL_nn() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
         L = currentComp.peek(getWZ());
         H = currentComp.peek(getWZ() + 1);
+        Logger.reg("HL", getHL());
     }
 
+	@Override
     public void LD_A_nn() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
@@ -575,141 +949,136 @@ public class Z80 implements Z80OpCode {
         A = currentComp.peek(getWZ());
     }
 
+	@Override
     public void INC_rp_p() {
         short z;
         short c;
 
-        switch (rp[p]) {
-            case "BC":
-                W = B;
-                Z = C;
-                break;
-            case "DE":
-                W = D;
-                Z = E;
-                break;
-            case "HL":
-                W = H;
-                Z = L;
-                break;
-            case "SP":
-                W = (byte) ((getSP() & 0xFF00) >> 8);
-                Z = (byte) (getSP() & 0x00FF);
-        }
+        get_rp_p();
 
         z = (short) ((((short) Z) & 0xFF) + 1);
         c = (short) (z & 0x0100); // pre-carry
         Z = (byte) (z & 0xFF);
         W = (byte) (W + (c >> 8));
 
-        switch (rp[p]) {
-            case "BC":
-                B = W;
-                C = Z;
-                break;
-            case "DE":
-                D = W;
-                E = Z;
-                break;
-            case "HL":
-                H = W;
-                L = Z;
-                break;
-            case "SP":
-                setSP(getWZ());
-        }
+        set_rp_p();
     }
 
+	@Override
     public void DEC_rp_p() {
         short z;
         short c;
 
-        switch (rp[p]) {
-            case "BC":
-                W = B;
-                Z = C;
-                break;
-            case "DE":
-                W = D;
-                Z = E;
-                break;
-            case "HL":
-                W = H;
-                Z = L;
-                break;
-            case "SP":
-                W = (byte) ((getSP() & 0xFF00) >> 8);
-                Z = (byte) (getSP() & 0x00FF);
-        }
+        get_rp_p();
 
         z = (short) ((((short) Z) & 0xFF) - 1);
         c = (short) ((z == -1) ? 1 : 0); // pre-carry
         Z = (byte) (z & 0xFF);
         W = (byte) (W - c);
 
-        switch (rp[p]) {
-            case "BC":
-                B = W;
-                C = Z;
-                break;
-            case "DE":
-                D = W;
-                E = Z;
-                break;
-            case "HL":
-                H = W;
-                L = Z;
-                break;
-            case "SP":
-                setSP(getWZ());
-        }
-    }
-    
-    public void INC_r_y(){
-        switch(r[y]){
-            case "B": B++; break;
-            case "C": C++; break;
-            case "D": D++; break;
-            case "E": E++; break;
-            case "H": H++; break;
-            case "L": L++; break;
-            case "(HL)":
-                    currentComp.poke(getHL(), (byte)(currentComp.peek(getHL()) + 1) );
-                    break;
-            case "A": A++;
-        }
-    }
-    
-    public void DEC_r_y(){
-        switch(r[y]){
-            case "B": B--; break;
-            case "C": C--; break;
-            case "D": D--; break;
-            case "E": E--; break;
-            case "H": H--; break;
-            case "L": L--; break;
-            case "(HL)":
-                currentComp.poke(getHL(), (byte)(currentComp.peek(getHL()) - 1) );
-                break;
-            case "A": A--;
-        }
+        set_rp_p();
     }
 
+	@Override
+    public void INC_r_y(){
+        int x;
+
+        get_r_(y);
+        x = Z;
+
+        switch(y){
+            case 0: Z = ++B; break;
+            case 1: Z = ++C; break;
+            case 2: Z = ++D; break;
+            case 3: Z = ++E; break;
+            case 4: Z = ++H; break;
+            case 5: Z = ++L; break;
+            case 6: currentComp.poke(getHL(), Z = (byte)(currentComp.peek(getHL()) + 1) );
+                    break;
+            case 7: Z = ++A;
+        }
+
+        boolean isHalfCarry = (((x & 0x0F) + (1 & 0x0F)) & 0xF0) != 0;
+
+        if( (Z & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( Z == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( iSOverflowADD(x, 1, Z) )
+            setVF();
+        else
+            resVF();
+
+        resNF();
+
+        Logger.reg("Z", Z);
+    }
+    
+    @Override
+    public void DEC_r_y(){
+        int x;
+
+        get_r_(y);
+        x = Z;
+
+        switch(y){
+            case 0: Z = --B; break;
+            case 1: Z = --C; break;
+            case 2: Z = --D; break;
+            case 3: Z = --E; break;
+            case 4: Z = --H; break;
+            case 5: Z = --L; break;
+            case 6: currentComp.poke(getHL(), Z = (byte)(currentComp.peek(getHL()) - 1) );
+                    break;
+            case 7: Z = --A;
+        }
+
+        boolean isHalfCarry = ((x & 0x0F) - (1 & 0x0F)) < 0;
+
+        if( (Z & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( Z == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( isOverflowSUB(x, 1, Z) )
+            setVF();
+        else
+            resVF();
+
+        setNF();
+
+        Logger.reg("Z", Z);
+    }
+
+	@Override
     public void LD_r_y_n() {
         Z = currentComp.peek(PC++);
 
-        switch (r[y]){
-            case "B": setB(Z); break;
-            case "C": setC(Z); break;
-            case "D": setD(Z); break;
-            case "E": setE(Z); break;
-            case "H": setH(Z); break;
-            case "L": setL(Z); break;
-            case "(HL)": currentComp.poke(getHL(), Z); break;
-            case "A": setA(Z);
-        }
+        set_r_(y);
     }
 
+	@Override
     public void RLCA() {
         byte c = (byte) (A & 0x80); // pre-carry
 
@@ -721,8 +1090,14 @@ public class Z80 implements Z80OpCode {
         } else {
             resCF();
         }
+
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void RRCA() {
         byte c = (byte) (A & 0x01); // pre-carry
 
@@ -735,12 +1110,18 @@ public class Z80 implements Z80OpCode {
             A &= 0x7F;
             resCF();
         }
+
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void RLA() {
         byte c = (byte) (A & 0x80); // pre-carry
         boolean oc = getCF(); // old-carry
-        
+
         A <<= 1;
         
         if( c != 0 ) {
@@ -753,8 +1134,14 @@ public class Z80 implements Z80OpCode {
             A |= 1;
         else
             A &= 0xFE;
+
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void RRA() {
         byte c = (byte) (A & 0x01); // pre-carry
         boolean oc = getCF(); // old-carry
@@ -771,129 +1158,301 @@ public class Z80 implements Z80OpCode {
             A |= 0x80;
         else
             A &= 0x7F;
+
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void DAA() { // TODO
 
     }
 
+	@Override
     public void CPL() {
+        int a = A;
         A = (byte) ~A;
+
+        if( A == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( (A & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( iSOverflowADD(a, 0, A) )
+            setVF();
+        else
+            resVF();
+
+        setNF();
+        setHF();
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void SCF() {
         setCF();
+
+        resNF();
+        resHF();
     }
 
+	@Override
     public void CCF() {
         F.flip(0);
+
+        resNF();
     }
 
+	@Override
     public void LD_r_y_r_z() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
-        
-        switch (r[y]){
-            case "B": setB(Z); break;
-            case "C": setC(Z); break;
-            case "D": setD(Z); break;
-            case "E": setE(Z); break;
-            case "H": setH(Z); break;
-            case "L": setL(Z); break;
-            case "(HL)": currentComp.poke(getHL(), Z); break;
-            case "A": setA(Z);
+        get_r_(z);
+
+        set_r_(y);
+    }
+
+    private void set_r_(int yz) {
+        switch (yz){
+            case 0: setB(Z); break;
+            case 1: setC(Z); break;
+            case 2: setD(Z); break;
+            case 3: setE(Z); break;
+            case 4: setH(Z); break;
+            case 5: setL(Z); break;
+            case 6: currentComp.poke(getHL(), Z); break;
+            case 7: setA(Z);
         }
     }
 
-    public void HALT() { // TODO
-
+    private void get_r_(int yz) {
+        switch (yz){
+            case 0: Z = getB(); break;
+            case 1: Z = getC(); break;
+            case 2: Z = getD(); break;
+            case 3: Z = getE(); break;
+            case 4: Z = getH(); break;
+            case 5: Z = getL(); break;
+            case 6: Z = currentComp.peek(getHL()); break;
+            case 7: Z = getA();
+        }
     }
 
-    public void ADD_A() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
-
-        A += Z;
+	@Override
+    public void HALT() {
+        isHalted = true;
+        Logger.halt();
     }
 
-    public void ADC_A() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
+    /*
+        https://web.archive.org/web/20170121033813/http://www.cs.umd.edu:80/class/spring2003/cmsc311/Notes/Comb/overflow.html
 
-        A += Z;
+        https://www.cs.umd.edu/~meesh/cmsc311/clin-cmsc311/Lectures/lecture22/overflow.htm
 
-        if( getCF() ) A++;
+        https://stackoverflow.com/a/199668/2928048
+     */
+    private boolean iSOverflowADD(int x, int y, int result) {
+        return ((~(x ^ y)) & (x ^ result) & 0x80) != 0;
     }
 
-    public void SUB() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
-
-        A -= Z;
+    private boolean iSOverflowADD16(int x, int y, int result) {
+        return ((~(x ^ y)) & (x ^ result) & 0x8000) != 0;
     }
 
-    public void SBC_A() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
-
-        A -= Z;
-
-        if( getCF() ) A--;
+    private boolean isOverflowSUB(int x, int y, int result) {
+        return (((x ^ result) & (x ^ y)) & 0x80) != 0;
     }
 
-    public void AND() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
+    private boolean isOverflowSUB16(int x, int y, int result) {
+        return (((x ^ result) & (x ^ y)) & 0x8000) != 0;
+    }
+
+	@Override
+    public void ADD_A_r_z() {
+        int x = A & 0xFF;
+        int result;
+
+        get_r_(z);
+        int y = Z & 0xFF;
+
+        result = x + y;
+        boolean isHalfCarry = (((x & 0x0F) + (y & 0x0F)) & 0xF0) != 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( iSOverflowADD(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( (result & 0xFF00) != 0 )
+            setCF();
+        else
+            resCF();
+
+        resNF();
+
+        A = (byte) (result & 0xFF);
+
+        Logger.reg("A", A);
+    }
+
+	@Override
+    public void ADC_A_r_z() {
+        int x = A & 0xFF;
+
+        get_r_(z);
+        int y = Z & 0xFF;
+
+        int result = x + y;
+
+        if( getCF() ) result++;
+
+        boolean isHalfCarry = (((x & 0x0F) + ((getCF()?y+1:y) & 0x0F)) & 0xF0) != 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( iSOverflowADD(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( (result & 0xFF00) != 0 )
+            setCF();
+        else
+            resCF();
+
+        resNF();
+
+        A = (byte) (result & 0xFF);
+
+        Logger.reg("A", A);
+    }
+
+	@Override
+    public void SUB_r_z() {
+        int x = A & 0xFF;
+
+        get_r_(z);
+        int y = Z & 0xFF;
+
+        int result = x - y;
+        boolean isHalfCarry = ((x & 0x0F) - (y & 0x0F)) < 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( isOverflowSUB(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( result < 0 )
+            setCF();
+        else
+            resCF();
+
+        setNF();
+
+        A = (byte) (result & 0xFF);
+
+        Logger.reg("A", A);
+    }
+
+	@Override
+    public void SBC_A_r_z() {
+        int x = A & 0xFF;
+
+        get_r_(z);
+        int y = Z & 0xFF;
+
+        int result = x - y;
+
+        if( getCF() ) result--;
+
+        if( result == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0xFF00) != 0 )
+            setCF();
+        else
+            resCF();
+
+        if( iSOverflowADD(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        setNF();
+
+        A = (byte) (result & 0xFF);
+
+        Logger.reg("A", A);
+    }
+
+	@Override
+    public void AND_r_z() {
+        get_r_(z);
 
         A &= Z;
+
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
 
         if (A == 0)
             setZF();
@@ -904,61 +1463,114 @@ public class Z80 implements Z80OpCode {
             setSF();
         else
             resSF();
+
+        resCF();
+        resNF();
+        setHF();
+
+        Logger.reg("A", A);
     }
 
-    public void XOR() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
+	@Override
+    public void XOR_r_z() {
+        get_r_(z);
 
         A ^= Z;
+
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        if (A == 0)
+            setZF();
+        else
+            resZF();
+
+        if (A < 0)
+            setSF();
+        else
+            resSF();
+
+        resCF();
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
     }
 
-    public void OR() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
+	@Override
+    public void OR_r_z() {
+        get_r_(z);
 
         A |= Z;
 
-        if( A == 0 )
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        if (A == 0)
             setZF();
         else
             resZF();
+
+        if (A < 0)
+            setSF();
+        else
+            resSF();
+
+        resCF();
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
     }
 
-    public void CP() {
-        switch (r[z]){
-            case "B": Z = getB(); break;
-            case "C": Z = getC(); break;
-            case "D": Z = getD(); break;
-            case "E": Z = getE(); break;
-            case "H": Z = getH(); break;
-            case "L": Z = getL(); break;
-            case "(HL)": Z = currentComp.peek(getHL()); break;
-            case "A": Z = getA();
-        }
+	@Override
+    public void CP_r_z() {
+        int x = A & 0xFF;
 
-        if( A == Z )
+        get_r_(z);
+
+        int y = Z & 0xFF;
+
+        int result = x - y;
+        boolean isHalfCarry = ((x & 0x0F) - (y & 0x0F)) < 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
             setZF();
         else
             resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( isOverflowSUB(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( result < 0 )
+            setCF();
+        else
+            resCF();
+
+        setNF();
     }
-    
+
+	@Override    
     public void RET_cc_y() {
         boolean ccSet = false;
 
@@ -995,7 +1607,8 @@ public class Z80 implements Z80OpCode {
             PC = getWZ();
         }
     }
-        
+
+	@Override        
     public void POP_rp2_p() {
         Z = currentComp.peek(SP++);
         W = currentComp.peek(SP++);
@@ -1018,45 +1631,55 @@ public class Z80 implements Z80OpCode {
                 setF(Z);
         }
     }
-    
+
+	@Override    
     public void RET() {
+Logger.info("RET SP:"+Integer.toHexString(SP));
         Z = currentComp.peek(SP++);
+Logger.info("(SP):"+Integer.toHexString(Z));
+Logger.info("RET SP:"+Integer.toHexString(SP));
         W = currentComp.peek(SP++);
+Logger.info("(SP):"+Integer.toHexString(W));
         
         PC = getWZ();
     }
-    
+
+	@Override    
     public void EXX() {
-        byte tmp;
-        
-        tmp = getB();
+        Z = getB();
         setB(alternative.B);
-        alternative.B = tmp;
-        tmp = getC();
+        alternative.B = Z;
+        Z = getC();
         setC(alternative.C);
-        alternative.C = tmp;
+        alternative.C = Z;
         
-        tmp = getH();
+        Z = getH();
         setH(alternative.H);
-        alternative.H = tmp;
-        tmp = getL();
+        alternative.H = Z;
+        Z = getL();
         setL(alternative.L);
-        alternative.L = tmp;
+        alternative.L = Z;
         
-        tmp = getD();
+        Z = getD();
         setD(alternative.D);
-        alternative.D = tmp;
-        tmp = getE();
+        alternative.D = Z;
+        Z = getE();
         setE(alternative.E);
-        alternative.E = tmp;
+        alternative.E = Z;
     }
-    
+
+	@Override    
     public void JP_HL() {
         PC = getHL();
+        Logger.reg("HL", getHL());
     }
-    
-    public void LD_SP_HL() { SP = getHL(); }
 
+	@Override    
+    public void LD_SP_HL() {
+    	SP = getHL();
+    }
+
+	@Override
     public void JP_cc_y_nn() {
         boolean ccSet = false;
 
@@ -1093,6 +1716,7 @@ public class Z80 implements Z80OpCode {
             PC = getWZ();
     }
 
+	@Override
     public void JP_nn() {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
@@ -1100,20 +1724,23 @@ public class Z80 implements Z80OpCode {
         PC = getWZ();
     }
 
+	@Override
     public void OUT_n_A() {
         Z = currentComp.peek(PC++);
-        W = 0; //A; // TODO
+        W = A;
         currentComp.write(getWZ(), A);
     }
 
+	@Override
     public void IN_A_n() { // TODO test pending
         Z = currentComp.peek(PC++);
         W = A;
-//System.out.println("IN port:"+Integer.toHexString(getWZ()));
+//Logger.info("IN port:"+Integer.toHexString(getWZ()));
         A = currentComp.read(getWZ());
-//System.out.println("IN A:"+Integer.toHexString(A));
+//Logger.info("IN A:"+Integer.toHexString(A));
     }
 
+	@Override
     public void EX_SP_HL() {
         Z = currentComp.peek(SP);
         currentComp.poke(SP, L);
@@ -1124,6 +1751,7 @@ public class Z80 implements Z80OpCode {
         H = W;
     }
 
+	@Override
     public void EX_DE_HL() {
         Z = E;
         E = L;
@@ -1132,11 +1760,25 @@ public class Z80 implements Z80OpCode {
         W = D;
         D = H;
         H = W;
+
+        Logger.reg("HL", getHL());
+        Logger.reg("DE", getDE());
     }
 
-    public void DI() {} // TODO
-    public void EI() {} // TODO
+	@Override
+    public void DI() {
+        IFF1 = IFF2 = false;
+    }
 
+    @Override
+    public void EI() {
+        IFF1 = IFF2 = true;
+        // countdown to effectively enabled:
+        // this one (EI) and next one
+        IFF3 = 2;
+    }
+
+	@Override
     public void CALL_cc_y_nn() {
         boolean ccSet = false;
         Z = currentComp.peek(PC++);
@@ -1176,6 +1818,7 @@ public class Z80 implements Z80OpCode {
         }
     }
 
+	@Override
     public void PUSH_rp2_p() {
         switch (rp2[p]) {
             case "BC":
@@ -1192,59 +1835,76 @@ public class Z80 implements Z80OpCode {
                 break;
             case "AF":
                 W = A;
-                Z = 0; //getF();    // FIX TODO
+                Z = getF();
         }
 
         currentComp.poke(--SP, W);
         currentComp.poke(--SP, Z);
     }
 
+	@Override
     public void CALL_nn() {
-//System.out.println("CALL_nn");
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-//System.out.println("byte alto:"+Integer.toHexString(SP));
         currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
-//System.out.println("byte bajo:"+Integer.toHexString(SP));
         currentComp.poke(--SP, (byte)(PC & 0x00FF));
-//System.out.println("CALL "+Integer.toHexString(getWZ())+ " RET "+Integer.toHexString(PC));
 
         PC = getWZ();
     }
 
+	@Override
     public void ADD_A_n() {
         Z = currentComp.peek(PC++);
 
         A += Z;
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void ADC_A_n() {
         Z = currentComp.peek(PC++);
 
         A += Z;
 
         if( getCF() ) A++;
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void SUB_n() {
         Z = currentComp.peek(PC++);
 
         A -= Z;
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void SBC_A_n() {
         Z = currentComp.peek(PC++);
 
         A -= Z;
 
         if( getCF() ) A--;
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void AND_n() {
         Z = currentComp.peek(PC++);
 
         A &= Z;
+
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
 
         if (A == 0)
             setZF();
@@ -1255,29 +1915,113 @@ public class Z80 implements Z80OpCode {
             setSF();
         else
             resSF();
+
+        resCF();
+        resNF();
+        setHF();
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void XOR_n() {
         Z = currentComp.peek(PC++);
 
         A ^= Z;
+
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        if (A == 0)
+            setZF();
+        else
+            resZF();
+
+        if (A < 0)
+            setSF();
+        else
+            resSF();
+
+        resCF();
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
     }
 
+	@Override
     public void OR_n() {
         Z = currentComp.peek(PC++);
 
         A |= Z;
-    }
 
-    public void CP_n() {
-        Z = currentComp.peek(PC++);
+        BitSet pA = BitSet.valueOf(new byte[]{A});
 
-        if( A == Z )
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        if (A == 0)
             setZF();
         else
             resZF();
+
+        if (A < 0)
+            setSF();
+        else
+            resSF();
+
+        resCF();
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
     }
 
+	@Override
+    public void CP_n() {
+        int x = A & 0xFF;
+
+        Z = currentComp.peek(PC++);
+        int y = Z & 0xFF;
+
+        int result = x - y;
+        boolean isHalfCarry = ((x & 0x0F) - (y & 0x0F)) < 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( isOverflowSUB(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( result < 0 )
+            setCF();
+        else
+            resCF();
+
+        setNF();
+    }
+
+	@Override
     public void RST_y_8() {
         Z = (byte) (y * 8);
         W = 0x00;
@@ -1288,33 +2032,818 @@ public class Z80 implements Z80OpCode {
         PC = getWZ();
     }
 
-    /* ED prefix */
+    /* CB prefix */
 
-    public void LD_I_A() {
-        I = A; // TODO flag affectation missing
-    }
+    @Override
+    public void RLC_r_z() {
+        get_r_(z);
 
-    public void SBC_HL_rp_p() {
-        switch (rp[p]) {
-            case "BC":
-                W = B;
-                Z = C;
-                break;
-            case "DE":
-                W = D;
-                Z = E;
-                break;
-            case "HL":
-                W = H;
-                Z = L;
-                break;
-            case "SP":
-                W = (byte) ((getSP() & 0xFF00) >> 8);
-                Z = (byte) (getSP() & 0x00FF);
+        byte c = (byte) (Z & 0x80); // pre-carry
+
+        Z <<= 1;
+        BitSet pZ = BitSet.valueOf(new byte[]{Z});
+
+        if( (Z & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( Z == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( (pZ.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        if( c != 0 ) {
+            Z |= 1;
+            setCF();
+        } else {
+            resCF();
         }
 
-        setHL((short)(getHL() - getWZ()));
+        if (Z == 0) // Must be tested after pre-carry!!
+            setZF();
+        else
+            resZF();
 
-        if( getCF() ) setHL((short) (getHL() - 1));
+        resNF();
+        resHF();
+
+        set_r_(z);
+
+        Logger.reg("Z", Z);
+    }
+
+    public void RL_r_z() {
+        get_r_(z);
+
+        byte c = (byte) (Z & 0x80); // pre-carry
+        boolean oc = getCF(); // old-carry
+
+        Z <<= 1;
+
+        if( c != 0 ) {
+            setCF();
+        } else {
+            resCF();
+        }
+
+        if( oc )
+            Z |= 1;
+        else
+            Z &= 0xFE;
+
+        resNF();
+        resHF();
+
+        set_r_(z);
+
+        Logger.reg(r[z], Z);
+    }
+
+/*      CBopCodes[0][0][3] = opC::RR_r_z;
+        CBopCodes[0][0][4] = opC::SLA_r_z;
+        CBopCodes[0][0][5] = opC::SRA_r_z;
+        CBopCodes[0][0][6] = opC::SLL_r_z;*/
+
+    public void SRL_r_z() {
+        get_r_(z);
+
+        byte c = (byte) (Z & 0x01); // pre-carry
+
+        Z >>= 1;
+
+        resSF();
+
+        if( Z == 0 )
+            setZF();
+        else
+            resZF();
+
+        BitSet pZ = BitSet.valueOf(new byte[]{Z});
+
+        if( (pZ.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        if( c != 0 )
+            setCF();
+        else
+            resCF();
+
+        resHF();
+        resNF();
+
+        set_r_(z);
+
+        Logger.reg("Z", Z);
+    }
+
+    /* ED prefix */
+
+	@Override
+    public void SBC_HL_rp_p() {
+        int carry = getCF() ? 1 : 0;
+        int hl = getHL() & 0xFFFF;
+
+        get_rp_p();
+        int wz = getWZ() & 0xFFFF;
+        if( wz == 0x7FFF )
+            System.out.println("BREAKPOINT");
+
+        int result = hl - wz - carry;
+
+        if( isOverflowSUB16(hl, wz, result) )
+            setVF();
+        else
+            resVF();
+
+        if ( (result & 0x10000) != 0 )
+            setCF();
+        else
+            resCF();
+
+        if ((result & 0xFFFF) == 0)
+            setZF();
+        else
+            resZF();
+
+        if ((result & 0x8000) != 0)
+            setSF();
+        else
+            resSF();
+
+        setNF();
+
+        setHL((short)(result & 0xFFFF));
+
+        Logger.reg("HL", getHL());
+    }
+
+	@Override
+    public void ADC_HL_rp_p() {
+        int hl;
+
+        get_rp_p();
+
+        hl = getHL();
+        hl += getWZ();
+
+        boolean isHalfCarry = (((getHL() & 0x0FFF) + ((getCF()?getWZ()+1:getWZ()) & 0x0FFF)) & 0xF000) != 0;
+
+        if( (hl & 0xFFFF0000) != 0 )
+            setCF();
+        else
+            resCF();
+
+        if(isHalfCarry)
+            setHF();
+        else
+            resHF();
+
+        if( iSOverflowADD16(getHL(), getWZ(), hl) )
+            setVF();
+        else
+            resVF();
+
+        resNF();
+
+        setHL((short) (hl & 0xFFFF));
+
+        Logger.reg("HL", getHL());
+    }
+
+	@Override
+    public void LD_mm_rp_p() {
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+        MEMPTR = getWZ();
+
+        get_rp_p();
+
+        currentComp.poke(MEMPTR, Z);
+        currentComp.poke(MEMPTR + 1, W);
+    }
+
+	@Override
+    public void LD_rp_p_mm() {
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+        MEMPTR = getWZ();
+
+        Z = currentComp.peek(MEMPTR);
+        W = currentComp.peek(MEMPTR + 1);
+
+        set_rp_p();
+    }
+
+    /* CB Prefix */
+
+	@Override
+    public void BIT_y_r_z() {
+        W = (byte) (1 << y);
+
+        get_r_(z);
+
+        Z &= W;
+
+        if( Z == 0 )
+            setZF();
+        else
+            resZF();
+
+        resNF();
+        setHF();
+    }
+
+	@Override
+    public void RES_y_r_z() {
+        W = (byte) ~(1 << y);
+
+        get_r_(z);
+
+        Z &= W;
+
+        set_r_(z);
+    }
+
+	@Override
+    public void SET_y_r_z() {
+        W = (byte) (1 << y);
+
+        get_r_(z);
+
+        Z |= W;
+
+        set_r_(z);
+    }
+
+    /* ED Prefix */
+
+    public void OUT_C_r_y() {
+        Z = C;
+        W = B;
+        currentComp.write(getWZ(), A);
+    }
+
+	@Override
+    public void IN_r_y_C() { // TODO test pending
+        Z = C;
+        W = B;
+//Logger.info("IN port:"+Integer.toHexString(getWZ()));
+        A = currentComp.read(getWZ());
+//Logger.info("IN A:"+Integer.toHexString(A));
+
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        if( A == 0 )
+            setZF();
+        else
+            resZF();
+
+        if ((A & 0x80) != 0)
+            setSF();
+        else
+            resSF();
+
+        resNF();
+        resHF();
+
+        Logger.reg("A", A);
+    }
+
+	@Override
+    public void NEG() {
+        boolean isHalfCarry = (-(A & 0x0F)) < 0;
+        int a = A;
+
+        A = (byte) -A;
+
+        if( (a & 0x80) != 0 ) {
+            setSF();
+            setPF();
+        } else {
+            resSF();
+            resPF();
+        }
+
+        if( A == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if ((A & 0x80) != 0)
+            setSF();
+        else
+            resSF();
+
+        if  ( a != 0 )
+            setCF();
+        else
+            resCF();
+
+        setNF();
+
+        Logger.reg("A", A);
+    }
+
+	@Override
+    public void IM_im_y() {
+        switch (y) {
+            case 0: currentIM = 0; break;
+            case 2: currentIM = 1; break;
+            case 3: currentIM = 2; break;
+        }
+    }
+
+	@Override
+    public void LD_I_A() {
+        setI(A); // TODO flag affectation missing
+    }
+
+	@Override
+    public void LD_R_A() {
+        setR(A);
+    }
+
+	@Override
+    public void LD_A_I() {
+        A = I;
+
+        if( A == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( IFF2 )
+            setVF();
+        else
+            resVF();
+
+        if( IFF2 )
+            setPF();
+        else
+            resPF();
+
+        resNF();
+        resHF();
+    }
+
+	@Override
+    public void LD_A_R() {
+        A = R;
+
+        if( A == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( IFF2 )
+            setVF();
+        else
+            resVF();
+
+        if( IFF2 )
+            setPF();
+        else
+            resPF();
+
+        resNF();
+        resHF();
+    }
+
+    //@Override
+    //public void RRD() {} TODO
+    //@Override
+    //public void RLD() {}
+
+	@Override
+    public void LDI() {
+        // TODO
+    }
+
+	@Override
+    public void LDD() {
+        // TODO
+    }
+
+	@Override
+    public void LDIR() {
+        short org = getHL(); Logger.reg("HL", org);
+        short dst = getDE(); Logger.reg("DE", dst);
+        short cont = getBC(); Logger.reg("BC", cont);
+
+        if( currentComp.isSameBank(org, dst, cont) ) {
+            currentComp.movemem(org, dst, cont, Memory.MovememDirection.FORWARD);
+            org += cont;
+            dst += cont;
+        } else {
+            while( cont-- > 0 ) {
+                currentComp.poke(dst++, currentComp.peek(org++));
+            }
+        }
+
+        setHL(org);
+        setDE(dst);
+        B = C = (byte) 0;
+
+        resPF();
+        resNF();
+        resHF();
+    }
+
+	@Override
+    public void LDDR() {
+        short org = getHL(); Logger.reg("HL", org);
+        short dst = getDE(); Logger.reg("DE", dst);
+        short cont = getBC(); Logger.reg("BC", cont);
+
+        if (currentComp.isSameBank(org, dst, cont)) {
+            currentComp.movemem(org, dst, cont, Memory.MovememDirection.REVERSE);
+            org -= cont;
+            dst -= cont;
+        } else {
+            while( cont-- > 0 ) {
+                currentComp.poke(dst--, currentComp.peek(org--));
+            }
+        }
+
+        setHL(org);
+        setDE(dst);
+        B = C = (byte) 0;
+
+        resPF();
+        resNF();
+        resHF();
+    }
+
+	@Override
+    public void CPI() {
+        // TODO
+    }
+
+	@Override
+    public void CPD() {
+        // TODO
+    }
+
+	@Override
+    public void CPIR() {
+        // TODO
+    }
+
+	@Override
+    public void CPDR() {
+        // TODO
+    }
+
+	@Override
+    public void INI() {
+        // TODO
+    }
+
+	@Override
+    public void IND() {
+        // TODO
+    }
+
+	@Override
+    public void INIR() {
+        // TODO
+    }
+
+	@Override
+    public void INDR() {
+        // TODO
+    }
+
+	@Override
+    public void OUTI() {
+        // TODO
+    }
+
+	@Override
+    public void OUTD() {
+        // TODO
+    }
+
+	@Override
+    public void OTIR() {
+        // TODO
+    }
+
+	@Override
+    public void OTDR() {
+        // TODO
+    }
+
+    /* DD prefix */
+
+    @Override
+    public void DEC_IX() {
+        IX--;
+        Logger.reg("IX:", IX);
+    }
+
+    @Override
+    public void LD_r_y_IX_d() {
+        d = currentComp.peek(PC++);
+
+        Z = currentComp.peek(getIX()+d);
+
+        set_r_(y);
+    }
+
+    @Override
+    public void LD_IX_nn() {
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        IX = getWZ();
+    }
+
+    @Override
+    public void ADD_IX_rp_p() {
+        int hl = getIX() & 0xFFFF;
+        int wz;
+
+        get_rp_p();
+        wz = getWZ() & 0xFFFF;
+
+        hl += wz;
+
+        boolean isHalfCarry = (((getIX() & 0x0FFF) + (getWZ() & 0x0FFF)) & 0xF000) != 0;
+
+        if( (hl & 0xFFFF0000) != 0 )
+            setCF();
+        else
+            resCF();
+
+        if( hl == 0)
+            setZF();
+        else
+            resZF();
+
+        if( iSOverflowADD16(getIX(), getWZ(), hl))
+            setVF();
+        else
+            resVF();
+
+        if(isHalfCarry)
+            setHF();
+        else
+            resHF();
+
+        resNF();
+
+        setIX((short) (hl & 0xFFFF));
+
+        Logger.reg("IX", getIX());
+    }
+
+    @Override
+    public void JP_IX() {
+        PC = getIX();
+    }
+
+    @Override
+    public void PUSH_IX() {
+        W = (byte) ((IX & 0xFF00) >> 8);
+        Z = (byte) (IX & 0x00FF);
+
+        currentComp.poke(--SP, W);
+        currentComp.poke(--SP, Z);
+    }
+
+    @Override
+    public void POP_IX() {
+        Z = currentComp.peek(SP++);
+        W = currentComp.peek(SP++);
+
+        setIX(getWZ());
+    }
+
+    /* FD prefix */
+
+	@Override
+    public void LD_IY_nn() {
+        Z = currentComp.peek(PC++);
+        W = currentComp.peek(PC++);
+
+        setIY(getWZ());
+    }
+
+	@Override
+    public void LD_IY_d_r_z() {
+        d = currentComp.peek(PC++);
+
+        get_r_(z);
+
+        currentComp.poke(getIY()+d, Z);
+    }
+
+	@Override
+    public void LD_r_y_IY_d() {
+        d = currentComp.peek(PC++);
+
+        Z = currentComp.peek(getIY()+d);
+
+        set_r_(y);
+    }
+
+	@Override
+    public void DEC_IY_d() {
+        byte d = currentComp.peek(PC++);
+
+        currentComp.poke(getIY()+d, (byte)(currentComp.peek(getIY()+d) - 1) );
+    }
+
+	@Override
+    public void LD_IY_d_n() {
+        byte d = currentComp.peek(PC++);
+        Z = currentComp.peek(PC++);
+
+        currentComp.poke(getIY()+d, Z);
+    }
+
+    /* FDCB prefix */
+
+	@Override
+    public void BIT_y_IY_d() {
+        W = (byte) (1 << y);
+
+        Z = currentComp.peek(getIY()+d);
+        Z &= W;
+
+        if( Z == 0 )
+            setZF();
+        else
+            resZF();
+
+        resNF();
+        setHF();
+    }
+
+	@Override
+    public void RES_y_IY_d() {
+        W = (byte) ~(1 << y);
+
+        Z = currentComp.peek(getIY()+d);
+        Z &= W;
+        currentComp.poke(getIY()+d, Z);
+    }
+
+	@Override
+    public void SET_y_IY_d() {
+        W = (byte) (1 << y);
+
+        Z = currentComp.peek(getIY()+d);
+        Z |= W;
+        currentComp.poke(getIY()+d, Z);
+    }
+
+	@Override
+    public void ADD_A_IY_d() {
+        int a = A;
+        byte d = currentComp.peek(PC++);
+
+        Z = currentComp.peek(getIY()+d);
+
+        a += Z;
+
+        if( a == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( a >= Byte.MAX_VALUE )
+            setCF();
+        else
+            resCF();
+
+        A = (byte) a;
+
+        Logger.reg("A", A);
+    }
+
+    @Override
+    public void CP_IY_d() {
+        byte d = currentComp.peek(PC++);
+        int x = A & 0xFF;
+
+        Z = currentComp.peek(getIY()+d);
+
+        int y = Z & 0xFF;
+
+        int result = x - y;
+        boolean isHalfCarry = ((x & 0x0F) - (y & 0x0F)) < 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( isOverflowSUB(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( result < 0 )
+            setCF();
+        else
+            resCF();
+
+        setNF();
+    }
+
+    @Override
+    public void SUB_IY_d() {
+        byte d = currentComp.peek(PC++);
+        int x = A & 0xFF;
+
+        Z = currentComp.peek(getIY()+d);
+        int y = Z & 0xFF;
+
+        int result = x - y;
+
+        boolean isHalfCarry = ((x & 0x0F) - (y & 0x0F)) < 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( isOverflowSUB(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( result < 0 )
+            setCF();
+        else
+            resCF();
+
+        setNF();
+
+        A = (byte) (result & 0xFF);
+
+        Logger.reg("A", A);
+    }
+
+    @Override
+    public void JP_IY() {
+        PC = getIY();
+    }
+
+    @Override
+    public void PUSH_IY() {
+        W = (byte) ((IY & 0xFF00) >> 8);
+        Z = (byte) (IY & 0x00FF);
+
+        currentComp.poke(--SP, W);
+        currentComp.poke(--SP, Z);
+    }
+
+    @Override
+    public void POP_IY() {
+        Z = currentComp.peek(SP++);
+        W = currentComp.peek(SP++);
+
+        setIY(getWZ());
     }
 }
