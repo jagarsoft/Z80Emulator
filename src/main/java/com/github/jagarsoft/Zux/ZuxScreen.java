@@ -152,9 +152,9 @@ public class ZuxScreen implements Screen {
             case '\n': cursor_y++; return;
         }
 
-        System.out.print('*');
-        System.out.printf("%c",data);
-        System.out.print('*');
+        //System.out.print('*');
+        //System.out.printf("%c",data);
+        //System.out.print('*');
 
         if( ! (data == '\n' || data == '\r' || (0x20<=data && data<=0x7f) ) ) {
             return;
@@ -163,6 +163,7 @@ public class ZuxScreen implements Screen {
         byte[] c = ZXSpectrumCharset.getChar(data);
         int pos_x = cursor_x * 8;
         int pos_y = cursor_y * 8;
+        //System.out.printf("pos_x=%d, pos_y=%d\n", pos_x, pos_y);
         for(int y = 0; y < c.length; y++) {
             data = c[y];
             for(int x = 0; x<8; x++, data<<=1) {
