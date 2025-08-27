@@ -26,6 +26,8 @@ public class LoggerModule extends BaseModule {
             @Override
             @RunOnUIThread
             public void handle(LongTaskEvent e) {
+                System.out.println("Handler thread: " + Thread.currentThread().getName());
+
                 appendLog("Tarea recibida: " + e.getMessage());
                 try {
                     // Simular procesamiento costoso

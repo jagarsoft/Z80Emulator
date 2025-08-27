@@ -66,16 +66,17 @@ public class AsyncEventBus implements EventBus {
     }
 
     private <T> void invokeHandler(EventHandler<T> handler, T event) {
-        try {
-            Method method = handler.getClass().getMethod("handle", event.getClass());
-            if (method.isAnnotationPresent(RunOnUIThread.class)) {
+        //try {
+            //Method method = handler.getClass().getMethod("handle", event.getClass());
+            //if (method.isAnnotationPresent(RunOnUIThread.class)) {
+            if (handler.getClass().isAnnotationPresent(RunOnUIThread.class)) {
                 SwingUtilities.invokeLater(() -> handler.handle(event));
             } else {
                 handler.handle(event);
             }
-        } catch (NoSuchMethodException e) {
+        /*} catch (NoSuchMethodException e) {
             handler.handle(event);
-        }
+        }*/
     }
 
     @Override

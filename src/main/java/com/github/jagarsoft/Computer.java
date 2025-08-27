@@ -25,6 +25,10 @@ public class Computer {
         cpu.reset();
     }
 
+    public void setOrigin(int origin) {
+        cpu.PC = origin;
+    }
+
     public void run(){
         for (;;) {
             int pc = cpu.getPC();
@@ -33,6 +37,10 @@ public class Computer {
             cpu.fetch(opC); // fetch opCode
             //if( opC == 0x76) break; // is HALT?
         }
+    }
+
+    public Z80 getCPU() {
+        return this.cpu;
     }
 
     public void addCPU(Z80 cpu){

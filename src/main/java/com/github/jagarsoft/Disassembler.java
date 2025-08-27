@@ -5,8 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 public class Disassembler {
+    static Z80Disassembler disassembler = new Z80Disassembler();
+
     public static void main(String[ ] args) {
-        Z80Disassembler disassembler = new Z80Disassembler();
+
         FileInputStream dataStream;
         int size;
 
@@ -22,8 +24,6 @@ public class Disassembler {
         comp.addCPU(disassembler);
         comp.addMemory(0x0000, new RAMMemory(comp.upper_power_of_two(size)));
 
-        disassembler.setComputer(comp);
-
         try {
             comp.load(dataStream, size);
             dataStream.close();
@@ -31,9 +31,17 @@ public class Disassembler {
             throw new RuntimeException(e);
         }
 
+        list(comp, 0, size);
+    }
+
+    static void list(Computer comp, int org, int size) {
+
+        disassembler.setComputer(comp);
+
         comp.reset();
+        comp.setOrigin(org);
         do {
             disassembler.fetch();
-        } while( disassembler.getPC() < size);
+        } while( (disassembler.getPC() - org) < size);
     }
 }

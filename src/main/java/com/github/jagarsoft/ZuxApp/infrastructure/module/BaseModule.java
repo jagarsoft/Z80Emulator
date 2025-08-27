@@ -2,7 +2,7 @@ package com.github.jagarsoft.ZuxApp.infrastructure.module;
 
 import com.github.jagarsoft.ZuxApp.core.bus.CommandBus;
 import com.github.jagarsoft.ZuxApp.core.bus.EventBus;
-import com.github.jagarsoft.ZuxApp.core.events.ModuleRegisteredEvent;
+import com.github.jagarsoft.ZuxApp.core.events.ModuleLoadedEvent;
 import com.github.jagarsoft.ZuxApp.core.module.Module;
 
 import javax.swing.*;
@@ -27,7 +27,7 @@ public abstract class BaseModule implements Module {
         configure();
 
         // Emitir evento global
-        this.eventBus.publish(new ModuleRegisteredEvent(this.getName()));
+        this.eventBus.publish(new ModuleLoadedEvent(this.getName()));
     }
 
     public abstract void initUI();

@@ -6,17 +6,6 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-      </profile>
-      <profile name="Annotation profile for Z80Emulator" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/systems/manifold/manifold-preprocessor/2024.1.18/manifold-preprocessor-2024.1.18.jar" />
-          <entry name="$MAVEN_REPOSITORY$/systems/manifold/manifold/2024.1.18/manifold-2024.1.18.jar" />
-          <entry name="$MAVEN_REPOSITORY$/systems/manifold/manifold-rt/2024.1.18/manifold-rt-2024.1.18.jar" />
-          <entry name="$MAVEN_REPOSITORY$/systems/manifold/manifold-util/2024.1.18/manifold-util-2024.1.18.jar" />
-        </processorPath>
         <module name="Z80Emulator" />
       </profile>
     </annotationProcessing>

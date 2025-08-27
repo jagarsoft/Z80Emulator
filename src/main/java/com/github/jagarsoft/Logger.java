@@ -21,13 +21,13 @@ public class Logger {
         System.out.println("Halt instruction executed");
     }
 
-    public static void write(String s) {
-        System.out.println(s);
-    }
+    public static void write(String s) { System.out.println("str:"+s); }
 
     public static void read(String s) {
         System.out.println(s);
     }
 
     public static void compMem(String s) {System.out.println(s); }
+
+    public static void intvalue(int data) {System.out.println("intvalue:"+String.format("%04X", data)); }
 }

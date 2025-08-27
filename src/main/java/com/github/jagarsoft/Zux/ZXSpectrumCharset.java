@@ -1,7 +1,5 @@
 package com.github.jagarsoft.Zux;
 
-import jdk.jfr.internal.tool.Main;
-
 public class ZXSpectrumCharset {
 static byte[] charset = new byte[]{
             (byte)0b00000000,	//char20

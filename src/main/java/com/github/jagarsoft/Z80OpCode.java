@@ -138,6 +138,9 @@ public interface Z80OpCode {
 
     void NEG();
 
+    void RETN();
+    void RETI();
+
     void IM_im_y();
 
     void LD_I_A();

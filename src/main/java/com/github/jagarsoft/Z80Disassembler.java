@@ -45,6 +45,13 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         this.reset();
     }*/
 
+    public void list(int org, int size) {
+        currentComp.setOrigin(org);
+        do {
+            this.fetch();
+        } while( (this.getPC() - org) < size);
+    }
+
     public void CB_prefix() {
         byte opC = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
@@ -576,6 +583,12 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     public void NEG() {
         instruction.mnemonic = "NEG";
     }
+
+    @Override
+    public void RETN() { instruction.mnemonic = "RETN"; }
+
+    @Override
+    public void RETI() { instruction.mnemonic = "RETI"; }
 
 	@Override
     public void IM_im_y() {

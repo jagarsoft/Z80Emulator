@@ -281,8 +281,8 @@ public class Z80 implements Z80OpCode {
         // z=4   [x][z][y]
         EDopCodes[1][4][0] = opC::NEG;
         // z=5     [x][z][y]
-        //EDopCodes[1][5][] = opC::RETN; // TODO IFF1 = IFF2
-        //EDopCodes[1][5][1] = opC::RETI; // TODO
+        EDopCodes[1][5][0] = opC::RETN;
+        EDopCodes[1][5][1] = opC::RETI;
         // z=6   [x][z][y]
         EDopCodes[1][6][0b000] = opC::IM_im_y; // TODO test
         EDopCodes[1][6][0b010] = opC::IM_im_y;
@@ -447,6 +447,19 @@ public class Z80 implements Z80OpCode {
         isHalted = false;
     }
 
+    public void interruptNMI() {
+        IFF2 = IFF1;
+        IFF1 = false;
+
+        Z = (byte) 0x66;
+        W = 0x00;
+
+        currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
+        currentComp.poke(--SP, (byte)(PC & 0x00FF));
+
+        PC = getWZ();
+    }
+
     public void CB_prefix() { fetchCB(currentComp.peek(PC++)); }
     public void DD_prefix() { fetchDD(currentComp.peek(PC++)); }
     public void ED_prefix() { fetchED(currentComp.peek(PC++)); }
@@ -519,6 +532,13 @@ public class Z80 implements Z80OpCode {
 
     protected void fetchED(byte opC) {
         opCMasked(opC);
+
+        if(x == 1){
+            if(z == 5){
+                if(y != 1)
+                    EDopCodes[x][z][0].execute(); // RETN
+            }
+        }
 
         if (EDopCodes[x][z][y] != null) {
             EDopCodes[x][z][y].execute();
@@ -897,11 +917,15 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
     @Override
     public void LD_BC_A() {
         currentComp.poke(getBC(), A);
+
+        Logger.reg("A", getA());
     }
 
 	@Override
     public void LD_DE_A() {
         currentComp.poke(getDE(), A);
+
+        Logger.reg("A", getA());
     }
 
 	@Override
@@ -911,6 +935,8 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
         currentComp.poke(getWZ(), L);
         currentComp.poke(getWZ() + 1, H);
+
+        Logger.reg("HL", getHL());
     }
 
 	@Override
@@ -919,16 +945,24 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         W = currentComp.peek(PC++);
 
         currentComp.poke(getWZ(), A);
+
+        Logger.reg("A", getA());
     }
 
 	@Override
     public void LD_A_BC() {
         A = currentComp.peek(getBC());
+
+        Logger.reg("A, ("+getBC()+"), ", getBC());
+        Logger.reg("A", getA());
     }
 
 	@Override
     public void LD_A_DE() {
         A = currentComp.peek(getDE());
+
+        Logger.reg("A, ("+getDE()+"), ", getDE());
+        Logger.reg("A", getA());
     }
 
 	@Override
@@ -938,6 +972,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
         L = currentComp.peek(getWZ());
         H = currentComp.peek(getWZ() + 1);
+
         Logger.reg("HL", getHL());
     }
 
@@ -947,6 +982,8 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         W = currentComp.peek(PC++);
 
         A = currentComp.peek(getWZ());
+
+        Logger.reg("A", getA());
     }
 
 	@Override
@@ -1617,18 +1654,22 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
             case "BC":
                 B = W;
                 C = Z;
+                Logger.reg("BC", getBC());
                 break;
             case "DE":
                 D = W;
                 E = Z;
+                Logger.reg("DE", getDE());
                 break;
             case "HL":
                 H = W;
                 L = Z;
+                Logger.reg("HL", getHL());
                 break;
             case "AF":
                 A = W;
                 setF(Z);
+                Logger.reg("AF", getWZ());
         }
     }
 
@@ -1676,7 +1717,9 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
 	@Override    
     public void LD_SP_HL() {
-    	SP = getHL();
+        SP = getHL();
+
+        Logger.reg("SP", getSP());
     }
 
 	@Override
@@ -1773,7 +1816,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
     @Override
     public void EI() {
         IFF1 = IFF2 = true;
-        // countdown to effectively enabled:
+        // opcodes countdown to effectively enabled:
         // this one (EI) and next one
         IFF3 = 2;
     }
@@ -2019,6 +2062,8 @@ Logger.info("(SP):"+Integer.toHexString(W));
             resCF();
 
         setNF();
+
+        Logger.reg("A", A);
     }
 
 	@Override
@@ -2074,8 +2119,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
         resHF();
 
         set_r_(z);
-
-        Logger.reg("Z", Z);
     }
 
     public void RL_r_z() {
@@ -2101,8 +2144,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
         resHF();
 
         set_r_(z);
-
-        Logger.reg(r[z], Z);
     }
 
 /*      CBopCodes[0][0][3] = opC::RR_r_z;
@@ -2140,8 +2181,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
         resNF();
 
         set_r_(z);
-
-        Logger.reg("Z", Z);
     }
 
     /* ED prefix */
@@ -2362,7 +2401,33 @@ Logger.info("(SP):"+Integer.toHexString(W));
         Logger.reg("A", A);
     }
 
-	@Override
+    @Override
+    public void RETN() {
+        IFF1 = IFF2;
+
+Logger.info("RET SP:"+Integer.toHexString(SP));
+        Z = currentComp.peek(SP++);
+Logger.info("(SP):"+Integer.toHexString(Z));
+Logger.info("RET SP:"+Integer.toHexString(SP));
+        W = currentComp.peek(SP++);
+Logger.info("(SP):"+Integer.toHexString(W));
+
+        PC = getWZ();
+    }
+
+    @Override
+    public void RETI() {
+Logger.info("RET SP:"+Integer.toHexString(SP));
+        Z = currentComp.peek(SP++);
+Logger.info("(SP):"+Integer.toHexString(Z));
+Logger.info("RET SP:"+Integer.toHexString(SP));
+        W = currentComp.peek(SP++);
+Logger.info("(SP):"+Integer.toHexString(W));
+
+        PC = getWZ();
+    }
+
+    @Override
     public void IM_im_y() {
         switch (y) {
             case 0: currentIM = 0; break;
@@ -2636,6 +2701,8 @@ Logger.info("(SP):"+Integer.toHexString(W));
         W = currentComp.peek(SP++);
 
         setIX(getWZ());
+
+        Logger.reg("IX", getIX());
     }
 
     /* FD prefix */
@@ -2845,5 +2912,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         W = currentComp.peek(SP++);
 
         setIY(getWZ());
+
+        Logger.reg("IY", getIY());
     }
 }
