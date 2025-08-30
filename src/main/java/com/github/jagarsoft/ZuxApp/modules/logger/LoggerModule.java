@@ -1,9 +1,8 @@
 package com.github.jagarsoft.ZuxApp.modules.logger;
 
-import com.github.jagarsoft.ZuxApp.core.annotations.RunOnUIThread;
 import com.github.jagarsoft.ZuxApp.core.bus.Event;
 import com.github.jagarsoft.ZuxApp.core.bus.EventHandler;
-import com.github.jagarsoft.ZuxApp.core.commands.AddJInternalFrameToDesktopPaneCommand;
+import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.core.events.LongTaskEvent;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 
@@ -23,8 +22,6 @@ public class LoggerModule extends BaseModule {
     public void configure() {
         // Suscribirse al evento pesado
         eventBus.subscribe(LongTaskEvent.class, new EventHandler<LongTaskEvent>() {
-            @Override
-            @RunOnUIThread
             public void handle(LongTaskEvent e) {
                 System.out.println("Handler thread: " + Thread.currentThread().getName());
 

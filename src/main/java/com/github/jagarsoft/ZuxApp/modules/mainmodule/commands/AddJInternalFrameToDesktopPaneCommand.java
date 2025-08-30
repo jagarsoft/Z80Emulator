@@ -1,4 +1,4 @@
-package com.github.jagarsoft.ZuxApp.core.commands;
+package com.github.jagarsoft.ZuxApp.modules.mainmodule.commands;
 
 import com.github.jagarsoft.ZuxApp.core.bus.Command;
 

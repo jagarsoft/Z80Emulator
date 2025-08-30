@@ -1,10 +1,8 @@
 package com.github.jagarsoft.ZuxApp.modules.helloworld;
 
-import com.github.jagarsoft.ZuxApp.core.bus.EventHandler;
-import com.github.jagarsoft.ZuxApp.core.commands.AddJInternalFrameToDesktopPaneCommand;
+import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.core.events.LongTaskEvent;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
-import com.github.jagarsoft.ZuxApp.modules.logger.events.LogEvent;
 
 import javax.swing.*;
 

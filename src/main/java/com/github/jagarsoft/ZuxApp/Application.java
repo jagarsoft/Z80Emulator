@@ -10,7 +10,7 @@ public class Application {
 
     public void start() {
         bootstrap.initialize();
-        bootstrap.launchMainWindow();
+        //bootstrap.launchMainWindow();
     }
 
     // TODO: No hay forma de llamar aqui porque la ref a app es local ;-(

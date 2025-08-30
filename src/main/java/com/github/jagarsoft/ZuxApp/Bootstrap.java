@@ -4,14 +4,13 @@ import com.github.jagarsoft.ZuxApp.core.bus.CommandBus;
 import com.github.jagarsoft.ZuxApp.core.bus.EventBus;
 import com.github.jagarsoft.ZuxApp.core.module.Module;
 import com.github.jagarsoft.ZuxApp.infrastructure.bus.SimpleCommandBus;
-import com.github.jagarsoft.ZuxApp.infrastructure.bus.SimpleEventBus;
 import com.github.jagarsoft.ZuxApp.infrastructure.bus.AsyncEventBus;
-import com.github.jagarsoft.ZuxApp.ui.MainFrame;
+import com.github.jagarsoft.ZuxApp.modules.memoryconfig.MemoryConfigModule;
+import com.github.jagarsoft.ZuxApp.modules.mainmodule.MainModule;
 
 import com.github.jagarsoft.ZuxApp.modules.helloworld.HelloWorldModule;
 import com.github.jagarsoft.ZuxApp.modules.logger.LoggerModule;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,7 +18,7 @@ public class Bootstrap {
 
     private EventBus eventBus;
     private CommandBus commandBus;
-    private MainFrame mainFrame;
+    private MainModule mainModule;
 
     /*
      *  Startup
@@ -46,11 +45,12 @@ public class Bootstrap {
         commandBus.execute(new CreateUserCommand("Javier"));
          */
 
-        this.mainFrame = new MainFrame(commandBus, eventBus);
+        //this.mainModule = new MainModule(commandBus, eventBus);
         List<Module> modules = Arrays.asList(
-                //new MainModule(),
+                new MainModule(),
                 new LoggerModule(),
-                new HelloWorldModule()
+                new HelloWorldModule(),
+                new MemoryConfigModule(32, 2) // TODO Create with default values from commandline options or property file
         );
 
         for (Module module : modules) {
@@ -60,7 +60,7 @@ public class Bootstrap {
     }
 
     public void launchMainWindow() {
-        javax.swing.SwingUtilities.invokeLater(() -> mainFrame.setVisible(true));
+        //javax.swing.SwingUtilities.invokeLater(() -> mainModule.setVisible(true));
     }
 
     /*
@@ -71,6 +71,6 @@ public class Bootstrap {
     }
 
     public void withdraw() {
-        mainFrame.dispose();
+        //mainModule.dispose(); // TODO who calls it?
     }
 }

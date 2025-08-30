@@ -11,7 +11,7 @@ public abstract class BaseModule implements Module {
 
     protected CommandBus commandBus;
     protected EventBus eventBus;
-    protected JDesktopPane desktopPane;
+    //protected JDesktopPane desktopPane;
 
     @Override
     public String getName() {
@@ -22,7 +22,7 @@ public abstract class BaseModule implements Module {
     public final void register(CommandBus commandBus, EventBus eventBus/*, JDesktopPane desktopPane*/) {
         this.commandBus = commandBus;
         this.eventBus = eventBus;
-        this.desktopPane = desktopPane;
+        //this.desktopPane = desktopPane;
 
         configure();
 
@@ -33,8 +33,8 @@ public abstract class BaseModule implements Module {
     public abstract void initUI();
 
     // TODO: Move into Command in MainModule
-    protected void openInternalFrame(JInternalFrame frame) {
+    /*protected void openInternalFrame(JInternalFrame frame) {
         desktopPane.add(frame);
         frame.setVisible(true);
-    }
+    }*/
 }
