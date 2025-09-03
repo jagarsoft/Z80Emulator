@@ -1,8 +1,10 @@
 package com.github.jagarsoft.ZuxApp.modules.memoryconfig;
 
+import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJMenuToMenuBarCommand;
+import com.github.jagarsoft.ZuxApp.modules.memoryconfig.commands.GetMemoryConfiguration;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigAcceptedEvent;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigCancelledEvent;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigChangedEvent;
@@ -53,6 +55,13 @@ public class MemoryConfigModule extends BaseModule implements ChangeListener {
                 (Consumer<MemoryConfigCancelledEvent>) e -> {
                     frame.setVisible(false);
                 });
+        commandBus.registerHandler(GetMemoryConfiguration.class, new CommandHandler<GetMemoryConfiguration>() {
+            @Override
+            public void handle(GetMemoryConfiguration command) {
+                command.pageSize = pageSize;
+                command.numberPages = numberPages;
+            }
+        });
     }
 
     @Override

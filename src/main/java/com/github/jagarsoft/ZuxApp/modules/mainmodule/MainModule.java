@@ -4,10 +4,12 @@ import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJMenuToMenuBarCommand;
+import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.GetFileSelectedCommand;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.events.FileSelectedEvent;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
 
@@ -15,6 +17,8 @@ public class MainModule extends BaseModule {
     private final JDesktopPane desktopPane;
 
     private JMenuBar menuBar;
+    private File selectedFile;
+
     public MainModule() {
         this.desktopPane = new JDesktopPane();
     }
@@ -24,7 +28,7 @@ public class MainModule extends BaseModule {
                 event -> System.out.println("Evento: ventana abierta -> " + event.getWindowTitle()
                 );*/
 
-        this.commandBus.registerHandler(AddJInternalFrameToDesktopPaneCommand.class, new CommandHandler<AddJInternalFrameToDesktopPaneCommand>() {
+        commandBus.registerHandler(AddJInternalFrameToDesktopPaneCommand.class, new CommandHandler<AddJInternalFrameToDesktopPaneCommand>() {
             // Lambda version:
             // (AddJInternalFrameToDesktopPaneCommand)command -> desktopPane.add(command.getFrame())
 
@@ -34,10 +38,17 @@ public class MainModule extends BaseModule {
             }
         });
 
-        this.commandBus.registerHandler(AddJMenuToMenuBarCommand.class, new CommandHandler<AddJMenuToMenuBarCommand>() {
+        commandBus.registerHandler(AddJMenuToMenuBarCommand.class, new CommandHandler<AddJMenuToMenuBarCommand>() {
             @Override
             public void handle(AddJMenuToMenuBarCommand command) {
                 menuBar.add(command.getMenu());
+            }
+        });
+
+        commandBus.registerHandler(GetFileSelectedCommand.class, new CommandHandler<GetFileSelectedCommand>() {
+            @Override
+            public void handle(GetFileSelectedCommand command) {
+                command.file = selectedFile;
             }
         });
     }
@@ -77,7 +88,7 @@ public class MainModule extends BaseModule {
         int result = fileChooser.showOpenDialog(null);
 
         if (result == JFileChooser.APPROVE_OPTION) {
-            java.io.File selectedFile = fileChooser.getSelectedFile();
+            selectedFile = fileChooser.getSelectedFile();
             eventBus.publish(new FileSelectedEvent(selectedFile));
         }
     }

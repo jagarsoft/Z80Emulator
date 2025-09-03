@@ -56,6 +56,7 @@ public class LoggerModule extends BaseModule {
         });*/
 
         eventBus.subscribeToAll( (Consumer<Event>) (e) -> {
+            System.out.print("[LOG] " + e.getEventName() + ": " + e.getMessage()  + "\n");
             logArea.append("[LOG] " + e.getEventName() + ": " + e.getMessage() + "\n");
         });
     }

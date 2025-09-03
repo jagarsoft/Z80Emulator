@@ -11,6 +11,10 @@ public class FileSelectedEvent implements Event {
         this.selectedFile = selectedFile;
     }
 
+    public File getSelectedFile() {
+        return selectedFile;
+    }
+
     @Override
     public String getEventName() {
         return this.getClass().getSimpleName();
