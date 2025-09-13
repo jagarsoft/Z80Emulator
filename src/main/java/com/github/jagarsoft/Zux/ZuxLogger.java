@@ -5,8 +5,8 @@ import com.github.jagarsoft.IODevice;
 import com.github.jagarsoft.Logger;
 
 public class ZuxLogger implements IODevice {
-    final static int LOGGER_CMD = 0x00E0;
-    final static int LOGGER_DAT = 0x00E1;
+    public final static int LOGGER_CMD = 0x00E0;
+    public final static int LOGGER_DAT = 0x00E1;
     final static int LOG_INT = 0;
     final static int LOG_STR = 1;
     private final Computer zux;
@@ -17,7 +17,7 @@ public class ZuxLogger implements IODevice {
     private int proc_ptr;
     private byte[] byteString = new byte[80];
 
-    ZuxLogger(Computer zux) {
+    public ZuxLogger(Computer zux) {
         this.zux = zux;
     }
 

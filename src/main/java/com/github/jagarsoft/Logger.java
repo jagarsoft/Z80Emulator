@@ -21,6 +21,10 @@ public class Logger {
         System.out.println("Halt instruction executed");
     }
 
+    public static void halted() {
+        System.out.println("Halted: NOP executed");
+    }
+
     public static void write(String s) { System.out.println("str:"+s); }
 
     public static void read(String s) {

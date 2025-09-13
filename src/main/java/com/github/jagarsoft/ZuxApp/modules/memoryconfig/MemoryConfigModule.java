@@ -46,8 +46,7 @@ public class MemoryConfigModule extends BaseModule implements ChangeListener {
     public void configure() {
         eventBus.subscribe(MemoryConfigAcceptedEvent.class,
                 (Consumer<MemoryConfigAcceptedEvent>) e -> {
-                    //memorySize = pageSize * round((Double) spinner.getValue());
-                    //System.out.println(memorySize);
+                    numberPages = round((Double) spinner.getValue());
                     eventBus.publish(new MemoryConfigChangedEvent(pageSize, round((Double) spinner.getValue())));
                     frame.setVisible(false);
                 });

@@ -103,7 +103,7 @@ public class Z80 implements Z80OpCode {
         opCodes[0][7][1] = opC::RRCA;
         opCodes[0][7][2] = opC::RLA;
         opCodes[0][7][3] = opC::RRA;
-        //opCodes[0][7][4] = opC::DAA;  TODO
+        opCodes[0][7][4] = opC::DAA;  // TODO
         opCodes[0][7][5] = opC::CPL;
         opCodes[0][7][6] = opC::SCF;
         opCodes[0][7][7] = opC::CCF;
@@ -219,11 +219,13 @@ public class Z80 implements Z80OpCode {
         CBopCodes[0][0][0] = opC::RLC_r_z;
 /*        CBopCodes[0][0][1] = opC::RRC_r_z;*/
         CBopCodes[0][0][2] = opC::RL_r_z;
-/*        CBopCodes[0][0][3] = opC::RR_r_z;
-        CBopCodes[0][0][4] = opC::SLA_r_z;
-        CBopCodes[0][0][5] = opC::SRA_r_z;
-        CBopCodes[0][0][6] = opC::SLL_r_z;
+        CBopCodes[0][0][3] = opC::RR_r_z;
+/*        CBopCodes[0][0][4] = opC::SLA_r_z;
  */
+        CBopCodes[0][0][5] = opC::SRA_r_z;
+
+        CBopCodes[0][0][6] = opC::SLL_r_z;
+
         CBopCodes[0][0][7] = opC::SRL_r_z;
 
         // x = 1
@@ -327,7 +329,7 @@ public class Z80 implements Z80OpCode {
         DDopCodes[0][1][0b111] = opC::ADD_IX_rp_p;
         // z=3   [x][z][y]
         DDopCodes[0][3][0b101] = opC::DEC_IX;
-        // z=6   [x][z][y]
+        // z=6   [x][z][y]       LD r, (IX+d)
         DDopCodes[1][6][0b000] = opC::LD_r_y_IX_d;
         DDopCodes[1][6][0b001] = opC::LD_r_y_IX_d;
         DDopCodes[1][6][0b010] = opC::LD_r_y_IX_d;
@@ -356,7 +358,7 @@ public class Z80 implements Z80OpCode {
         FDopCodes[0][6][0b110] = opC::LD_IY_d_n; // TODO LD_IY_mm
 
         // x=1
-        // y=6   [x][z][y]
+        // y=6   [x][z][y]       LD (IY+d), r
         FDopCodes[1][0b000][6] = opC::LD_IY_d_r_z;
         FDopCodes[1][0b001][6] = opC::LD_IY_d_r_z;
         FDopCodes[1][0b010][6] = opC::LD_IY_d_r_z;
@@ -367,7 +369,7 @@ public class Z80 implements Z80OpCode {
         FDopCodes[1][0b111][6] = opC::LD_IY_d_r_z;
         // z=5 [x][z][y]
         FDopCodes[3][5][0b100] = opC::PUSH_IY;
-        // z=6   [x][z][y]
+        // z=6   [x][z][y]       LD r, (IY+d)
         FDopCodes[1][6][0b000] = opC::LD_r_y_IY_d;
         FDopCodes[1][6][0b001] = opC::LD_r_y_IY_d;
         FDopCodes[1][6][0b010] = opC::LD_r_y_IY_d;
@@ -458,6 +460,7 @@ public class Z80 implements Z80OpCode {
         currentComp.poke(--SP, (byte)(PC & 0x00FF));
 
         PC = getWZ();
+        regTouched(RegTouched.SP);
     }
 
     public void CB_prefix() { fetchCB(currentComp.peek(PC++)); }
@@ -477,15 +480,15 @@ public class Z80 implements Z80OpCode {
     public void fetch() { fetch(currentComp.peek(PC++)); }
 
     public void fetch(byte opC) {
-        if( PC == 0 /* 0x07e2 0x47CD 0x11DC PC == 0x16D2 || PC == 0x1297 || PC == 0x0D7F*/ ) {
+        /*if( PC == 0 /#* 0x07e2 0x47CD 0x11DC PC == 0x16D2 || PC == 0x1297 || PC == 0x0D7F*#/ ) {
             IFF1 = false;
             setA(getA());
-        }
+        }*/
 
         if( isHalted ) {
             PC--;
             NOP();
-            Logger.info("Halted: NOP executed");
+            Logger.halted();
             return;
         }
 
@@ -506,7 +509,8 @@ public class Z80 implements Z80OpCode {
             if (opCodes[x][z][y] != null) {
                 opCodes[x][z][y].execute();
             } else {
-                throw new IllegalArgumentException("OpCode not implemented yet: " + Integer.toHexString(opC));
+                System.out.println("OpCode not implemented yet: " + Integer.toHexString(opC));;
+                //throw new IllegalArgumentException("OpCode not implemented yet: " + Integer.toHexString(opC));
             }
         }
 
@@ -526,7 +530,8 @@ public class Z80 implements Z80OpCode {
         if (CBopCodes[x][0][0] != null) {
             CBopCodes[x][0][0].execute(); // Bitwise y, r[z]
         } else {
-            throw new IllegalArgumentException("CB+OpCode not implemented yet: " + Integer.toHexString(opC));
+            System.out.println("OpCode not implemented yet: " + Integer.toHexString(opC));
+            //throw new IllegalArgumentException("CB+OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
 
@@ -543,7 +548,8 @@ public class Z80 implements Z80OpCode {
         if (EDopCodes[x][z][y] != null) {
             EDopCodes[x][z][y].execute();
         } else {
-            throw new IllegalArgumentException("ED+OpCode not implemented yet: " + Integer.toHexString(opC));
+            System.out.println("OpCode not implemented yet: " + Integer.toHexString(opC));
+            //throw new IllegalArgumentException("ED+OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
 
@@ -553,7 +559,8 @@ public class Z80 implements Z80OpCode {
         if (DDopCodes[x][z][y] != null) {
             DDopCodes[x][z][y].execute();
         } else {
-            throw new IllegalArgumentException("DD+OpCode not implemented yet: " + Integer.toHexString(opC));
+            System.out.println("DD+OpCode not implemented yet: " + Integer.toHexString(opC));
+            //throw new IllegalArgumentException("DD+OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
 
@@ -563,7 +570,8 @@ Logger.info("AQUI FD:"+Integer.toHexString(opC));
         if (FDopCodes[x][z][y] != null) {
             FDopCodes[x][z][y].execute();
         } else {
-            throw new IllegalArgumentException("FD+OpCode not implemented yet: " + Integer.toHexString(opC));
+            System.out.println("FD+OpCode not implemented yet: " + Integer.toHexString(opC));
+            //throw new IllegalArgumentException("FD+OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
 
@@ -579,7 +587,8 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         if (FDCBopCodes[x][z][y] != null) {
             FDCBopCodes[x][z][y].execute();
         } else {
-            throw new IllegalArgumentException("FDCB+OpCode not implemented yet: " + Integer.toHexString(opC));
+            System.out.println("FDCB+OpCode not implemented yet: " + Integer.toHexString(opC));
+            //throw new IllegalArgumentException("FDCB+OpCode not implemented yet: " + Integer.toHexString(opC));
         }
     }
 
@@ -593,6 +602,14 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
     protected byte H;
     protected byte L;
     protected BitSet F = new BitSet(8);
+
+    public enum RegTouched {
+        A, B, C, D, E, F, H, L, SP, IX, IY, I, R,
+        // 0  1  2  3  4  5  6  7  8   9   10 11 12
+        A_, B_, C_, D_, E_, F_, H_, L_;
+        // 13  14  15  16  17  18  19  20
+    };
+    private final BitSet regTouched = new BitSet(RegTouched.values().length);
 
     protected int PC;
 
@@ -629,12 +646,14 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
     // According to Reset Timing at http://www.z80.info/interrup.htm
     public void reset() {
+        regTouched.clear();
         PC = 0; // 0x4C2;
         setI((byte) 0);
         setR((byte) 0); // will forget Flags affectation
         setA((byte) 0xFF);
         setF((byte) 0xFF);
         SP = 0xFFFF;
+        regTouched(RegTouched.SP);
         IFF1 = IFF2 = false;
         IFF3 = 2;
         currentIM = 0;
@@ -645,31 +664,31 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
     // Getters / Setters
     public byte getA() { return A; }
-    public void setA(byte a) { A = a; Logger.reg("A", a); }
+    public void setA(byte a) { A = a; regTouched(RegTouched.A); }
 
     public byte getB() { return B; }
-    public void setB(byte b) { B = b; Logger.reg("B", b);}
+    public void setB(byte b) { B = b; regTouched(RegTouched.B);}
 
     public byte getC() { return C; }
-    public void setC(byte c) { C = c; Logger.reg("C", c); }
+    public void setC(byte c) { C = c; regTouched(RegTouched.C); }
 
     public byte getD() {return D; }
-    public void setD(byte d) { D = d; Logger.reg("D", d); }
+    public void setD(byte d) { D = d; regTouched(RegTouched.D); }
 
     public byte getE() { return E; }
-    public void setE(byte e) { E = e; Logger.reg("E", e); }
+    public void setE(byte e) { E = e; regTouched(RegTouched.E); }
 
     public byte getH() { return H; }
-    public void setH(byte h) { H = h; Logger.reg("H", h); }
+    public void setH(byte h) { H = h; regTouched(RegTouched.H); }
 
     public byte getL() { return L; }
-    public void setL(byte l) { L = l; Logger.reg("L", l); }
+    public void setL(byte l) { L = l; regTouched(RegTouched.L); }
 
     public byte getI() { return I; }
-    public void setI(byte i) { I = i; Logger.reg("I", i); }
+    public void setI(byte i) { I = i; regTouched(RegTouched.I); }
 
     public byte getR() { return R; }
-    public void setR(byte r) { R = r; Logger.reg("R", r); }
+    public void setR(byte r) { R = r; regTouched(RegTouched.R); }
 
     public byte getF() {
         if( F.cardinality() == 0 ) // Hmmm... BitSet does not support returning 0 if all bits are clear ;-(
@@ -677,7 +696,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         return F.toByteArray()[0];
     }
 
-    public void setF(byte f) { F = BitSet.valueOf(new byte[]{f}); }
+    public void setF(byte f) { F = BitSet.valueOf(new byte[]{f}); regTouched(RegTouched.F); }
 
     public byte getF_() {
         if( alternative.F.cardinality() == 0 )
@@ -685,7 +704,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         return alternative.F.toByteArray()[0];
     }
 
-    public void setF_(byte f) { alternative.F = BitSet.valueOf(new byte[]{f}); }
+    public void setF_(byte f) { alternative.F = BitSet.valueOf(new byte[]{f}); regTouched(RegTouched.F_); }
 
     public boolean getSF(){ return F.get(7); }
     public boolean getZF(){ return F.get(6); }
@@ -697,61 +716,64 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
     public boolean getNF(){ return F.get(1); }
     public boolean getCF(){ return F.get(0); }
 
-    public void setSF(){ F.set(7); }
-    public void setZF(){ F.set(6); }
-    public void setxF(){ F.set(5); }
-    public void setHF(){ F.set(4); }
-    public void setyF(){ F.set(3); }
-    public void setPF(){ F.set(2); }
-    public void setVF(){ F.set(2); } // same setPF()
-    public void setNF(){ F.set(1); }
-    public void setCF(){ F.set(0); }
+    public void setSF(){ F.set(7); regTouched(RegTouched.F); }
+    public void setZF(){ F.set(6); regTouched(RegTouched.F); }
+    public void setxF(){ F.set(5); regTouched(RegTouched.F); }
+    public void setHF(){ F.set(4); regTouched(RegTouched.F); }
+    public void setyF(){ F.set(3); regTouched(RegTouched.F); }
+    public void setPF(){ F.set(2); regTouched(RegTouched.F); }
+    public void setVF(){ F.set(2); regTouched(RegTouched.F); } // same setPF()
+    public void setNF(){ F.set(1); regTouched(RegTouched.F); }
+    public void setCF(){ F.set(0); regTouched(RegTouched.F); }
 
-    public void resSF(){ F.clear(7); }
-    public void resZF(){ F.clear(6); }
-    public void resxF(){ F.clear(5); }
-    public void resHF(){ F.clear(4); }
-    public void resyF(){ F.clear(3); }
-    public void resPF(){ F.clear(2); }
-    public void resVF(){ F.clear(2); } // same resPF()
-    public void resNF(){ F.clear(1); }
-    public void resCF(){ F.clear(0); }
+    public void resSF(){ F.clear(7); regTouched(RegTouched.F); }
+    public void resZF(){ F.clear(6); regTouched(RegTouched.F); }
+    public void resxF(){ F.clear(5); regTouched(RegTouched.F); }
+    public void resHF(){ F.clear(4); regTouched(RegTouched.F); }
+    public void resyF(){ F.clear(3); regTouched(RegTouched.F); }
+    public void resPF(){ F.clear(2); regTouched(RegTouched.F); }
+    public void resVF(){ F.clear(2); regTouched(RegTouched.F); } // same resPF()
+    public void resNF(){ F.clear(1); regTouched(RegTouched.F); }
+    public void resCF(){ F.clear(0); regTouched(RegTouched.F); }
 
     // Words
     public short getBC() { return (short) ((short) (B << 8) | (C & 0xFF)); }
     public short getDE() { return (short) ((short) (D << 8) | (E & 0xFF)); }
     public short getHL() { return (short) ((short) (H << 8) | (L & 0xFF)); }
-    public int getSP() { return SP; }
+    public int   getSP() { return SP; }
     public short getIX() { return IX; }
     public short getIY() { return IY; }
 
     private short getWZ() { return (short) ((short) (W << 8) | (Z & 0xFF)); }
 
     public void setBC(short bc) {
-        B = (byte) ((bc & 0xFF00) >> 8);
-        C = (byte) (bc & 0x00FF);
+        setB((byte) ((bc & 0xFF00) >> 8));
+        setC((byte) (bc & 0x00FF));
     }
 
     public void setDE(short de) {
-        D = (byte) ((de & 0xFF00) >> 8);
-        E = (byte) (de & 0x00FF);
+        setD((byte) ((de & 0xFF00) >> 8));
+        setE( (byte) (de & 0x00FF));
     }
 
     public void setHL(short hl) {
-        H = (byte) ((hl & 0xFF00) >> 8);
-        L = (byte) (hl & 0x00FF);
+        setH((byte) ((hl & 0xFF00) >> 8));
+        setL( (byte) (hl & 0x00FF));
     }
 
     public void setSP(int sp) {
         SP = sp;
+        regTouched(RegTouched.SP);
     }
 
     public void setIX(short ix) {
         IX = ix;
+        regTouched(RegTouched.IX);
     }
 
     public void setIY(short iy) {
         IY = iy;
+        regTouched(RegTouched.IY);
     }
 
     public String getWord(byte h, byte l) {
@@ -759,7 +781,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
     }
 
     public int getPC() { return PC++; }
-    public int getPC2() { return PC; }
+    public int getPCnonIncrement() { return PC; }
 
     private void get_rp_p() {
         switch (p) {
@@ -784,24 +806,35 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
     private void set_rp_p() {
         switch (p) {
             case 0:
-                B = W;
-                C = Z;
-                Logger.reg("BC", getBC());
+                setB(W);
+                setC(Z);
                 break;
             case 1:
-                D = W;
-                E = Z;
-                Logger.reg("DE", getDE());
+                setD(W);
+                setE(Z);
                 break;
             case 2:
-                H = W;
-                L = Z;
-                Logger.reg("HL", getHL());
+                setH(W);
+                setL(Z);
                 break;
             case 3:
                 setSP(getWZ());
-                Logger.reg("SP", getSP());
         }
+    }
+
+    public boolean isHalted() {
+        return isHalted;
+    }
+
+    private void regTouched(RegTouched r) {
+        regTouched.set(r.ordinal());
+    }
+
+    public BitSet getSnapshot() {
+        //final long[] snapshot = regTouched.toLongArray();
+        final BitSet snapshot = (BitSet)regTouched.clone();
+        regTouched.clear();
+        return snapshot;
     }
 
     /*
@@ -821,7 +854,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 	@Override
     public void EX_AF_AF_() {
         W = A;
-        A = alternative.A;
+        setA(alternative.A);
         alternative.A = W;
 
         Z = getF();
@@ -835,6 +868,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
         if (--B != 0)
             PC += (short) d;
+        regTouched(RegTouched.B);
     }
 
 	@Override
@@ -951,18 +985,12 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
 	@Override
     public void LD_A_BC() {
-        A = currentComp.peek(getBC());
-
-        Logger.reg("A, ("+getBC()+"), ", getBC());
-        Logger.reg("A", getA());
+        setA(currentComp.peek(getBC()));
     }
 
 	@Override
     public void LD_A_DE() {
-        A = currentComp.peek(getDE());
-
-        Logger.reg("A, ("+getDE()+"), ", getDE());
-        Logger.reg("A", getA());
+        setA(A = currentComp.peek(getDE()));
     }
 
 	@Override
@@ -970,10 +998,8 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-        L = currentComp.peek(getWZ());
-        H = currentComp.peek(getWZ() + 1);
-
-        Logger.reg("HL", getHL());
+        setL(currentComp.peek(getWZ()));
+        setH(currentComp.peek(getWZ() + 1));
     }
 
 	@Override
@@ -981,9 +1007,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-        A = currentComp.peek(getWZ());
-
-        Logger.reg("A", getA());
+        setA(currentComp.peek(getWZ()));
     }
 
 	@Override
@@ -1024,15 +1048,15 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         x = Z;
 
         switch(y){
-            case 0: Z = ++B; break;
-            case 1: Z = ++C; break;
-            case 2: Z = ++D; break;
-            case 3: Z = ++E; break;
-            case 4: Z = ++H; break;
-            case 5: Z = ++L; break;
+            case 0: Z = ++B; regTouched(RegTouched.B); break;
+            case 1: Z = ++C; regTouched(RegTouched.C); break;
+            case 2: Z = ++D; regTouched(RegTouched.D); break;
+            case 3: Z = ++E; regTouched(RegTouched.E); break;
+            case 4: Z = ++H; regTouched(RegTouched.H); break;
+            case 5: Z = ++L; regTouched(RegTouched.L); break;
             case 6: currentComp.poke(getHL(), Z = (byte)(currentComp.peek(getHL()) + 1) );
                     break;
-            case 7: Z = ++A;
+            case 7: Z = ++A; regTouched(RegTouched.A);
         }
 
         boolean isHalfCarry = (((x & 0x0F) + (1 & 0x0F)) & 0xF0) != 0;
@@ -1058,8 +1082,6 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
             resVF();
 
         resNF();
-
-        Logger.reg("Z", Z);
     }
     
     @Override
@@ -1070,15 +1092,15 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         x = Z;
 
         switch(y){
-            case 0: Z = --B; break;
-            case 1: Z = --C; break;
-            case 2: Z = --D; break;
-            case 3: Z = --E; break;
-            case 4: Z = --H; break;
-            case 5: Z = --L; break;
+            case 0: Z = --B; regTouched(RegTouched.B); break;
+            case 1: Z = --C; regTouched(RegTouched.C); break;
+            case 2: Z = --D; regTouched(RegTouched.D); break;
+            case 3: Z = --E; regTouched(RegTouched.E); break;
+            case 4: Z = --H; regTouched(RegTouched.H); break;
+            case 5: Z = --L; regTouched(RegTouched.L); break;
             case 6: currentComp.poke(getHL(), Z = (byte)(currentComp.peek(getHL()) - 1) );
                     break;
-            case 7: Z = --A;
+            case 7: Z = --A; regTouched(RegTouched.A);
         }
 
         boolean isHalfCarry = ((x & 0x0F) - (1 & 0x0F)) < 0;
@@ -1131,7 +1153,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         resNF();
         resHF();
 
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
 	@Override
@@ -1151,7 +1173,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         resNF();
         resHF();
 
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
 	@Override
@@ -1175,7 +1197,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         resNF();
         resHF();
 
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
 	@Override
@@ -1199,12 +1221,13 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         resNF();
         resHF();
 
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
+    // https://worldofspectrum.org/faq/reference/z80reference.htm#DAA
 	@Override
     public void DAA() { // TODO
-
+        System.out.println("DAA TODO ERROR");
     }
 
 	@Override
@@ -1230,7 +1253,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         setNF();
         setHF();
 
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
 	@Override
@@ -1348,9 +1371,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
         resNF();
 
-        A = (byte) (result & 0xFF);
-
-        Logger.reg("A", A);
+        setA((byte) (result & 0xFF));
     }
 
 	@Override
@@ -1393,9 +1414,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
         resNF();
 
-        A = (byte) (result & 0xFF);
-
-        Logger.reg("A", A);
+        setA((byte) (result & 0xFF));
     }
 
 	@Override
@@ -1435,9 +1454,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
         setNF();
 
-        A = (byte) (result & 0xFF);
-
-        Logger.reg("A", A);
+        setA((byte) (result & 0xFF));
     }
 
 	@Override
@@ -1473,16 +1490,14 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
         setNF();
 
-        A = (byte) (result & 0xFF);
-
-        Logger.reg("A", A);
+        setA((byte) (result & 0xFF));
     }
 
 	@Override
     public void AND_r_z() {
         get_r_(z);
 
-        A &= Z;
+        A &= Z; regTouched(RegTouched.A);
 
         BitSet pA = BitSet.valueOf(new byte[]{A});
 
@@ -1504,15 +1519,13 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         resCF();
         resNF();
         setHF();
-
-        Logger.reg("A", A);
     }
 
 	@Override
     public void XOR_r_z() {
         get_r_(z);
 
-        A ^= Z;
+        A ^= Z; regTouched(RegTouched.A);
 
         BitSet pA = BitSet.valueOf(new byte[]{A});
 
@@ -1534,15 +1547,13 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         resCF();
         resNF();
         resHF();
-
-        Logger.reg("A", A);
     }
 
 	@Override
     public void OR_r_z() {
         get_r_(z);
 
-        A |= Z;
+        A |= Z; regTouched(RegTouched.A);
 
         BitSet pA = BitSet.valueOf(new byte[]{A});
 
@@ -1564,8 +1575,6 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         resCF();
         resNF();
         resHF();
-
-        Logger.reg("A", A);
     }
 
 	@Override
@@ -1652,74 +1661,52 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         
         switch (rp2[p]) {
             case "BC":
-                B = W;
-                C = Z;
-                Logger.reg("BC", getBC());
+                setB(W);
+                setC(Z);
                 break;
             case "DE":
-                D = W;
-                E = Z;
-                Logger.reg("DE", getDE());
+                setD(W);
+                setE(Z);
                 break;
             case "HL":
-                H = W;
-                L = Z;
-                Logger.reg("HL", getHL());
+                setH(W);
+                setL(Z);
                 break;
             case "AF":
-                A = W;
+                setA(W);
                 setF(Z);
-                Logger.reg("AF", getWZ());
         }
     }
 
 	@Override    
     public void RET() {
-Logger.info("RET SP:"+Integer.toHexString(SP));
         Z = currentComp.peek(SP++);
-Logger.info("(SP):"+Integer.toHexString(Z));
-Logger.info("RET SP:"+Integer.toHexString(SP));
         W = currentComp.peek(SP++);
-Logger.info("(SP):"+Integer.toHexString(W));
-        
+
         PC = getWZ();
+        regTouched(RegTouched.SP);
     }
 
 	@Override    
     public void EXX() {
-        Z = getB();
-        setB(alternative.B);
-        alternative.B = Z;
-        Z = getC();
-        setC(alternative.C);
-        alternative.C = Z;
+        Z = getB(); setB(alternative.B); alternative.B = Z; regTouched(RegTouched.B_);
+        Z = getC(); setC(alternative.C); alternative.C = Z; regTouched(RegTouched.C_);
+
+        Z = getH(); setH(alternative.H); alternative.H = Z; regTouched(RegTouched.H_);
+        Z = getL(); setL(alternative.L); alternative.L = Z; regTouched(RegTouched.L_);
         
-        Z = getH();
-        setH(alternative.H);
-        alternative.H = Z;
-        Z = getL();
-        setL(alternative.L);
-        alternative.L = Z;
-        
-        Z = getD();
-        setD(alternative.D);
-        alternative.D = Z;
-        Z = getE();
-        setE(alternative.E);
-        alternative.E = Z;
+        Z = getD(); setD(alternative.D); alternative.D = Z; regTouched(RegTouched.D_);
+        Z = getE(); setE(alternative.E); alternative.E = Z; regTouched(RegTouched.E_);
     }
 
 	@Override    
     public void JP_HL() {
         PC = getHL();
-        Logger.reg("HL", getHL());
     }
 
 	@Override    
     public void LD_SP_HL() {
-        SP = getHL();
-
-        Logger.reg("SP", getSP());
+        setSP(getHL());
     }
 
 	@Override
@@ -1779,7 +1766,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         Z = currentComp.peek(PC++);
         W = A;
 //Logger.info("IN port:"+Integer.toHexString(getWZ()));
-        A = currentComp.read(getWZ());
+        setA(currentComp.read(getWZ()));
 //Logger.info("IN A:"+Integer.toHexString(A));
     }
 
@@ -1787,25 +1774,22 @@ Logger.info("(SP):"+Integer.toHexString(W));
     public void EX_SP_HL() {
         Z = currentComp.peek(SP);
         currentComp.poke(SP, L);
-        L = Z;
+        setL(Z);
 
         W = currentComp.peek(SP+1);
         currentComp.poke(SP+1, H);
-        H = W;
+        setH(W);
     }
 
 	@Override
     public void EX_DE_HL() {
         Z = E;
-        E = L;
-        L = Z;
+        setE(L);
+        setL(Z);
 
         W = D;
-        D = H;
-        H = W;
-
-        Logger.reg("HL", getHL());
-        Logger.reg("DE", getDE());
+        setD(H);
+        setH(W);
     }
 
 	@Override
@@ -1858,6 +1842,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
             currentComp.poke(--SP, (byte)(PC & 0x00FF));
 
             PC = getWZ();
+            regTouched(RegTouched.SP);
         }
     }
 
@@ -1883,6 +1868,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         currentComp.poke(--SP, W);
         currentComp.poke(--SP, Z);
+        regTouched(RegTouched.SP);
     }
 
 	@Override
@@ -1894,6 +1880,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         currentComp.poke(--SP, (byte)(PC & 0x00FF));
 
         PC = getWZ();
+        regTouched(RegTouched.SP);
     }
 
 	@Override
@@ -1901,8 +1888,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         Z = currentComp.peek(PC++);
 
         A += Z;
-
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
 	@Override
@@ -1913,7 +1899,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         if( getCF() ) A++;
 
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
 	@Override
@@ -1922,7 +1908,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         A -= Z;
 
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
 	@Override
@@ -1933,14 +1919,14 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         if( getCF() ) A--;
 
-        Logger.reg("A", A);
+        regTouched(RegTouched.A);
     }
 
 	@Override
     public void AND_n() {
         Z = currentComp.peek(PC++);
 
-        A &= Z;
+        A &= Z; regTouched(RegTouched.A);
 
         BitSet pA = BitSet.valueOf(new byte[]{A});
 
@@ -1962,15 +1948,13 @@ Logger.info("(SP):"+Integer.toHexString(W));
         resCF();
         resNF();
         setHF();
-
-        Logger.reg("A", A);
     }
 
 	@Override
     public void XOR_n() {
         Z = currentComp.peek(PC++);
 
-        A ^= Z;
+        A ^= Z; regTouched(RegTouched.A);
 
         BitSet pA = BitSet.valueOf(new byte[]{A});
 
@@ -1992,15 +1976,13 @@ Logger.info("(SP):"+Integer.toHexString(W));
         resCF();
         resNF();
         resHF();
-
-        Logger.reg("A", A);
     }
 
 	@Override
     public void OR_n() {
         Z = currentComp.peek(PC++);
 
-        A |= Z;
+        A |= Z; regTouched(RegTouched.A);
 
         BitSet pA = BitSet.valueOf(new byte[]{A});
 
@@ -2022,8 +2004,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
         resCF();
         resNF();
         resHF();
-
-        Logger.reg("A", A);
     }
 
 	@Override
@@ -2062,8 +2042,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
             resCF();
 
         setNF();
-
-        Logger.reg("A", A);
     }
 
 	@Override
@@ -2075,6 +2053,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         currentComp.poke(--SP, (byte)(PC & 0x00FF));
 
         PC = getWZ();
+        regTouched(RegTouched.SP);
     }
 
     /* CB prefix */
@@ -2150,6 +2129,9 @@ Logger.info("(SP):"+Integer.toHexString(W));
         CBopCodes[0][0][4] = opC::SLA_r_z;
         CBopCodes[0][0][5] = opC::SRA_r_z;
         CBopCodes[0][0][6] = opC::SLL_r_z;*/
+    public void RR_r_z() { System.out.println("RR_r_z ERROR"); }
+    public void SRA_r_z() { System.out.println("SRA_r_z ERROR"); }
+    public void SLL_r_z() { System.out.println("SLL_r_z ERROR"); }
 
     public void SRL_r_z() {
         get_r_(z);
@@ -2220,8 +2202,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
         setNF();
 
         setHL((short)(result & 0xFFFF));
-
-        Logger.reg("HL", getHL());
     }
 
 	@Override
@@ -2253,8 +2233,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
         resNF();
 
         setHL((short) (hl & 0xFFFF));
-
-        Logger.reg("HL", getHL());
     }
 
 	@Override
@@ -2335,7 +2313,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         Z = C;
         W = B;
 //Logger.info("IN port:"+Integer.toHexString(getWZ()));
-        A = currentComp.read(getWZ());
+        setA(currentComp.read(getWZ()));
 //Logger.info("IN A:"+Integer.toHexString(A));
 
         BitSet pA = BitSet.valueOf(new byte[]{A});
@@ -2357,8 +2335,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         resNF();
         resHF();
-
-        Logger.reg("A", A);
     }
 
 	@Override
@@ -2366,7 +2342,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         boolean isHalfCarry = (-(A & 0x0F)) < 0;
         int a = A;
 
-        A = (byte) -A;
+        setA((byte) -A);
 
         if( (a & 0x80) != 0 ) {
             setSF();
@@ -2397,8 +2373,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
             resCF();
 
         setNF();
-
-        Logger.reg("A", A);
     }
 
     @Override
@@ -2413,6 +2387,7 @@ Logger.info("RET SP:"+Integer.toHexString(SP));
 Logger.info("(SP):"+Integer.toHexString(W));
 
         PC = getWZ();
+        regTouched(RegTouched.SP);
     }
 
     @Override
@@ -2425,6 +2400,7 @@ Logger.info("RET SP:"+Integer.toHexString(SP));
 Logger.info("(SP):"+Integer.toHexString(W));
 
         PC = getWZ();
+        regTouched(RegTouched.SP);
     }
 
     @Override
@@ -2438,7 +2414,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
 	@Override
     public void LD_I_A() {
-        setI(A); // TODO flag affectation missing
+        setI(A); // TODO flag affectation missing http://www.z80.info/z80sflag.htm
     }
 
 	@Override
@@ -2448,7 +2424,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
 	@Override
     public void LD_A_I() {
-        A = I;
+        setA(I);
 
         if( A == 0 )
             setZF();
@@ -2471,7 +2447,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
 	@Override
     public void LD_A_R() {
-        A = R;
+        setA(R);
 
         if( A == 0 )
             setZF();
@@ -2525,7 +2501,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         setHL(org);
         setDE(dst);
-        B = C = (byte) 0;
+        setBC((byte) 0);
 
         resPF();
         resNF();
@@ -2550,7 +2526,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         setHL(org);
         setDE(dst);
-        B = C = (byte) 0;
+        setBC((byte) 0);
 
         resPF();
         resNF();
@@ -2622,7 +2598,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
     @Override
     public void DEC_IX() {
         IX--;
-        Logger.reg("IX:", IX);
+        regTouched(RegTouched.IX);
     }
 
     @Override
@@ -2639,7 +2615,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-        IX = getWZ();
+        setIX(getWZ());
     }
 
     @Override
@@ -2677,8 +2653,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
         resNF();
 
         setIX((short) (hl & 0xFFFF));
-
-        Logger.reg("IX", getIX());
     }
 
     @Override
@@ -2693,6 +2667,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         currentComp.poke(--SP, W);
         currentComp.poke(--SP, Z);
+        regTouched(RegTouched.SP);
     }
 
     @Override
@@ -2701,8 +2676,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         W = currentComp.peek(SP++);
 
         setIX(getWZ());
-
-        Logger.reg("IX", getIX());
+        regTouched(RegTouched.SP);
     }
 
     /* FD prefix */
@@ -2716,7 +2690,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
     }
 
 	@Override
-    public void LD_IY_d_r_z() {
+    public void LD_IY_d_r_z() { // TODO revisar valor de Z
         d = currentComp.peek(PC++);
 
         get_r_(z);
@@ -2803,9 +2777,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
         else
             resCF();
 
-        A = (byte) a;
-
-        Logger.reg("A", A);
+        setA((byte) a);
     }
 
     @Override
@@ -2887,9 +2859,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         setNF();
 
-        A = (byte) (result & 0xFF);
-
-        Logger.reg("A", A);
+        setA((byte) (result & 0xFF));
     }
 
     @Override
@@ -2904,6 +2874,7 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
         currentComp.poke(--SP, W);
         currentComp.poke(--SP, Z);
+        regTouched(RegTouched.SP);
     }
 
     @Override
@@ -2912,7 +2883,6 @@ Logger.info("(SP):"+Integer.toHexString(W));
         W = currentComp.peek(SP++);
 
         setIY(getWZ());
-
-        Logger.reg("IY", getIY());
+        regTouched(RegTouched.SP);
     }
 }

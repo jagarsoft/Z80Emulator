@@ -10,12 +10,10 @@ public class BreakpointHitEvent implements Event {
     public Z80State getState() { return state; }
 
     @Override
-    public String getEventName() {
-        return ""; // TODO
-    }
+    public String getEventName() { return getClass().getName(); }
 
     @Override
     public String getMessage() {
-        return ""; // TODO
+        return " at " + String.format("%04X", getAddress());
     }
 }

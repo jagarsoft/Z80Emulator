@@ -99,6 +99,7 @@ public class AsyncEventBus implements IAsyncEventBus {
     public void unsubscribeAll() {
         globalListeners.clear();
         globalAsyncListeners.clear();
+        globalUIListeners.clear();
     }
 
     @Override

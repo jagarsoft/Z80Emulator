@@ -8,20 +8,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyListener;
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import com.github.jagarsoft.Zux.Observable;
-
-import static com.github.jagarsoft.Zux.MemoryManagementUnit.PHYS_COPY_CMD;
-import static com.github.jagarsoft.Zux.MemoryManagementUnit.PHYS_COPY_DAT;
 
 import static com.github.jagarsoft.Zux.ZuxLogger.LOGGER_CMD;
 import static com.github.jagarsoft.Zux.ZuxLogger.LOGGER_DAT;
@@ -76,7 +67,7 @@ public class ZuxEmulator {
         }
 
         //System.out.println(FileSizeFormatter.stringifyFileSize(zux.getMemSize()*64L,4,1024));
-        System.out.println(zux.getMemSize() * 64L + "Kb");
+        System.out.println(zux.getBankSize() * 64L + "Kb");
         zux.reset();
 
         SwingUtilities.invokeLater(new Runnable() {

@@ -5,7 +5,7 @@ import com.github.jagarsoft.ZuxApp.modules.debugger.IZ80Cpu;
 import com.github.jagarsoft.ZuxApp.modules.debugger.Z80State;
 
 public class Z80Cpu implements IZ80Cpu {
-    Z80 cpu;
+    private Z80 cpu;
 
     public Z80Cpu(Z80 cpu) {
         this.cpu = cpu;

@@ -2,6 +2,7 @@ package com.github.jagarsoft.ZuxApp.modules.logger;
 
 import com.github.jagarsoft.ZuxApp.core.bus.Event;
 import com.github.jagarsoft.ZuxApp.core.bus.EventHandler;
+import com.github.jagarsoft.ZuxApp.core.bus.UIEventHandler;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.core.events.LongTaskEvent;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
@@ -21,7 +22,8 @@ public class LoggerModule extends BaseModule {
     @Override
     public void configure() {
         // Suscribirse al evento pesado
-        eventBus.subscribe(LongTaskEvent.class, new EventHandler<LongTaskEvent>() {
+        /*eventBus.subscribe(LongTaskEvent.class, new EventHandler<LongTaskEvent>() {
+            @Override
             public void handle(LongTaskEvent e) {
                 System.out.println("Handler thread: " + Thread.currentThread().getName());
 
@@ -34,7 +36,7 @@ public class LoggerModule extends BaseModule {
                 }
                 appendLog("Tarea completada: " + e.getMessage());
             }
-        });
+        });*/
 
         /*
         eventBus.subscribe(LogEvent.class, new EventHandler<LogEvent>() {
@@ -55,10 +57,21 @@ public class LoggerModule extends BaseModule {
             }
         });*/
 
-        eventBus.subscribeToAll( (Consumer<Event>) (e) -> {
-            System.out.print("[LOG] " + e.getEventName() + ": " + e.getMessage()  + "\n");
-            logArea.append("[LOG] " + e.getEventName() + ": " + e.getMessage() + "\n");
+        eventBus.subscribeToAll( new Consumer<Event>() {
+            @Override
+            public void accept(Event e) {
+                System.out.print("[LOG] Consumer " + e.getEventName() + ": " + e.getMessage()  + "\n");
+                logArea.append("[LOG] Consumer " + e.getEventName() + ": " + e.getMessage() + "\n");
+            }
         });
+
+        /*eventBus.subscribeToAll( new UIEventHandler<Event>() {
+            @Override
+            public void handle(Event e) {
+                logArea.append("[LOG] UIEventHandler "+e.getEventName()+": "+e.getMessage()+"\n");
+                System.out.print("[LOG] UIEventHandler "+e.getEventName()+": "+e.getMessage()+"\n");
+            }
+        });*/
     }
 
     @Override

@@ -10,8 +10,8 @@ import java.io.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.github.jagarsoft.Zux.MemoryManagementUnit.PHYS_COPY_CMD;
-import static com.github.jagarsoft.Zux.MemoryManagementUnit.PHYS_COPY_DAT;
+import static com.github.jagarsoft.Zux.IOManagementUnit.PHYS_COPY_CMD;
+import static com.github.jagarsoft.Zux.IOManagementUnit.PHYS_COPY_DAT;
 
 import static com.github.jagarsoft.Zux.ZuxLogger.LOGGER_CMD;
 import static com.github.jagarsoft.Zux.ZuxLogger.LOGGER_DAT;
@@ -27,8 +27,9 @@ public class ZuxEmulatorV1 {
 
         Computer zux = new Computer();
         zux.addCPU(cpu = new Z80());
-        zux.addMemory(0x0000_0000, new RAMMemory(64 * 1024));
-        zux.addMemory(0x0001_0000, new RAMMemory(64 * 1024));
+        zux.addMemory(0x0000, new RAMMemory(64 * 1024));
+        //zux.addMemory(0x0000_0000, new RAMMemory(64 * 1024));
+        //zux.addMemory(0x0001_0000, new RAMMemory(64 * 1024));
         // 2^16 * 64K = 4096K
         /*for(long bank = 0; bank < 0x0010_0000L /#*0x1_0000_0000L*#/; bank += 0x1_0000) {
             //System.out.println("Bank: " + String.format("0x%08X", bank));
@@ -36,7 +37,7 @@ public class ZuxEmulatorV1 {
         }*/
 
         zux.addIODevice((byte) 0xCC, new ZuxIO(keyboard, new ZuxTerminal(screen)));
-        MemoryManagementUnit MMU = new MemoryManagementUnit(zux);
+        IOManagementUnit MMU = new IOManagementUnit(zux);
         zux.addIODevice(new byte[]{(byte)PHYS_COPY_CMD, (byte)PHYS_COPY_DAT}, new ZuxIO(MMU, MMU));
 
         ZuxLogger zuxLogger = new ZuxLogger(zux);
@@ -56,7 +57,7 @@ public class ZuxEmulatorV1 {
         }
 
         //System.out.println(FileSizeFormatter.stringifyFileSize(zux.getMemSize()*64L,4,1024));
-        System.out.println(zux.getMemSize()*64L+"Kb");
+        System.out.println(zux.getBankSize()*64L+"Kb");
         zux.reset();
 
         SwingUtilities.invokeLater(new Runnable() {

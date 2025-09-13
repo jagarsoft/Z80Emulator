@@ -4,26 +4,6 @@ import java.util.LinkedList;
 
 public class Z80Disassembler extends Z80 implements Z80OpCode {
 
-    private class Instruction {
-        int PC;
-        byte[] opCodes = new byte[4];
-        int opCodeCounter = 0;
-        String mnemonic;
-        String comment;
-
-        public String toString() {
-            int i;
-            StringBuilder line = new StringBuilder(String.format("%04X ", PC));
-            for(i = 0; i<opCodeCounter; i++)
-               line.append(String.format("%02X", opCodes[i]));
-            for(; i<8; i++)
-                line.append("  "); // 2 spaces
-            //line.append("\t");
-            line.append(mnemonic);
-            return line.toString();
-        }
-    }
-
     Instruction instruction = new Instruction();
     LinkedList<Instruction> instructions = new LinkedList<Instruction>();
     Z80 cpu;
@@ -45,7 +25,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         this.reset();
     }*/
 
-    public void list(int org, int size) {
+    public void dump(int org, int size) {
         currentComp.setOrigin(org);
         do {
             this.fetch();
@@ -101,14 +81,14 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
             return PC;
     }
 
-    public void fetch() {
+    public Instruction fetchInstruction() {
         if(cpu != null)
-            fetch(currentComp.peek(cpu.PC++));
+            return fetchInstruction(currentComp.peek(cpu.PC++));
         else
-            fetch(currentComp.peek(PC++));
+            return fetchInstruction(currentComp.peek(PC++));
          }
 
-    public void fetch(byte opC) {
+    public Instruction fetchInstruction(byte opC) {
         this.PC = this.getPC();
         instruction.PC = this.PC - 1;
         instruction.opCodes[0] = opC;
@@ -116,9 +96,11 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         super.fetch(opC);
         System.out.println(instruction);
         //instructions.add(instruction);
+        Instruction i = instruction;
         instruction = null;
         instruction = new Instruction();
         this.PC = this.getPC();
+        return i;
     }
 
 	@Override
@@ -515,7 +497,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void ADC_HL_rp_p() {
-        instruction.mnemonic = "ADC HL"+rp[p];
+        instruction.mnemonic = "ADC HL, "+rp[p];
     }
 
 	@Override
@@ -548,7 +530,9 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         CBopCodes[0][0][4] = opC::SLA_r_z;
         CBopCodes[0][0][5] = opC::SRA_r_z;
         CBopCodes[0][0][6] = opC::SLL_r_z;*/
-
+    public void RR_r_z() { instruction.mnemonic = "RR "+r[z]; System.out.println("RR_r_z ERROR"); }
+    public void SRA_r_z() { instruction.mnemonic = "SRA "+r[z]; System.out.println("SRA_r_z ERROR"); }
+    public void SLL_r_z() { instruction.mnemonic = "SRL "+r[z]; System.out.println("SLL_r_z ERROR"); }
     public void SRL_r_z() {
         instruction.mnemonic = "SRL "+r[z];
     }

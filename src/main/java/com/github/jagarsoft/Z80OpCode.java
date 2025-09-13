@@ -118,7 +118,9 @@ public interface Z80OpCode {
         CBopCodes[0][0][4] = opC::SLA_r_z;
         CBopCodes[0][0][5] = opC::SRA_r_z;
         CBopCodes[0][0][6] = opC::SLL_r_z;*/
-
+    void RR_r_z();
+    void SRA_r_z();
+    void SLL_r_z();
     void SRL_r_z();
 
     void BIT_y_r_z();
@@ -195,4 +197,5 @@ public interface Z80OpCode {
     void POP_IY();
     void JP_IY();
     void PUSH_IY();
+
 }

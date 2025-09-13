@@ -59,13 +59,17 @@ public class Computer {
 
     public void addMemory(int base, Memory memory) {
         int s = memory.getSize();
-        if( ! powerOf2(s) )
-            throw new IllegalArgumentException("Size must be a power of 2. "+ s +" given");
+        if( ! powerOf2(s) ) {
+            System.out.println("Size must be a power of 2. " + s + " given");
+            throw new IllegalArgumentException("Size must be a power of 2. " + s + " given");
+        }
 //System.out.println("Size:"+s);
         if( sizeMask == 0 )
             sizeMask = makeSizeMask(s);
-        else if( sizeMask != makeSizeMask(s) )
-            throw new IllegalArgumentException("All banks must be the same size as the first one ("+Integer.toHexString(sizeMask)+"). "+Integer.toHexString(s)+" given");
+        else if( sizeMask != makeSizeMask(s) ) {
+            System.out.println("All banks must be the same size as the first one (" + Integer.toHexString(sizeMask) + "). " + Integer.toHexString(s) + " given");
+            throw new IllegalArgumentException("All banks must be the same size as the first one (" + Integer.toHexString(sizeMask) + "). " + Integer.toHexString(s) + " given");
+        }
 
         int key = base2key(base);
 
@@ -91,8 +95,9 @@ public class Computer {
 
     }
 
+    // int s is a power of 2
     private int makeSizeMask(int s) {
-        return ~(s - 1);
+        return Math.abs(~(s - 1));
     }
 
     private int base2key(int addr) {
@@ -146,6 +151,14 @@ Logger.info("Computer.load dataStream: "+dataStream.toString());
     }
     */
 
+    /**
+     * Load Image into Memory chunks.
+     * Each chunk is the size of the first bank
+     *
+     * @param dataStream
+     * @param length
+     * @throws IOException
+     */
     public void load(FileInputStream dataStream, long length) throws IOException {
         assert dataStream != null;
         Logger.info("Computer.load dataStream: "+dataStream.toString());
@@ -167,6 +180,7 @@ Logger.info("Computer.load dataStream: "+dataStream.toString());
             && base2key(org+cont) == base2key(dst+cont);*/
     }
 
+    // PRECOND: ord & dst are in the same bank
     public void movemem(short org, short dst, short cont, Memory.MovememDirection dir) {
         banks.get(base2key(org)).movemem((short) (org - (org & sizeMask)), (short) (dst - (dst & sizeMask)), cont, dir);
     }
@@ -183,15 +197,21 @@ Logger.info("Computer.load dataStream: "+dataStream.toString());
         }
     }
 
-    int getSize() {
-        int size = 0;
+    public int getMemorySize() {
+        /*int size = 0;
         for(Memory bank : banks.values()) {
             size += bank.getSize();
         }
-        return size;
+        return size;*/
+        return sizeMask * banks.size();
     }
 
-    public int getMemSize() {
+    public int getBankSize() {
         return banks.size();
+    }
+
+    public void freeMemory() {
+        sizeMask = 0;
+        banks.clear();
     }
 }

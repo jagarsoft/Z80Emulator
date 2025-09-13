@@ -7,8 +7,8 @@ public class MemoryConfigChangedEvent implements Event {
     private long numberPages;
 
     public MemoryConfigChangedEvent(int pageSize, long numberPages) {
-        this.pageSize = pageSize;
-        this.numberPages = numberPages;
+        this.setPageSize(pageSize);
+        this.setNumberPages(numberPages);
     }
 
     @Override
@@ -18,6 +18,22 @@ public class MemoryConfigChangedEvent implements Event {
 
     @Override
     public String getMessage() {
-        return pageSize + " * " + numberPages;
+        return getPageSize() + " * " + getNumberPages();
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
+
+    public long getNumberPages() {
+        return numberPages;
+    }
+
+    public void setNumberPages(long numberPages) {
+        this.numberPages = numberPages;
     }
 }

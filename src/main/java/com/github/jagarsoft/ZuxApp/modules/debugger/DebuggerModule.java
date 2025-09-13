@@ -5,9 +5,11 @@ import com.github.jagarsoft.ZuxApp.core.bus.UIEventHandler;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.computer.Z80Cpu;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.ComputerLoadImageCommand;
-import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCPUCommand;
+import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
 import com.github.jagarsoft.ZuxApp.modules.debugger.commands.*;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.*;
+import com.github.jagarsoft.ZuxApp.modules.disassembler.events.BreakpointToggledEvent;
+import com.github.jagarsoft.ZuxApp.modules.logger.events.LogEvent;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.events.FileSelectedEvent;
 
@@ -34,8 +36,8 @@ public class DebuggerModule extends BaseModule {
     private final ExecutorService runExecutor = Executors.newSingleThreadExecutor();
     private final AtomicBoolean running = new AtomicBoolean(false);
     //private NotificationStrategy notificationStrategy = new NoEventsStrategy();
-    //private NotificationStrategy notificationStrategy = new StepStrategy();
-    private NotificationStrategy notificationStrategy = new SnapshotStrategy();
+    private NotificationStrategy notificationStrategy = new StepStrategy();
+    //private NotificationStrategy notificationStrategy = new SnapshotStrategy();
 
     // Coalescing de UI: un “tick” cada ~33ms (30 FPS)
     private volatile long lastUiPushMs = 0L;
@@ -70,14 +72,6 @@ public class DebuggerModule extends BaseModule {
          * Debugger Controller
          */
 
-        // STEP
-        commandBus.registerHandler(DebuggerStepCommand.class, new CommandHandler<DebuggerStepCommand>() {
-            @Override public void handle(DebuggerStepCommand cmd) {
-                if (running.get()) return; // ignore if already running
-                doOneStepAndPublish();
-            }
-        });
-
         // RUN
         commandBus.registerHandler(DebuggerRunCommand.class, new CommandHandler<DebuggerRunCommand>() {
             @Override public void handle(DebuggerRunCommand cmd) {
@@ -100,6 +94,14 @@ public class DebuggerModule extends BaseModule {
             }
         });
 
+        // STEP
+        commandBus.registerHandler(DebuggerStepCommand.class, new CommandHandler<DebuggerStepCommand>() {
+            @Override public void handle(DebuggerStepCommand cmd) {
+                if (running.get()) return; // ignore if already running
+                doOneStepAndPublish();
+            }
+        });
+
         // RESET
         commandBus.registerHandler(DebuggerResetCommand.class, new CommandHandler<DebuggerResetCommand>() {
             @Override public void handle(DebuggerResetCommand cmd) {
@@ -108,13 +110,13 @@ public class DebuggerModule extends BaseModule {
         });
 
         // TOGGLE BREAKPOINT
-        commandBus.registerHandler(DebuggerToggleBreakpointCommand.class, new CommandHandler<DebuggerToggleBreakpointCommand>() {
+        /*commandBus.registerHandler(DebuggerToggleBreakpointCommand.class, new CommandHandler<DebuggerToggleBreakpointCommand>() {
             @Override public void handle(DebuggerToggleBreakpointCommand cmd) {
                 boolean enabled = breakpoints.toggle(cmd.getAddress());
                 // TODO (Opcional) publicar un evento de “breakpoints actualizados”
                 // eventBus.publish(new BreakPointToggledEvent(breakpoints));
             }
-        });
+        });*/
 
         //eventBus.subscribe(ExecutionStartedEvent.class, (Consumer<ExecutionStartedEvent>) (e) -> {
         eventBus.subscribe(ExecutionStartedEvent.class, (UIEventHandler<ExecutionStartedEvent>) (e) -> {
@@ -131,23 +133,26 @@ public class DebuggerModule extends BaseModule {
         /*eventBus.subscribe(BreakpointHitEvent.class, (Consumer<BreakpointHitEvent>) (e) -> {
             eventBus.publish(new ExecutionPausedEvent("BREAKPOINT"));
         });*/
+        eventBus.subscribe(BreakpointToggledEvent.class, (Consumer<BreakpointToggledEvent>) (e) -> {
+            breakpoints.toggle(e.getAddress());
+        });
 
-        GetComputerCPUCommand currentCPU = new GetComputerCPUCommand();
-        commandBus.execute(currentCPU);
-        this.cpu = new Z80Cpu(currentCPU.getCpu());
+        GetComputerCommand currentComputer = new GetComputerCommand();
+        commandBus.execute(currentComputer);
+        this.cpu = new Z80Cpu(currentComputer.getCpu());
 
+        // TODO UIEventHandler probably
         eventBus.subscribe(FileSelectedEvent.class, (Consumer<FileSelectedEvent>) (e) -> {
             File currentFile = e.getSelectedFile();
             commandBus.execute(new ComputerLoadImageCommand(currentFile));
-            // eventBus.publish(new ImageLoadedEvent());
+            // TODO delegar en ComputerLoadImageCommand si la carga tiene exito
+            eventBus.publish(new ImageLoadedEvent(currentComputer.getComputer(), currentFile.length()));
+        });
+
+        eventBus.subscribe(ImageLoadedEvent.class, (Consumer<ImageLoadedEvent>) (e) -> {
             //commandBus.execute(new DebuggerRunCommand()); // RUN ??
             commandBus.execute(new DebuggerPauseCommand()); // PAUSE ??
         });
-
-        /*
-        eventBus.subscribe(ImageLoadedEvent.class, (Consumer<ImageLoadedEvent>) (e) -> {
-
-        });*/
     }
 
     @Override
@@ -197,6 +202,7 @@ public class DebuggerModule extends BaseModule {
 
     public void setNotificationStrategy(NotificationStrategy strategy) {
         notificationStrategy = strategy;
+        eventBus.publish( new LogEvent("setNotificationStrategy => " + notificationStrategy.getClass()));
     }
 
     /*
@@ -206,16 +212,16 @@ public class DebuggerModule extends BaseModule {
     private void doOneStepAndPublish() {
         stepDebugger();
         int pc = cpu.getPC();
-        if (! isBreakpointHit(pc)) {
+        //if (! isBreakpointHit(pc)) {
             cpu.step();
             notificationStrategy.onInstruction(cpu, eventBus);
             if (cpu.isHalted()) {
                 //running.set(false);
                 pauseDebugger("HALTED");
-                setNotificationStrategy( new StepStrategy() );
-                //notificationStrategy.onPause(cpu, eventBus);
+                //setNotificationStrategy( new SnapshotStrategy() );
+                notificationStrategy.onPause(cpu, eventBus);
             }
-        }
+        //}
     }
 
     private void stepDebugger() {
@@ -228,73 +234,20 @@ public class DebuggerModule extends BaseModule {
     private boolean isBreakpointHit(int pc) {
         if (breakpoints.isBreakpoint(pc)) {
             //running.set(false);
-            pauseDebugger("PAUSE");
+            pauseDebugger("BREAKPOINT");
             eventBus.publish(new BreakpointHitEvent(pc, cpu.snapshot()));
             return true;
         } else
             return false;
     }
 
-    /*
-    private void runLoop() {
-        try {
-            while (running.get()) {
-                if (cpu.isHalted()) {
-                    running.set(false);
-                    eventBus.publish(new ExecutionStoppedEvent());
-                    break;
-                }
-
-                doOneStepAndPublish(true);
-
-                int pc = cpu.getPC();
-                if (breakpoints.isBreakpoint(pc)) {
-                    running.set(false);
-                    eventBus.publish(new BreakpointHitEvent(pc, cpu.snapshot()));
-                    break;
-                }
-
-                // Coalescing de UI (30 Hz aprox)
-                long now = System.currentTimeMillis();
-                if (now - lastUiPushMs >= uiPushIntervalMs) {
-                    lastUiPushMs = now;
-                    eventBus.publish(new CpuStateUpdatedEvent(cpu.snapshot()));
-                }
-            }
-        } finally {
-            if (!running.get()) {
-                eventBus.publish(new ExecutionStoppedEvent());
-            }
-        }
-    }
-
-    private void doOneStepAndPublish(boolean emitSteppedEvent) {
-        cpu.step();
-        Z80State snap = cpu.snapshot();
-        if (emitSteppedEvent) {
-            eventBus.publish(new CpuSteppedEvent(snap)); // útil para “paso a paso”
-        } else {
-            // En run no publicamos cada instrucción; el coalescing arriba enviará CpuStateUpdatedEvent
-        }
-    }
-    */
-
-    /*
-    private void runLoop() {
-        while (running.get() && !cpu.isHalted()) {
-            doOneStepAndPublish();
-        }
-        notificationStrategy.onPause(cpu, eventBus);
-    }
-    */
-
     private void runLoop() {
         runDebugger();
         while (running.get() && !cpu.isHalted()) {
             int pc = cpu.getPC();
-            if (! isBreakpointHit(pc)) {
-                cpu.step();
-                //notificationStrategy.onInstruction(cpu, eventBus);
+            cpu.step();
+            if (isBreakpointHit(pc)) {
+                notificationStrategy.onInstruction(cpu, eventBus);
             }
         }
         if (cpu.isHalted()) {
@@ -314,17 +267,17 @@ public class DebuggerModule extends BaseModule {
         running.set(false);
         if( state != DebuggerState.PAUSED ) {
             state = DebuggerState.PAUSED;
+            //setNotificationStrategy( new StepStrategy() );
             setNotificationStrategy( new SnapshotStrategy() );
         }
 
-        // TODO si esta pausado tras un HALT debe de cambiar el estado de los botones
-        // FALLA: llegar a HALT y dar RUN
         eventBus.publish(new ExecutionPausedEvent(mode)); // PAUSE, HALTED, RESET
     }
 
     private void resetDebugger() {
         cpu.reset();
         pauseDebugger("RESET");
+        notificationStrategy.onPause(cpu, eventBus);
     }
 
     public void shutdown() {

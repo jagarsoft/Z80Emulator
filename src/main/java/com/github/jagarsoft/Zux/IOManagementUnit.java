@@ -2,11 +2,10 @@ package com.github.jagarsoft.Zux;
 
 import com.github.jagarsoft.Computer;
 import com.github.jagarsoft.IODevice;
-import com.github.jagarsoft.Memory;
 
 import static java.lang.String.format;
 
-public class MemoryManagementUnit  implements IODevice {
+public class IOManagementUnit implements IODevice {
     final static int PHYS_COPY_CMD = 0x00EE;
     final static int PHYS_COPY_DAT = 0x00EF;
 
@@ -14,7 +13,7 @@ public class MemoryManagementUnit  implements IODevice {
     private int data_cnt;
     private byte[] data = new byte[12];
 
-    MemoryManagementUnit(Computer zux) {
+    IOManagementUnit(Computer zux) {
         this.zux = zux;
     }
 
