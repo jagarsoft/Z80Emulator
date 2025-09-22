@@ -33,7 +33,7 @@ public class ROMMemory implements Memory {
     }
 
     @Override
-    public void movemem(short org, short dst, short cont, MovememDirection dir) {
-        throw new UnsupportedOperationException();
+    public void movemem(short org, short dst, short count, MovememDirection dir) {
+        // omit silently
      }
 }

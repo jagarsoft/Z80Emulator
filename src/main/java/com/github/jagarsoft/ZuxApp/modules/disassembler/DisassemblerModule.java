@@ -5,7 +5,6 @@ import com.github.jagarsoft.Instruction;
 import com.github.jagarsoft.Z80Disassembler;
 import com.github.jagarsoft.ZuxApp.core.bus.UIEventHandler;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
-import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.CpuStateUpdatedEvent;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.ImageLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.disassembler.events.BreakpointToggledEvent;
@@ -72,6 +71,7 @@ public class DisassemblerModule extends BaseModule {
     private void list(Computer comp, int org, long size) {
         //disassemblyModel.clear();
         disassembler.setComputer(comp);
+        //disassembler.setSymbolTable(symbolTable);
 
         comp.reset();
         comp.setOrigin(org);
@@ -84,7 +84,6 @@ public class DisassemblerModule extends BaseModule {
             processed++;
             // Update UI every 100 instructions
             if (processed % 100 == 0) {
-                System.out.println(processed);
                 disassemblyModel.fireTableDataChanged();
                 //disassemblyModel.fireTableRowsInserted(processed-100, processed-1);
             }

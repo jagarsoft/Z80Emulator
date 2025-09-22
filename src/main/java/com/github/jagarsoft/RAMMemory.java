@@ -30,14 +30,14 @@ public class RAMMemory implements Memory {
         }
 
         @Override
-        public void movemem(short org, short dst, short cont, MovememDirection dir) {
+        public void movemem(short org, short dst, short count, MovememDirection dir) {
                 switch (dir) {
                         case FORWARD:
-                                while (cont-- > 0)
+                                while (count-- > 0)
                                         ram[dst++] = ram[org++];
                                 break;
                         case REVERSE:
-                                while (cont-- > 0)
+                                while (count-- > 0)
                                         ram[dst--] = ram[org--];
                                 break;
                 }

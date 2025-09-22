@@ -36,7 +36,7 @@ public class MemoryViewModule extends BaseModule implements Module {
         memoryModel = new MemoryTableModel();
         memoryTable = new JTable(memoryModel);
 
-        JInternalFrame frame = new JInternalFrame("Volcado de Memoria", true, true, true, true);
+        JInternalFrame frame = new JInternalFrame("Memory Dump", true, true, true, true);
         JScrollPane memScroll = new JScrollPane(memoryTable);
         frame.add(memScroll);
         frame.pack();

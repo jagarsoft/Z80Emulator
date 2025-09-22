@@ -1,32 +1,25 @@
 package com.github.jagarsoft.ZuxApp.modules.computer;
 
 import com.github.jagarsoft.*;
-import com.github.jagarsoft.Zux.ZuxIO;
-import com.github.jagarsoft.Zux.ZuxLogger;
-import com.github.jagarsoft.Zux.ZuxScreen;
-import com.github.jagarsoft.Zux.ZuxTerminal;
+import com.github.jagarsoft.Computer;
 import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
-import com.github.jagarsoft.ZuxApp.infrastructure.bus.BroadCastEvents;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.ComputerLoadImageCommand;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
 import com.github.jagarsoft.ZuxApp.modules.logger.events.LogEvent;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.commands.GetMemoryConfiguration;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigChangedEvent;
+import com.github.jagarsoft.ZuxApp.modules.zxspectrum.commands.SetZXSpectrumDeviceBanksCommand;
 
-import javax.swing.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import static com.github.jagarsoft.Zux.ZuxLogger.LOGGER_CMD;
-import static com.github.jagarsoft.Zux.ZuxLogger.LOGGER_DAT;
-
 public class ComputerModule extends BaseModule {
     private final Computer computer;
     Z80 cpu;
-    ZuxScreen screen;
 
     public ComputerModule() {
         computer = new Computer();
@@ -42,23 +35,27 @@ public class ComputerModule extends BaseModule {
         eventBus.publish(new LogEvent("Allocating memory..." + memConfiguration.numberPages + " pages of "
                 + memConfiguration.pageSize + "K = " + (memConfiguration.numberPages * pageSizeK) + " bytes"));
 
-        for(int bank = 0; bank < memConfiguration.numberPages; bank++) {
+        /*for(int bank = 0; bank < memConfiguration.numberPages; bank++) {
             System.out.println("Bank: " + String.format("0x%08X", (long)(bank * pageSizeK)));
             computer.addMemory(bank * pageSizeK, new RAMMemory(pageSizeK));
-        }
+        }*/
+
+        SetZXSpectrumDeviceBanksCommand command = new SetZXSpectrumDeviceBanksCommand(computer);
+        commandBus.execute(command);
     }
 
     @Override
     public void configure() {
         allocMemory();
 
-        screen = new ZuxScreen();
-        IODevice keyboard = null; // new ZuxKeyboard();
-        computer.addIODevice((byte) 0xCC, new BroadCastEvents(eventBus, new ZuxIO(keyboard, new ZuxTerminal(screen))));
+        //screen = new ZuxScreen();
+        //IODevice keyboard = new ZXSpectrumKeyboard();
+        //computer.addIODevice((byte) 0xCC, new BroadCastEvents(eventBus, new ZuxIO(keyboard, new ZuxTerminal(screen))));
         //computer.addIODevice((byte) 0xFE, new BroadCastEvents(eventBus, new ZuxIO(keyboard, new ZuxTerminal(screen))));
-        ZuxLogger zuxLogger = new ZuxLogger(computer);
-        computer.addIODevice(new byte[]{(byte)LOGGER_CMD, (byte)LOGGER_DAT}, new BroadCastEvents(eventBus, new ZuxIO(zuxLogger, zuxLogger)));
-        // TODO computer.addIODevice((byte)0xFE, new ZXSpectrumIO(keyboard, new ZXBorder(screen)));
+        //ZuxLogger zuxLogger = new ZuxLogger(computer);
+        //computer.addIODevice(new byte[]{(byte)LOGGER_CMD, (byte)LOGGER_DAT}, new BroadCastEvents(eventBus, new ZuxIO(zuxLogger, zuxLogger)));
+        //computer.addIODevice((byte)0xFE, new ZXSpectrumIO(keyboard, new ZXTapeAndBorder(screen)));
+
 
         //disassembler = new Z80Disassembler(cpu);
         //disassembler.setComputer(computer);
@@ -110,7 +107,6 @@ public class ComputerModule extends BaseModule {
 
     @Override
     public void initUI() {
-        //JInternalFrame frame = new JInternalFrame("Debugger", true, true, true, true);
-        //screen.createScreen(frame.getFr);
+        // It's a service
     }
 }

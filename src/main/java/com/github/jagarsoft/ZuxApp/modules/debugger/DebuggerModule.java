@@ -146,7 +146,7 @@ public class DebuggerModule extends BaseModule {
             File currentFile = e.getSelectedFile();
             commandBus.execute(new ComputerLoadImageCommand(currentFile));
             // TODO delegar en ComputerLoadImageCommand si la carga tiene exito
-            eventBus.publish(new ImageLoadedEvent(currentComputer.getComputer(), currentFile.length()));
+            eventBus.publish(new ImageLoadedEvent(currentComputer.getComputer(), currentComputer.getComputer().getMemorySize() /*currentFile.length()*/));
         });
 
         eventBus.subscribe(ImageLoadedEvent.class, (Consumer<ImageLoadedEvent>) (e) -> {
@@ -211,49 +211,49 @@ public class DebuggerModule extends BaseModule {
 
     private void doOneStepAndPublish() {
         stepDebugger();
-        int pc = cpu.getPC();
-        //if (! isBreakpointHit(pc)) {
-            cpu.step();
-            notificationStrategy.onInstruction(cpu, eventBus);
-            if (cpu.isHalted()) {
-                //running.set(false);
-                pauseDebugger("HALTED");
-                //setNotificationStrategy( new SnapshotStrategy() );
-                notificationStrategy.onPause(cpu, eventBus);
-            }
-        //}
-    }
-
-    private void stepDebugger() {
-        if( state != DebuggerState.STEPPING ) {
-            state = DebuggerState.STEPPING;
-            setNotificationStrategy( new StepStrategy() );
+        cpu.step();
+        notificationStrategy.onInstruction(cpu, eventBus);
+        if (cpu.isHalted()) {
+            pauseDebugger("HALTED");
+            notificationStrategy.onPause(cpu, eventBus);
         }
-    }
-
-    private boolean isBreakpointHit(int pc) {
-        if (breakpoints.isBreakpoint(pc)) {
-            //running.set(false);
-            pauseDebugger("BREAKPOINT");
-            eventBus.publish(new BreakpointHitEvent(pc, cpu.snapshot()));
-            return true;
-        } else
-            return false;
     }
 
     private void runLoop() {
         runDebugger();
         while (running.get() && !cpu.isHalted()) {
             int pc = cpu.getPC();
-            cpu.step();
-            if (isBreakpointHit(pc)) {
-                notificationStrategy.onInstruction(cpu, eventBus);
-            }
+            if ( ! isBreakpointHit(pc) )
+                cpu.step();
+            // else
+                //notificationStrategy.onInstruction(cpu, eventBus);
+                // break! running == false
         }
+
         if (cpu.isHalted()) {
             pauseDebugger("HALTED");
         }
+
         notificationStrategy.onPause(cpu, eventBus);
+    }
+
+    private boolean isBreakpointHit(int pc) {
+        if (breakpoints.isBreakpoint(pc)) {
+            pauseDebugger("BREAKPOINT");
+            eventBus.publish(new BreakpointHitEvent(pc));
+            return true;
+        } else
+            return false;
+    }
+
+    /*
+     * Model state changes
+     */
+    private void stepDebugger() {
+        if( state != DebuggerState.STEPPING ) {
+            state = DebuggerState.STEPPING;
+            setNotificationStrategy( new StepStrategy() );
+        }
     }
 
     private void runDebugger() {
@@ -267,7 +267,6 @@ public class DebuggerModule extends BaseModule {
         running.set(false);
         if( state != DebuggerState.PAUSED ) {
             state = DebuggerState.PAUSED;
-            //setNotificationStrategy( new StepStrategy() );
             setNotificationStrategy( new SnapshotStrategy() );
         }
 

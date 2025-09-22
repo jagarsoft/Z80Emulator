@@ -12,5 +12,6 @@ public interface Memory {
     void load(InputStream dataStream, int dest, int size);
     //void load(FileInputStream dataStream, int dest, int size);
 
-    void movemem(short org, short dst, short cont, MovememDirection dir);
+    //PRECOND: origin and destination are in the same bank throughout the entire count
+    void movemem(short org, short dst, short count, MovememDirection dir);
 }

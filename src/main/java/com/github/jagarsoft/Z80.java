@@ -23,6 +23,8 @@ public class Z80 implements Z80OpCode {
     protected int q; // ---- q---
     protected int d; // displacement for IX and IY
 
+    protected int prefix; // DD or FD
+
     // Array to store reference to methods of different implementations
     protected OpCode[][][] opCodes   = new OpCode[4][8][8];
     protected OpCode[][][] CBopCodes = new OpCode[4][8][8];
@@ -30,6 +32,8 @@ public class Z80 implements Z80OpCode {
     protected OpCode[][][] DDopCodes = new OpCode[4][8][8];
     protected OpCode[][][] FDopCodes = new OpCode[4][8][8];
     protected OpCode[][][] FDCBopCodes=new OpCode[4][8][8];
+
+    private int tstate = 0;
 
     protected void dispatcher(Z80OpCode opC) {
         // According to http://www.z80.info/decoding.htm
@@ -109,7 +113,7 @@ public class Z80 implements Z80OpCode {
         opCodes[0][7][7] = opC::CCF;
         // x = 1
         // Exception: 7 * 7 combinations managed in fetch
-        //     [x][z][y] (z=y=0 is dummy))
+        //     [x][z][y] (z=y=0 are dummies))
         opCodes[1][0][0] = opC::LD_r_y_r_z;
         opCodes[1][6][6] = opC::HALT;
 
@@ -136,7 +140,7 @@ public class Z80 implements Z80OpCode {
         opCodes[3][0][5] = opC::RET_cc_y;
         opCodes[3][0][6] = opC::RET_cc_y;
         opCodes[3][0][7] = opC::RET_cc_y;
-        // z=1 [x][z][y]
+        // z=1 [x][z][y] (y=ppq)
         opCodes[3][1][0b000] = opC::POP_rp2_p;
         opCodes[3][1][0b010] = opC::POP_rp2_p;
         opCodes[3][1][0b100] = opC::POP_rp2_p;
@@ -175,7 +179,7 @@ public class Z80 implements Z80OpCode {
         opCodes[3][4][5] = opC::CALL_cc_y_nn;
         opCodes[3][4][6] = opC::CALL_cc_y_nn;
         opCodes[3][4][7] = opC::CALL_cc_y_nn;
-        // z=5 [x][z][y]
+        // z=5 [x][z][y] (y=ppq)
         opCodes[3][5][0b000] = opC::PUSH_rp2_p;
         opCodes[3][5][0b010] = opC::PUSH_rp2_p;
         opCodes[3][5][0b100] = opC::PUSH_rp2_p;
@@ -215,22 +219,19 @@ public class Z80 implements Z80OpCode {
         // x = 0, z = 0..7
         // Exception: iterates over z instead of y are 7 * 7 combinations managed in fetch,
         // but still opC::PTR is needed
-        //       [x][z][y]
+        //       [x][z][y] (z=0 is dummy)
         CBopCodes[0][0][0] = opC::RLC_r_z;
-/*        CBopCodes[0][0][1] = opC::RRC_r_z;*/
+        CBopCodes[0][0][1] = opC::RRC_r_z;
         CBopCodes[0][0][2] = opC::RL_r_z;
         CBopCodes[0][0][3] = opC::RR_r_z;
-/*        CBopCodes[0][0][4] = opC::SLA_r_z;
- */
+        CBopCodes[0][0][4] = opC::SLA_r_z;
         CBopCodes[0][0][5] = opC::SRA_r_z;
-
         CBopCodes[0][0][6] = opC::SLL_r_z;
-
         CBopCodes[0][0][7] = opC::SRL_r_z;
 
         // x = 1
         // Exception: 7 * 7 combinations managed in fetch
-        //       [x][z][y]
+        //       [x][z][y] (z=y=0 are dummies)
         CBopCodes[1][0][0] = opC::BIT_y_r_z;
         // x = 2
         // Exception: 7 * 7 combinations managed in fetch
@@ -242,6 +243,7 @@ public class Z80 implements Z80OpCode {
         CBopCodes[3][0][0] = opC::SET_y_r_z;
 
         /* Table ED Prefix */
+        // x = 0 or x = 3 are invalid instructions, equivalent to NONI followed by NOP
 
         // x = 1
         // z=0   [x][z][y]
@@ -262,7 +264,7 @@ public class Z80 implements Z80OpCode {
         EDopCodes[1][1][0b101] = opC::OUT_C_r_y;
         EDopCodes[1][1][0b110] = opC::OUT_C_r_y;
         EDopCodes[1][1][0b111] = opC::OUT_C_r_y;
-        // z=2   [x][z][y]
+        // z=2   [x][z][y] (y=ppq)
         EDopCodes[1][2][0b000] = opC::SBC_HL_rp_p;
         EDopCodes[1][2][0b010] = opC::SBC_HL_rp_p;
         EDopCodes[1][2][0b100] = opC::SBC_HL_rp_p;
@@ -271,26 +273,26 @@ public class Z80 implements Z80OpCode {
         EDopCodes[1][2][0b011] = opC::ADC_HL_rp_p;
         EDopCodes[1][2][0b101] = opC::ADC_HL_rp_p;
         EDopCodes[1][2][0b111] = opC::ADC_HL_rp_p;
-        // z=3   [x][z][y]
-        EDopCodes[1][3][0b000] = opC::LD_mm_rp_p; // TODO test
+        // z=3   [x][z][y] (y=ppq)
+        EDopCodes[1][3][0b000] = opC::LD_mm_rp_p; // LD (mm), rp[p]
         EDopCodes[1][3][0b010] = opC::LD_mm_rp_p;
         EDopCodes[1][3][0b100] = opC::LD_mm_rp_p;
         EDopCodes[1][3][0b110] = opC::LD_mm_rp_p;
-        EDopCodes[1][3][0b001] = opC::LD_rp_p_mm;
+        EDopCodes[1][3][0b001] = opC::LD_rp_p_mm; // LD rp[p], (mm)
         EDopCodes[1][3][0b011] = opC::LD_rp_p_mm;
         EDopCodes[1][3][0b101] = opC::LD_rp_p_mm;
         EDopCodes[1][3][0b111] = opC::LD_rp_p_mm;
         // z=4   [x][z][y]
         EDopCodes[1][4][0] = opC::NEG;
-        // z=5     [x][z][y]
-        EDopCodes[1][5][0] = opC::RETN;
+        // z=5   [x][z][y]
+        EDopCodes[1][5][0] = opC::RETN; // y != 1
         EDopCodes[1][5][1] = opC::RETI;
         // z=6   [x][z][y]
-        EDopCodes[1][6][0b000] = opC::IM_im_y; // TODO test
+        EDopCodes[1][6][0b000] = opC::IM_im_y;
         EDopCodes[1][6][0b010] = opC::IM_im_y;
         EDopCodes[1][6][0b011] = opC::IM_im_y;
         // z=7   [x][z][y]
-        EDopCodes[1][7][0] = opC::LD_I_A; // TODO test
+        EDopCodes[1][7][0] = opC::LD_I_A; // TODO flag affectation
         EDopCodes[1][7][1] = opC::LD_R_A;
         EDopCodes[1][7][2] = opC::LD_A_I;
         EDopCodes[1][7][3] = opC::LD_A_R;
@@ -300,8 +302,9 @@ public class Z80 implements Z80OpCode {
         EDopCodes[1][7][7] = opC::NOP;
 
         // x=2
-        // z<=3  [x][z][y]
-        EDopCodes[2][0][0b100] = opC::LDI; // TODO test
+        // z<=3 and y>=4
+        //       [x][z][y]
+        EDopCodes[2][0][0b100] = opC::LDI; // TODO
         EDopCodes[2][0][0b101] = opC::LDD;
         EDopCodes[2][0][0b110] = opC::LDIR;
         EDopCodes[2][0][0b111] = opC::LDDR;
@@ -321,14 +324,35 @@ public class Z80 implements Z80OpCode {
         /* Table DD Prefix */
 
         // x = 0
-        // z=1   [x][z][y]
+        // z=1   [x][z][y] (q=0)
         DDopCodes[0][1][0b100] = opC::LD_IX_nn;
+        //                 (q=1)
         DDopCodes[0][1][0b001] = opC::ADD_IX_rp_p;
         DDopCodes[0][1][0b011] = opC::ADD_IX_rp_p;
         DDopCodes[0][1][0b101] = opC::ADD_IX_rp_p;
         DDopCodes[0][1][0b111] = opC::ADD_IX_rp_p;
+
         // z=3   [x][z][y]
+//1        DDopCodes[0][3][0b100] = opC::INC_IX;
         DDopCodes[0][3][0b101] = opC::DEC_IX;
+//1        DDopCodes[0][4][0b110] = opC::INC_IX_d;
+//1        DDopCodes[0][5][0b110] = opC::DEC_IX_d;
+
+        // z=0..7[x][z][y]
+//1        DDopCodes[0][0b000][6] = opC::LD_IX_d_r_z;
+//1        DDopCodes[0][0b001][6] = opC::LD_IX_d_r_z;
+//1        DDopCodes[0][0b010][6] = opC::LD_IX_d_r_z;
+//1        DDopCodes[0][0b011][6] = opC::LD_IX_d_r_z;
+//1        DDopCodes[0][0b100][6] = opC::LD_IX_d_r_z;
+//1        DDopCodes[0][0b101][6] = opC::LD_IX_d_r_z;
+//1        DDopCodes[0][0b110][6] = opC::LD_IX_d_n;
+//1        DDopCodes[0][0b111][6] = opC::LD_IX_d_r_z;
+
+        // x = 1
+        // z=2   [x][z][y]
+//1        DDopCodes[1][2][4] = opC::LD_mm_IX;
+//1        DDopCodes[1][2][5] = opC::LD_IX_mm;
+
         // z=6   [x][z][y]       LD r, (IX+d)
         DDopCodes[1][6][0b000] = opC::LD_r_y_IX_d;
         DDopCodes[1][6][0b001] = opC::LD_r_y_IX_d;
@@ -336,8 +360,12 @@ public class Z80 implements Z80OpCode {
         DDopCodes[1][6][0b011] = opC::LD_r_y_IX_d;
         DDopCodes[1][6][0b100] = opC::LD_r_y_IX_d;
         DDopCodes[1][6][0b101] = opC::LD_r_y_IX_d;
-        DDopCodes[1][6][0b110] = opC::LD_r_y_IX_d;
+//1        DDopCodes[1][6][0b110] = opC::NOPI;
         DDopCodes[1][6][0b111] = opC::LD_r_y_IX_d;
+
+        // x = 2
+        // z=1   [x][z][y]
+//1        DDopCodes[2][6][0] = opC::ADD_A_IX_d;
 
         // x = 3
         // z=1
@@ -351,9 +379,18 @@ public class Z80 implements Z80OpCode {
         /* FDCB Prefix */
         FDopCodes[3][3][1] = opC::FDCB_prefix;
 
+        //         [x][z][y]
+//      ADD_IY_rp_p 0  1  pp1 ADD IY, rp[p]
+//      INC_IY      0  3  4
+//      DEC_IY      0  3  5
+//      LD_mm_IY    1  4  2
+//      LD_IY_mm    1  5  2
+//      ADC_A_IY_d  2  6  1   ADC A, (IY+d)
+
         // x=0
         //       [x][z][y]
         FDopCodes[0][1][0b100] = opC::LD_IY_nn;
+        FDopCodes[0][4][0b110] = opC::INC_IY_d;
         FDopCodes[0][5][0b110] = opC::DEC_IY_d;
         FDopCodes[0][6][0b110] = opC::LD_IY_d_n; // TODO LD_IY_mm
 
@@ -464,10 +501,11 @@ public class Z80 implements Z80OpCode {
     }
 
     public void CB_prefix() { fetchCB(currentComp.peek(PC++)); }
-    public void DD_prefix() { fetchDD(currentComp.peek(PC++)); }
     public void ED_prefix() { fetchED(currentComp.peek(PC++)); }
+    public void DD_prefix() { fetchDD(currentComp.peek(PC++)); }
     public void FD_prefix() { fetchFD(currentComp.peek(PC++)); }
     public void FDCB_prefix() { fetchFDCB(currentComp.peek(PC++)); }
+    // DDCB
 
     protected void opCMasked(byte opC) {
         x = ((opC & 0b11000000) >> 6);
@@ -516,6 +554,11 @@ public class Z80 implements Z80OpCode {
 
         if( IFF1 && IFF3 > 0 )
             IFF3--;
+
+        if( ++tstate > 400 ) {
+            interrupt();
+            tstate = 0;
+        }
     }
 
     protected void fetchCB(byte opC) {
@@ -537,6 +580,12 @@ public class Z80 implements Z80OpCode {
 
     protected void fetchED(byte opC) {
         opCMasked(opC);
+
+        if( x == 0 || x == 3
+         /*|| z > 4  || y < 4 */) {
+            NONI();
+            return;
+        }
 
         if(x == 1){
             if(z == 5){
@@ -851,6 +900,11 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         --nop;
     }
 
+    private void NONI() {
+        NOP();
+        IFF3 = 2;
+    }
+
 	@Override
     public void EX_AF_AF_() {
         W = A;
@@ -944,22 +998,16 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         resNF();
 
         setHL((short) (hl & 0xFFFF));
-
-        Logger.reg("HL", getHL());
     }
 
     @Override
     public void LD_BC_A() {
         currentComp.poke(getBC(), A);
-
-        Logger.reg("A", getA());
     }
 
 	@Override
     public void LD_DE_A() {
         currentComp.poke(getDE(), A);
-
-        Logger.reg("A", getA());
     }
 
 	@Override
@@ -969,8 +1017,6 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
 
         currentComp.poke(getWZ(), L);
         currentComp.poke(getWZ() + 1, H);
-
-        Logger.reg("HL", getHL());
     }
 
 	@Override
@@ -979,8 +1025,6 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         W = currentComp.peek(PC++);
 
         currentComp.poke(getWZ(), A);
-
-        Logger.reg("A", getA());
     }
 
 	@Override
@@ -1126,8 +1170,6 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
             resVF();
 
         setNF();
-
-        Logger.reg("Z", Z);
     }
 
 	@Override
@@ -1278,19 +1320,6 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         set_r_(y);
     }
 
-    private void set_r_(int yz) {
-        switch (yz){
-            case 0: setB(Z); break;
-            case 1: setC(Z); break;
-            case 2: setD(Z); break;
-            case 3: setE(Z); break;
-            case 4: setH(Z); break;
-            case 5: setL(Z); break;
-            case 6: currentComp.poke(getHL(), Z); break;
-            case 7: setA(Z);
-        }
-    }
-
     private void get_r_(int yz) {
         switch (yz){
             case 0: Z = getB(); break;
@@ -1301,6 +1330,19 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
             case 5: Z = getL(); break;
             case 6: Z = currentComp.peek(getHL()); break;
             case 7: Z = getA();
+        }
+    }
+
+    private void set_r_(int yz) {
+        switch (yz){
+            case 0: setB(Z); break;
+            case 1: setC(Z); break;
+            case 2: setD(Z); break;
+            case 3: setE(Z); break;
+            case 4: setH(Z); break;
+            case 5: setL(Z); break;
+            case 6: currentComp.poke(getHL(), Z); break;
+            case 7: setA(Z);
         }
     }
 
@@ -1762,7 +1804,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
     }
 
 	@Override
-    public void IN_A_n() { // TODO test pending
+    public void IN_A_n() { // TODO
         Z = currentComp.peek(PC++);
         W = A;
 //Logger.info("IN port:"+Integer.toHexString(getWZ()));
@@ -2100,6 +2142,10 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         set_r_(z);
     }
 
+    public void RRC_r_z() {
+        System.out.println("RRC_r_z"); // TODO
+    }
+
     public void RL_r_z() {
         get_r_(z);
 
@@ -2131,6 +2177,42 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
         CBopCodes[0][0][6] = opC::SLL_r_z;*/
     public void RR_r_z() { System.out.println("RR_r_z ERROR"); }
     public void SRA_r_z() { System.out.println("SRA_r_z ERROR"); }
+
+    public void SLA_r_z() {
+        get_r_(z);
+
+        byte c = (byte) (Z & 0x80); // pre-carry
+
+        Z <<= 1;
+
+        if( (Z & 0x80) == 0x80 )
+            setSF();
+        else
+            resSF();
+
+        if( Z == 0 )
+            setZF();
+        else
+            resZF();
+
+        BitSet pZ = BitSet.valueOf(new byte[]{Z});
+
+        if( (pZ.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        if( c != 0 )
+            setCF();
+        else
+            resCF();
+
+        resHF();
+        resNF();
+
+        set_r_(z);
+    }
+
     public void SLL_r_z() { System.out.println("SLL_r_z ERROR"); }
 
     public void SRL_r_z() {
@@ -2309,7 +2391,7 @@ Logger.info("AQUI FDCB opC:"+Integer.toHexString(opC));
     }
 
 	@Override
-    public void IN_r_y_C() { // TODO test pending
+    public void IN_r_y_C() { // TODO
         Z = C;
         W = B;
 //Logger.info("IN port:"+Integer.toHexString(getWZ()));
@@ -2485,23 +2567,23 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
 	@Override
     public void LDIR() {
-        short org = getHL(); Logger.reg("HL", org);
-        short dst = getDE(); Logger.reg("DE", dst);
-        short cont = getBC(); Logger.reg("BC", cont);
+        short org = getHL();
+        short dst = getDE();
+        short count = getBC();
 
-        if( currentComp.isSameBank(org, dst, cont) ) {
-            currentComp.movemem(org, dst, cont, Memory.MovememDirection.FORWARD);
-            org += cont;
-            dst += cont;
+        if( currentComp.isSameBank(org, dst, count) ) {
+            currentComp.movemem(org, dst, count, Memory.MovememDirection.FORWARD);
+            org += count;
+            dst += count;
         } else {
-            while( cont-- > 0 ) {
+            while( count-- > 0 ) {
                 currentComp.poke(dst++, currentComp.peek(org++));
             }
         }
 
         setHL(org);
         setDE(dst);
-        setBC((byte) 0);
+        setBC((short) 0);
 
         resPF();
         resNF();
@@ -2510,23 +2592,23 @@ Logger.info("(SP):"+Integer.toHexString(W));
 
 	@Override
     public void LDDR() {
-        short org = getHL(); Logger.reg("HL", org);
-        short dst = getDE(); Logger.reg("DE", dst);
-        short cont = getBC(); Logger.reg("BC", cont);
+        short org = getHL();
+        short dst = getDE();
+        short count = getBC();
 
-        if (currentComp.isSameBank(org, dst, cont)) {
-            currentComp.movemem(org, dst, cont, Memory.MovememDirection.REVERSE);
-            org -= cont;
-            dst -= cont;
+        if (currentComp.isSameBank(org, dst, count)) {
+            currentComp.movemem(org, dst, count, Memory.MovememDirection.REVERSE);
+            org -= count;
+            dst -= count;
         } else {
-            while( cont-- > 0 ) {
+            while( count-- > 0 ) {
                 currentComp.poke(dst--, currentComp.peek(org--));
             }
         }
 
         setHL(org);
         setDE(dst);
-        setBC((byte) 0);
+        setBC((short) 0);
 
         resPF();
         resNF();
@@ -2707,11 +2789,20 @@ Logger.info("(SP):"+Integer.toHexString(W));
         set_r_(y);
     }
 
+    @Override
+    public void INC_IY_d() {
+        byte d = currentComp.peek(PC++);
+        int Z = getIY() + d;
+
+        currentComp.poke(Z, (byte)(currentComp.peek(Z) + 1) );
+    }
+
 	@Override
     public void DEC_IY_d() {
         byte d = currentComp.peek(PC++);
 
-        currentComp.poke(getIY()+d, (byte)(currentComp.peek(getIY()+d) - 1) );
+        final int Z = getIY() + d;
+        currentComp.poke(Z, (byte)(currentComp.peek(Z) - 1) );
     }
 
 	@Override

@@ -55,7 +55,7 @@ public class MemoryTableModel extends AbstractTableModel {
     @Override
     public String getColumnName(int col) {
         return switch (col) {
-            case 0 -> "Addrs";
+            case 0 -> "Addr";
             case 1 -> "Hex";
             case 2 -> "ASCII";
             default -> "";

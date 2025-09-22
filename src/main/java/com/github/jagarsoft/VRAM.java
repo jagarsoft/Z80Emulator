@@ -7,10 +7,10 @@ import java.io.InputStream;
 
 public class VRAM implements Memory {
     private int k = 0;
-    private Screen screen;
-    private byte[] ram;
+    private final Screen screen;
+    private final byte[] ram;
     private Rectangle r = null;
-    public int size;
+    private final int size;
 
     public VRAM(Screen screen){
         this.screen = screen;
@@ -56,14 +56,14 @@ System.out.println("c="+pointLR[0]+" r="+pointLR[1]+" paper="+attr[0]+" ink="+at
     }
 
     @Override
-    public void movemem(short org, short dst, short cont, MovememDirection dir) {
+    public void movemem(short org, short dst, short count, MovememDirection dir) {
         switch (dir) {
             case FORWARD:
-                while (cont-- > 0)
+                while (count-- > 0)
                     ram[dst++] = ram[org++];
                 break;
             case REVERSE:
-                while (cont-- > 0)
+                while (count-- > 0)
                     ram[dst--] = ram[org--];
                 break;
         }

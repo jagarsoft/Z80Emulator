@@ -60,8 +60,8 @@ public class LoggerModule extends BaseModule {
         eventBus.subscribeToAll( new Consumer<Event>() {
             @Override
             public void accept(Event e) {
-                System.out.print("[LOG] Consumer " + e.getEventName() + ": " + e.getMessage()  + "\n");
-                logArea.append("[LOG] Consumer " + e.getEventName() + ": " + e.getMessage() + "\n");
+                System.out.print("[LOG] " + e.getEventName() + ": " + e.getMessage()  + "\n");
+                logArea.append("[LOG] " + e.getEventName() + ": " + e.getMessage() + "\n");
             }
         });
 

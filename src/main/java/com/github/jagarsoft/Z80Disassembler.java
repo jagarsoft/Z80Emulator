@@ -1,11 +1,8 @@
 package com.github.jagarsoft;
 
-import java.util.LinkedList;
-
 public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     Instruction instruction = new Instruction();
-    LinkedList<Instruction> instructions = new LinkedList<Instruction>();
     Z80 cpu;
 
     public Z80Disassembler() {
@@ -522,6 +519,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     public void RLC_r_z() { instruction.mnemonic = "RLC "+r[z]; }
 
+    public void RRC_r_z() { instruction.mnemonic = "RLC "+r[z]; }
+
     public void RL_r_z() {
         instruction.mnemonic = "RL "+r[z];
     }
@@ -531,6 +530,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         CBopCodes[0][0][5] = opC::SRA_r_z;
         CBopCodes[0][0][6] = opC::SLL_r_z;*/
     public void RR_r_z() { instruction.mnemonic = "RR "+r[z]; System.out.println("RR_r_z ERROR"); }
+    public void SLA_r_z() { instruction.mnemonic = "SLA "+r[z]; }
     public void SRA_r_z() { instruction.mnemonic = "SRA "+r[z]; System.out.println("SRA_r_z ERROR"); }
     public void SLL_r_z() { instruction.mnemonic = "SRL "+r[z]; System.out.println("SLL_r_z ERROR"); }
     public void SRL_r_z() {
@@ -753,6 +753,13 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         byte d = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
         instruction.mnemonic = "LD "+r[y]+", (IY+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void INC_IY_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "INC (IY+"+String.format("%02X",d)+")";
     }
 
 	@Override

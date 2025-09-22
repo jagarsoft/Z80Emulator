@@ -113,12 +113,15 @@ public interface Z80OpCode {
 
     void RLC_r_z();
 
+    void RRC_r_z();
+
     void RL_r_z();
 /*      CBopCodes[0][0][3] = opC::RR_r_z;
         CBopCodes[0][0][4] = opC::SLA_r_z;
         CBopCodes[0][0][5] = opC::SRA_r_z;
         CBopCodes[0][0][6] = opC::SLL_r_z;*/
     void RR_r_z();
+    void SLA_r_z();
     void SRA_r_z();
     void SLL_r_z();
     void SRL_r_z();
@@ -183,6 +186,7 @@ public interface Z80OpCode {
 
     void LD_IY_nn();
     void LD_IY_d_r_z();
+    void INC_IY_d();
     void DEC_IY_d();
     void LD_IY_d_n();
     void LD_r_y_IY_d();

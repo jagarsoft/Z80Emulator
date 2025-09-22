@@ -21,7 +21,7 @@ public class Computer {
     }
 
     public void reset(){
-        cpu.setComputer(this);
+        //cpu.setComputer(this);
         cpu.reset();
     }
 
@@ -97,7 +97,7 @@ public class Computer {
 
     // int s is a power of 2
     private int makeSizeMask(int s) {
-        return Math.abs(~(s - 1));
+        return ~(s - 1);
     }
 
     private int base2key(int addr) {
@@ -120,7 +120,7 @@ addr = addr&0xFFFF;
 
     public void poke(int addr, byte data) {
 addr = addr&0xFFFF;
-Logger.compMem("poke addr:"+Integer.toHexString(addr)+" -> "+Integer.toHexString(data));
+//Logger.compMem("poke addr:"+Integer.toHexString(addr)+" -> "+Integer.toHexString(data));
         banks.get(base2key(addr&0xFFFF)).poke(addr - (addr & sizeMask), data);
     }
 
@@ -180,9 +180,9 @@ Logger.info("Computer.load dataStream: "+dataStream.toString());
             && base2key(org+cont) == base2key(dst+cont);*/
     }
 
-    // PRECOND: ord & dst are in the same bank
-    public void movemem(short org, short dst, short cont, Memory.MovememDirection dir) {
-        banks.get(base2key(org)).movemem((short) (org - (org & sizeMask)), (short) (dst - (dst & sizeMask)), cont, dir);
+    // PRECOND: origin and destination are in the same bank throughout the entire size
+    public void movemem(short org, short dst, short size, Memory.MovememDirection dir) {
+        banks.get(base2key(org)).movemem((short) (org - (org & sizeMask)), (short) (dst - (dst & sizeMask)), size, dir);
     }
 
     public void dump(int org, int count) {
@@ -198,16 +198,14 @@ Logger.info("Computer.load dataStream: "+dataStream.toString());
     }
 
     public int getMemorySize() {
-        /*int size = 0;
-        for(Memory bank : banks.values()) {
-            size += bank.getSize();
-        }
-        return size;*/
-        return sizeMask * banks.size();
+        return banks.size() * getBankSize();
     }
 
     public int getBankSize() {
-        return banks.size();
+        if( !banks.isEmpty() )
+            return banks.get(0).getSize();
+        else
+            return 0;
     }
 
     public void freeMemory() {

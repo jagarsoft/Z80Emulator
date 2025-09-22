@@ -35,7 +35,7 @@ public class RegisterTableModel extends AbstractTableModel {
         } else if( row < names.indexOf("IX") ) {
                     return String.format("%02X", (byte)(value & 0x00FF));
                 } else  {
-                    return String.format("%04X", value);
+                    return String.format("%04X", (short)(value & 0x0000FFFF));
                 }
     }
 
