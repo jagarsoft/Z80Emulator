@@ -19,7 +19,7 @@ public class BreakpointCellRenderer extends DefaultTableCellRenderer {
         JLabel label = (JLabel) super.getTableCellRendererComponent(
                 table, value, isSelected, hasFocus, row, column);
 
-        int addr = model.get(row).getAddress();
+        int addr = model.getInstruction(row).getAddress();
         if (model.isBreakpoint(addr)) {
             label.setIcon(bpIcon);
             label.setText(""); // sólo icono

@@ -5,38 +5,47 @@ import com.github.jagarsoft.Instruction;
 import com.github.jagarsoft.Z80Disassembler;
 import com.github.jagarsoft.ZuxApp.core.bus.UIEventHandler;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
+import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegion;
+import com.github.jagarsoft.ZuxApp.modules.dataregion.events.DataBlockMapLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.CpuStateUpdatedEvent;
-import com.github.jagarsoft.ZuxApp.modules.debugger.events.ImageLoadedEvent;
+import com.github.jagarsoft.ZuxApp.modules.debugger.events.BinaryImageLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.disassembler.events.BreakpointToggledEvent;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigChangedEvent;
+import com.github.jagarsoft.ZuxApp.modules.disassembler.events.StepEvent;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DisassemblerModule extends BaseModule {
     static Z80Disassembler disassembler = new Z80Disassembler();
     DisassemblyTableModel disassemblyModel;
     JTable disassemblyTable;
-
-    /*UIEventHandler<ImageLoadedEvent>  imageLoadedEventUIEventHandler = new  UIEventHandler<ImageLoadedEvent>() {
-
-        @Override
-        public void handle(ImageLoadedEvent event) {
-            event.get
-        }
-    };*/
+    //SymbolTable ...
+    DataRegion dataRegion;
+    // Searching
+    private JTextField searchField;
+    private List<Map.Entry<Integer, Instruction>> searchResults;
+    private int currentSearchIndex = -1;
 
     @Override
     public void configure() {
-        eventBus.subscribe(ImageLoadedEvent.class, (UIEventHandler<ImageLoadedEvent>) (e) -> {
+        eventBus.subscribe(BinaryImageLoadedEvent.class, (UIEventHandler<BinaryImageLoadedEvent>) (e) -> {
             list(e.getComputer(), 0, e.getLength());
             disassemblyModel.fireTableDataChanged(); // TODO evitarlo si se usa fireTableRowsInserted abajo
         });
+
+        eventBus.subscribe(DataBlockMapLoadedEvent.class, (Consumer<DataBlockMapLoadedEvent>) e->{
+            dataRegion = e.getDataRegion();
+        });
+
         eventBus.subscribe(MemoryConfigChangedEvent.class, (UIEventHandler<MemoryConfigChangedEvent>) (e) -> {
             // TODO no llega a actualizar la vista del Desensamblador
             /*GetComputerCommand computerCommand = new GetComputerCommand();
@@ -66,12 +75,19 @@ public class DisassemblerModule extends BaseModule {
             //disassemblyModel.fireTableRowsUpdated(index, index);
             disassemblyModel.fireTableDataChanged();
         });
+
+        eventBus.subscribe(StepEvent.class, (Consumer<StepEvent>) (ev) -> {
+            Instruction instruction = disassemblyModel.getInstructionByPC(ev.getPC());
+            System.out.println(instruction.toString());
+        });
     }
 
     private void list(Computer comp, int org, long size) {
         //disassemblyModel.clear();
         disassembler.setComputer(comp);
         //disassembler.setSymbolTable(symbolTable);
+
+        disassembler.setDataBlock(dataRegion);
 
         comp.reset();
         comp.setOrigin(org);
@@ -104,7 +120,7 @@ public class DisassemblerModule extends BaseModule {
                 int row = disassemblyTable.rowAtPoint(e.getPoint());
                 int col = disassemblyTable.columnAtPoint(e.getPoint());
                 if (row >= 0 && col == 0) { // primera columna
-                    int addr = disassemblyModel.get(row).getAddress();
+                    int addr = disassemblyModel.getInstruction(row).getAddress();
                     disassemblyModel.toggleBreakpoint(addr);
                     disassemblyModel.fireTableCellUpdated(row, col);
                     eventBus.publish(new BreakpointToggledEvent(addr));
@@ -112,8 +128,37 @@ public class DisassemblerModule extends BaseModule {
             }
         });
 
+        // Campo de búsqueda
+        JPanel searchPanel = new JPanel(new BorderLayout());
+        searchField = new JTextField();
+searchField.setName("symbolSearchField");
+        searchPanel.add(new JLabel("Search: "), BorderLayout.WEST);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+
+        JButton prevButton = new JButton("Prev");
+        JButton nextButton = new JButton("Next");
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(prevButton);
+        buttonPanel.add(nextButton);
+
+        searchPanel.add(buttonPanel, BorderLayout.EAST);
+
         JInternalFrame frame = new JInternalFrame("Disassembly", true, true, true, true);
+        frame.add(searchPanel, BorderLayout.NORTH);
         frame.add(new JScrollPane(disassemblyTable));
+
+        //
+        // Eventos
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { updateSearch(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { updateSearch(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { updateSearch(); }
+        });
+
+        prevButton.addActionListener(e -> showPreviousMatch());
+        nextButton.addActionListener(e -> showNextMatch());
+        //
 
         frame.setSize(500, 300);
         frame.setLocation(10, 10);
@@ -129,7 +174,7 @@ public class DisassemblerModule extends BaseModule {
                                                            boolean isSelected, boolean hasFocus,
                                                            int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                int pcRow = pcRowSupplier.get();
+                int pcRow = pcRowSupplier.get(); // Call to disassemblyModel::getCurrentPCRow
                 if (row == pcRow) {
                     c.setBackground(Color.YELLOW);
                 } else {
@@ -138,5 +183,37 @@ public class DisassemblerModule extends BaseModule {
                 return c;
             }
         });
+    }
+
+    private void updateSearch() {
+        searchResults = disassemblyModel.search(searchField.getText());
+        currentSearchIndex = searchResults.isEmpty() ? -1 : 0;
+        highlightCurrentMatch();
+    }
+
+    private void showNextMatch() {
+        if (searchResults == null || searchResults.isEmpty()) return;
+        currentSearchIndex = (currentSearchIndex + 1) % searchResults.size();
+        highlightCurrentMatch();
+    }
+
+    private void showPreviousMatch() {
+        if (searchResults == null || searchResults.isEmpty()) return;
+        currentSearchIndex = (currentSearchIndex - 1 + searchResults.size()) % searchResults.size();
+        highlightCurrentMatch();
+    }
+
+    private void highlightCurrentMatch() {
+        if (currentSearchIndex < 0 || searchResults == null || searchResults.isEmpty())
+            return;
+
+        int address = searchResults.get(currentSearchIndex).getKey();
+        Instruction instruction = disassemblyModel.getInstructionByPC(address);
+
+        if( instruction != null ) {
+            int i = instruction.getIndex();
+            disassemblyTable.setRowSelectionInterval(i, i);
+            disassemblyTable.scrollRectToVisible(disassemblyTable.getCellRect(i, 0, true));
+        }
     }
 }

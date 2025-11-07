@@ -44,7 +44,7 @@ public class ZuxEmulator {
         //zux.addIODevice(new byte[]{(byte)PHYS_COPY_CMD, (byte)PHYS_COPY_DAT}, new ZuxIO(MMU, MMU));
 
         ZuxLogger zuxLogger = new ZuxLogger(zux);
-        zux.addIODevice(new byte[]{(byte) LOGGER_CMD, (byte) LOGGER_DAT}, new ZuxIO(zuxLogger, zuxLogger));
+        zux.addIODevice(new short[]{LOGGER_CMD, LOGGER_DAT}, new ZuxIO(zuxLogger, zuxLogger));
 
         disassembler = new Z80Disassembler(cpu);
         disassembler.setComputer(zux);

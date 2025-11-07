@@ -31,6 +31,7 @@ public class RegistersViewModule extends BaseModule {
                     registerModel.setRegister(r.name(), cpu.getReg(r.name()));
                 }
             }
+            registerModel.setRegister("PC", cpu.getPC());
         });
     }
 

@@ -1,8 +1,6 @@
 package com.github.jagarsoft.ZuxApp.modules.disassembler;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 public class InstructionList<T> {
     private TreeMap<Integer, T> treeMap = new TreeMap<>();
@@ -35,11 +33,20 @@ public class InstructionList<T> {
         return treeMap.size();
     }
 
-    /*public List<Integer> obtenerClavesOrdenadas() {
-        return new ArrayList<>(mapa.keySet());
-    }*/
-
     public void clear() {
         treeMap.clear();
+    }
+
+    public List<Map.Entry<Integer, T>> search(String query) {
+        String q = query.toLowerCase(Locale.ROOT);
+        List<Map.Entry<Integer, T>> result = new ArrayList<>();
+        for (Map.Entry<Integer, T> entry : treeMap.entrySet()) {
+            //String hexValue = String.format("%04X", entry.getKey());
+            if (/*hexValue.toLowerCase(Locale.ROOT).contains(q) ||*/
+                    entry.getValue().toString().toLowerCase(Locale.ROOT).contains(q)) {
+                result.add(entry);
+            }
+        }
+        return result;
     }
 }

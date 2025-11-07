@@ -10,7 +10,7 @@ import javax.swing.table.AbstractTableModel;
 
 public class RegisterTableModel extends AbstractTableModel {
     //private final List<String> names = Arrays.asList("AF", "BC", "DE", "HL", "IX", "IY", "SP", "PC");
-    private final List<String> names = Arrays.asList("A", "B", "C", "D", "E", "H", "L", "I", "R", "IX", "IY", "SP", "F");
+    private final List<String> names = Arrays.asList("A", "B", "C", "D", "E", "H", "L", "I", "R", "IX", "IY", "SP", "F", "PC");
     private final Map<String, Integer> values = new HashMap<>();
 
     @Override

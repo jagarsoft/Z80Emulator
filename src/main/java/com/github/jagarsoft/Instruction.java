@@ -3,6 +3,7 @@ package com.github.jagarsoft;
 public class Instruction {
     public boolean hasBreakPoint;
     public int index;
+    public boolean isData;
     int PC;
     byte[] opCodes = new byte[4];
     int opCodeCounter = 0;

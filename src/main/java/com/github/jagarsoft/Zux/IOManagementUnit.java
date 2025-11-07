@@ -6,8 +6,8 @@ import com.github.jagarsoft.IODevice;
 import static java.lang.String.format;
 
 public class IOManagementUnit implements IODevice {
-    final static int PHYS_COPY_CMD = 0x00EE;
-    final static int PHYS_COPY_DAT = 0x00EF;
+    final static short PHYS_COPY_CMD = 0x00EE;
+    final static short PHYS_COPY_DAT = 0x00EF;
 
     Computer zux;
     private int data_cnt;

@@ -15,7 +15,5 @@ public class ZXSpectrumIO implements IODevice {
     }
 
     @Override
-    public byte read(int addr) {
-        return in.read(addr);
-    }
+    public byte read(int addr) { return in.read(addr); }
 }

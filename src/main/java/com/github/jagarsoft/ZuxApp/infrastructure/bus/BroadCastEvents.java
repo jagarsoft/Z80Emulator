@@ -1,29 +1,29 @@
 package com.github.jagarsoft.ZuxApp.infrastructure.bus;
 
 import com.github.jagarsoft.IODevice;
-import com.github.jagarsoft.Zux.ZuxIO;
 import com.github.jagarsoft.ZuxApp.core.bus.EventBus;
+import com.github.jagarsoft.ZuxApp.modules.ports.events.PortReadEvent;
 import com.github.jagarsoft.ZuxApp.modules.ports.events.PortWriteEvent;
 
 public class BroadCastEvents implements IODevice {
     EventBus eventBus;
-    ZuxIO io;
+    IODevice ioDev;
 
-    public BroadCastEvents(EventBus eventBus, ZuxIO zuxIO) {
+    public BroadCastEvents(EventBus eventBus, IODevice ioDev) {
         this.eventBus = eventBus;
-        this.io = zuxIO;
+        this.ioDev = ioDev;
     }
 
     @Override
     public void write(int addr, byte data) {
-        io.write(addr, data);
+        ioDev.write(addr, data);
         eventBus.publish(new PortWriteEvent(addr, data));
     }
 
     @Override
     public byte read(int addr) {
-        byte data = io.read(addr);
-        //eventBus.publish(new PortReadEvent(addr, data));
+        byte data = ioDev.read(addr);
+        eventBus.publish(new PortReadEvent(addr, data));
         return data;
     }
 }

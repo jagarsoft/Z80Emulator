@@ -1,4 +1,4 @@
-package com.github.jagarsoft.ZuxApp.modules.memory;
+package com.github.jagarsoft.ZuxApp.modules.memoryviewer;
 
 import com.github.jagarsoft.Computer;
 

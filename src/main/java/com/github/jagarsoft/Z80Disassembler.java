@@ -1,9 +1,15 @@
 package com.github.jagarsoft;
 
+import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegion;
+
+import java.nio.charset.StandardCharsets;
+
 public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     Instruction instruction = new Instruction();
     Z80 cpu;
+
+    private DataRegion dataRegion;
 
     public Z80Disassembler() {
         dispatcher(this);
@@ -21,6 +27,11 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         dispatcher(opC);
         this.reset();
     }*/
+
+    public void setComputer(Computer theComp) {
+        this.cpu = theComp.getCPU();
+        super.setComputer(theComp);
+    }
 
     public void dump(int org, int size) {
         currentComp.setOrigin(org);
@@ -72,6 +83,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
     public int getPC() {
+assert cpu != null;
         if(cpu != null)
             return cpu.PC;
         else
@@ -79,6 +91,10 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
     public Instruction fetchInstruction() {
+        if( dataRegion != null && dataRegion.isDataRegion(cpu.PC) ){
+            return fetchData(currentComp.peek(cpu.PC++));
+        }
+
         if(cpu != null)
             return fetchInstruction(currentComp.peek(cpu.PC++));
         else
@@ -96,13 +112,239 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         Instruction i = instruction;
         instruction = null;
         instruction = new Instruction();
-        this.PC = this.getPC();
+        cpu.PC = this.PC; //this.PC = this.getPC();
         return i;
     }
 
-	@Override
+    public Instruction fetchData(byte opC) {
+        this.PC = this.getPC();
+        instruction.PC = this.PC - 1;
+        instruction.opCodes[0] = opC;
+        instruction.opCodeCounter = 1;
+        //super.fetch(opC);
+        String label = dataRegion.getLabel(instruction.PC);
+        int end = dataRegion.getEnd();
+        int size = end - instruction.PC + 1;
+        String comment = dataRegion.getComment();
+        fetchLabel(opC, label, size);
+        instruction.comment = comment;
+        instruction.isData = true;
+        System.out.println(instruction);
+        //instructions.add(instruction);
+        Instruction i = instruction;
+        instruction = null;
+        instruction = new Instruction();
+        cpu.PC = this.PC; //this.PC = this.getPC();
+        return i;
+    }
+
+    public void setDataBlock(DataRegion dataRegion) {
+        this.dataRegion = dataRegion;
+    }
+
+    void fetchLabel(byte opC, String label, int size) {
+        switch(label) {
+            case "DEFB":
+            case "DEFS":
+                label = "DEFB";
+                fetchDEFB(opC, label, size);
+                break;
+            case "DEFW":
+                fetchDEFW(opC, label, size);
+                break;
+            case "DEFM":
+                fetchDEFM(opC, label, size);
+                break;
+            case "ASCII80":
+                fetchASCII80(opC, label, size);
+                break;
+            case "ASCIIZ":
+                fetchASCIIZ(opC, label, size);
+                break;
+        }
+    }
+
+    private void fetchDEFB(byte opC, String label, int size) {
+        StringBuilder s = new StringBuilder();
+        while (instruction.opCodeCounter < 4 && instruction.opCodeCounter < size) {
+            opC = currentComp.peek(PC++);
+            instruction.opCodes[instruction.opCodeCounter++] = opC;
+        }
+        for(int i = 0; i < instruction.opCodeCounter; i++) {
+            opC = instruction.opCodes[i];
+            if( i > 0 ) // i == 1 or i == 2
+                s.append(", ");
+            s.append("0x"+Integer.toHexString(Byte.toUnsignedInt(opC)).toUpperCase());
+        }
+        instruction.mnemonic = label + " " + s;
+    }
+
+    private void fetchDEFW(byte opC, String label, int size) {
+        StringBuilder s = new StringBuilder();
+        while (instruction.opCodeCounter < 4 && instruction.opCodeCounter < size*2) { // size => 1 word, 2 words, 3 words, etc
+            opC = currentComp.peek(PC++);
+            instruction.opCodes[instruction.opCodeCounter++] = opC;
+        }
+        for(int i = 0; i < instruction.opCodeCounter; i+=2) {
+            Z = instruction.opCodes[i];
+            W = instruction.opCodes[i+1];
+            if( i == 2 )
+                s.append(", ");
+            s.append("0x"+getWord(W, Z));
+        }
+        instruction.mnemonic = label + " " + s;
+    }
+
+    private void fetchDEFM(byte opC, String label, int size) {
+        StringBuilder s = new StringBuilder();
+        while(instruction.opCodeCounter < 4 && instruction.opCodeCounter < size) {
+            opC = currentComp.peek(PC++);
+            instruction.opCodes[instruction.opCodeCounter++] = opC;
+        }
+        for(int i = 0; i < instruction.opCodeCounter; i++) {
+            opC = instruction.opCodes[i];
+            s.append(escapeCharForString((char)opC));
+            if( i > 0 && i < instruction.opCodeCounter )
+                s.append(", ");
+        }
+        instruction.mnemonic = "DEFM \"" + s + "\"";
+    }
+
+    private void fetchASCIIZ(byte opC, String label, int size) {
+        StringBuilder s = new StringBuilder();
+        boolean endString = (opC == 0x0);
+        while(instruction.opCodeCounter < 4 && instruction.opCodeCounter < size && !endString) {
+            opC = currentComp.peek(PC++);
+            instruction.opCodes[instruction.opCodeCounter++] = opC;
+            endString = (opC == 0x0);
+        }
+        for(int i = 0; i < instruction.opCodeCounter; i++) {
+            opC = instruction.opCodes[i];
+           // Sacar la logica de si es printable o no fuera de la funcion para poder
+            //concatenar las , separadoras y los inicio y fin de ' '
+            s.append(escapeCharForString((char)opC));
+        }
+        instruction.mnemonic = "DEFM \"" + s + "\"";
+    }
+
+    private void fetchASCII80(byte opC, String label, int size) {
+        StringBuilder s = new StringBuilder();
+        boolean endString = (opC & 0x080) == 0x080;
+        while(instruction.opCodeCounter < 4 && instruction.opCodeCounter < size && !endString) {
+            opC = currentComp.peek(PC++);
+            instruction.opCodes[instruction.opCodeCounter++] = opC;
+            endString = (opC & 0x080) == 0x080;
+        }
+        instruction.mnemonic = renderOpCodesAsASCII80();
+    }
+
+    private String renderOpCodesAsASCII80() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("DEFM ");
+
+        StringBuilder stringPart = new StringBuilder();
+        boolean inString = false;
+
+        for (int i = 0; i < instruction.opCodeCounter; i++) {
+            int b = instruction.opCodes[i] & 0xFF;
+            boolean bit7 = (b & 0x80) != 0;
+            int charCode = b & 0x7F; // limpio bit 7 para imprimir
+
+            char c = (char) charCode;
+            boolean printable = (c >= 32 && c <= 126 && c != '"' && c != '\\')
+                    || c == '\n' || c == '\r' || c == '\t';
+
+            if (bit7) {
+                // Cierra cualquier cadena abierta antes de este byte
+                if (inString) {
+                    sb.append('"').append(stringPart).append('"');
+                    stringPart.setLength(0);
+                    inString = false;
+                    sb.append(',');
+                } else if (i > 0) {
+                    sb.append(',');
+                }
+
+                // Representación individual con bit 7
+                sb.append(renderCharWithEscape(c)).append("+0x80");
+            } else {
+                if (printable) {
+                    if (!inString) {
+                        if (i > 0) sb.append(',');
+                        inString = true;
+                    }
+                    stringPart.append(escapeCharForString(c));
+                } else {
+                    // Cierra cadena si estaba abierta
+                    if (inString) {
+                        sb.append('"').append(stringPart).append('"').append(',');
+                        stringPart.setLength(0);
+                        inString = false;
+                    } else if (i > 0) {
+                        sb.append(',');
+                    }
+                    sb.append("0x").append(Integer.toHexString(b).toUpperCase());
+                }
+            }
+        }
+
+        // Cierra cadena final si quedó abierta
+        if (inString) {
+            sb.append('"').append(stringPart).append('"');
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Escapa caracteres de control o especiales para que aparezcan correctamente
+     * dentro de cadenas entre comillas.
+     */
+    private static String escapeCharForString(char c) {
+        switch (c) {
+            case '\n': return "\\n";
+            case '\r': return "\\r";
+            case '\t': return "\\t";
+            case '\"': return "\\\"";
+            case '\\': return "\\\\";
+            case '\0': return "\\0";
+            //default:   return String.valueOf(c);
+            default:
+                if (c >= 32 && c <= 126) {
+                    return String.valueOf(c);
+                } else {
+                    return String.format("'0x%02X'", (int) c);
+                }
+        }
+    }
+
+    /**
+     * Renderiza un carácter individual entre comillas simples,
+     * escapando si es necesario (\n, \r, etc.).
+     */
+    private static String renderCharWithEscape(char c) {
+        switch (c) {
+            case '\n': return "'\\n'";
+            case '\r': return "'\\r'";
+            case '\t': return "'\\t'";
+            case '\'': return "'\\''"; // comilla simple escapada
+            case '\\': return "'\\\\'";
+            default:
+                if (c >= 32 && c <= 126) {
+                    return "'" + c + "'";
+                } else {
+                    return String.format("0x%02X", (int) c);
+                }
+        }
+    }
+
+    @Override
     public void NOP() {
         instruction.mnemonic = "NOP";
+    }
+    public void NONI() {
+        instruction.mnemonic = "NONI";
+        instruction.comment = "; NOP + next instruct, No Interrupts";
     }
 
 	@Override
@@ -156,7 +398,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
 	@Override
-    public void LD_nn_HL() {
+    public void LD_mm_HL() {
         byte Z = currentComp.peek(PC++);
         byte W = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
@@ -165,7 +407,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
 	@Override
-    public void LD_nn_A() {
+    public void LD_mm_A() {
         byte Z = currentComp.peek(PC++);
         byte W = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
@@ -184,7 +426,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
 	@Override
-    public void LD_HL_nn() {
+    public void LD_HL_mm() {
         byte Z = currentComp.peek(PC++);
         byte W = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
@@ -193,7 +435,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
 	@Override
-    public void LD_A_nn() {
+    public void LD_A_mm() {
         byte Z = currentComp.peek(PC++);
         byte W = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
@@ -349,6 +591,16 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         instruction.mnemonic = "LD SP, HL";
     }
 
+    @Override
+    public void LD_SP_IX() {
+        instruction.mnemonic = "LD SP, IX";
+    }
+
+    @Override
+    public void LD_SP_IY() {
+        instruction.mnemonic = "LD SP, IY";
+    }
+
 	@Override
     public void JP_cc_y_nn() {
         Z = currentComp.peek(PC++);
@@ -384,6 +636,16 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 	@Override
     public void EX_SP_HL() {
         instruction.mnemonic = "EX (SP), HL";
+    }
+
+    @Override
+    public void EX_SP_IX() {
+        instruction.mnemonic = "EX (SP), IX";
+    }
+
+    @Override
+    public void EX_SP_IY() {
+        instruction.mnemonic = "EX (SP), IY";
     }
 
 	@Override
@@ -518,21 +780,14 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 	/* CB Prefix */
 
     public void RLC_r_z() { instruction.mnemonic = "RLC "+r[z]; }
-
     public void RRC_r_z() { instruction.mnemonic = "RLC "+r[z]; }
-
     public void RL_r_z() {
         instruction.mnemonic = "RL "+r[z];
     }
-
-/*      CBopCodes[0][0][3] = opC::RR_r_z;
-        CBopCodes[0][0][4] = opC::SLA_r_z;
-        CBopCodes[0][0][5] = opC::SRA_r_z;
-        CBopCodes[0][0][6] = opC::SLL_r_z;*/
-    public void RR_r_z() { instruction.mnemonic = "RR "+r[z]; System.out.println("RR_r_z ERROR"); }
+    public void RR_r_z() { instruction.mnemonic = "RR "+r[z]; }
     public void SLA_r_z() { instruction.mnemonic = "SLA "+r[z]; }
-    public void SRA_r_z() { instruction.mnemonic = "SRA "+r[z]; System.out.println("SRA_r_z ERROR"); }
-    public void SLL_r_z() { instruction.mnemonic = "SRL "+r[z]; System.out.println("SLL_r_z ERROR"); }
+    public void SRA_r_z() { instruction.mnemonic = "SRA "+r[z]; }
+    public void SLL_r_z() { instruction.mnemonic = "SLL "+r[z]; instruction.comment = "; undocumented"; }
     public void SRL_r_z() {
         instruction.mnemonic = "SRL "+r[z];
     }
@@ -599,16 +854,16 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         instruction.mnemonic = "LD A, R";
     }
 
-/*	@Override
-    public void RRD() { // TODO
+	@Override
+    public void RRD() {
         instruction.mnemonic = "RRD";
     }
 
     @Override
-    public void RLD() { // TODO
+    public void RLD() {
         instruction.mnemonic = "RLD";
     }
-*/
+
 	@Override
     public void LDI() { // TODO
         instruction.mnemonic = "LDI";
@@ -692,8 +947,43 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     /* DD prefix */
 
     @Override
+    public void INC_IX() {
+        instruction.mnemonic = "INC IX";
+    }
+
+    @Override
     public void DEC_IX() {
         instruction.mnemonic = "DEC IX";
+    }
+
+    @Override
+    public void INC_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "INC (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void DEC_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "DEC (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void LD_IXH_n() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "LD IXh, "+String.format("%02X",d);
+        instruction.comment = "; undocumented";
+    }
+
+    @Override
+    public void LD_IXL_n() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "LD IXl, "+String.format("%02X",d);
+        instruction.comment = "; undocumented";
     }
 
     @Override
@@ -731,6 +1021,62 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         instruction.mnemonic = "ADD IX, "+rp[p];
 	}
 
+    @Override
+    public void ADD_A_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "ADD A, (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void ADC_A_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "ADC A, (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void SUB_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "SUB (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void SBC_A_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "SBC A, (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void AND_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "AND (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void XOR_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "XOR (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void OR_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "OR (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void CP_IX_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "CP (IX+"+String.format("%02X",d)+")";
+    }
+
 	/* FD Prefix */
 
 	@Override
@@ -756,6 +1102,9 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
     @Override
+    public void ADD_IY_rp_p()  { instruction.mnemonic = "ADD IY, "+rp[p]; }
+
+    @Override
     public void INC_IY_d() {
         byte d = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
@@ -769,6 +1118,16 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         instruction.mnemonic = "DEC (IY+"+String.format("%02X",d)+")";
     }
 
+    @Override
+    public void INC_IY() {
+        instruction.mnemonic = "INC IY";
+    }
+
+    @Override
+    public void DEC_IY() {
+        instruction.mnemonic = "DEC IY";
+    }
+
 	@Override
     public void LD_IY_d_n() {
         byte d = currentComp.peek(PC++);
@@ -776,6 +1135,29 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         instruction.opCodes[instruction.opCodeCounter++] = d;
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.mnemonic = "LD (IY+"+String.format("%02X",d)+"), "+Z;
+    }
+
+    /* DDCB prefix */
+
+    @Override
+    public void BIT_y_IX_d() {
+        byte opC = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = opC;
+        instruction.mnemonic = "BIT "+y+", (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void RES_y_IX_d() {
+        byte opC = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = opC;
+        instruction.mnemonic = "RES "+y+", (IX+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void SET_y_IX_d() {
+        byte opC = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = opC;
+        instruction.mnemonic = "SET "+y+", (IX+"+String.format("%02X",d)+")";
     }
 
 	/* FDCB prefix */
@@ -809,6 +1191,13 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
     @Override
+    public void ADC_A_IY_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "ADC A, (IY+"+String.format("%02X",d)+")";
+    }
+
+    @Override
     public void CP_IY_d() {
         byte d = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
@@ -819,6 +1208,79 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         byte d = currentComp.peek(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
         instruction.mnemonic = "SUB A, (IY+"+String.format("%02X",d)+")";
+    }
+
+    public void SBC_A_IY_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "SBC A, (IY+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void AND_IY_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "AND (IY+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void OR_IY_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "OR (IY+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void XOR_IY_d() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "XOR (IY+"+String.format("%02X",d)+")";
+    }
+
+    @Override
+    public void LD_IYH_n() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "LD IYh, "+String.format("%02X",d);
+        instruction.comment = "; undocumented";
+    }
+
+    @Override
+    public void LD_IYL_n() {
+        byte d = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.mnemonic = "LD IYl, "+String.format("%02X",d);
+        instruction.comment = "; undocumented";
+    }
+
+    @Override
+    public void LD_IX_d_n() {
+        d = currentComp.peek(PC++);
+        Z = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = d;
+        instruction.opCodes[instruction.opCodeCounter++] = Z;
+        instruction.mnemonic = "LD (IX+"+String.format("%02X",d)+"), "+Z;
+    }
+
+    public void LD_IX_d_r_z() {
+        d = currentComp.peek(PC++);
+        instruction.mnemonic = "LD (IX+"+String.format("%02X",d)+"), "+r[z];
+    }
+
+    public void LD_mm_IX() {
+        byte Z = currentComp.peek(PC++);
+        byte W = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = Z;
+        instruction.opCodes[instruction.opCodeCounter++] = W;
+        instruction.mnemonic = "LD ("+getWord(W, Z)+"), IX";
+    }
+
+    public void LD_IX_mm() {
+        byte Z = currentComp.peek(PC++);
+        byte W = currentComp.peek(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = Z;
+        instruction.opCodes[instruction.opCodeCounter++] = W;
+        instruction.mnemonic = "LD IX, (" + getWord(W, Z) + ")";
     }
 
     public void POP_IY() { instruction.mnemonic = "POP IY"; }

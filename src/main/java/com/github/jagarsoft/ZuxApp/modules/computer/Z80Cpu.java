@@ -1,19 +1,25 @@
 package com.github.jagarsoft.ZuxApp.modules.computer;
 
+import com.github.jagarsoft.Computer;
 import com.github.jagarsoft.Z80;
+import com.github.jagarsoft.ZuxApp.core.bus.EventBus;
 import com.github.jagarsoft.ZuxApp.modules.debugger.IZ80Cpu;
 import com.github.jagarsoft.ZuxApp.modules.debugger.Z80State;
+import com.github.jagarsoft.ZuxApp.modules.disassembler.events.StepEvent;
 
 public class Z80Cpu implements IZ80Cpu {
+    private final EventBus eventBus;
     private Z80 cpu;
 
-    public Z80Cpu(Z80 cpu) {
+    public Z80Cpu(Z80 cpu, EventBus eventBus) {
         this.cpu = cpu;
+        this.eventBus = eventBus;
     }
 
     @Override
     public void step() {
-        //System.out.println("Z80 step: " + String.format("%04X", getPC()));
+        System.out.println("Z80 step: " + String.format("%04X", getPC()));
+        eventBus.publish(new StepEvent(getPC()));
         cpu.fetch();
     }
 
@@ -59,5 +65,10 @@ public class Z80Cpu implements IZ80Cpu {
                 throw new IllegalArgumentException("Unknown reg: "+name);
         }
         return v;
+    }
+
+    @Override
+    public Computer getComputer() {
+        return cpu.getComputer();
     }
 }

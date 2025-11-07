@@ -36,12 +36,12 @@ public class ZuxEmulatorV1 {
             zux.addMemory((int)bank, new RAMMemory(64 * 1024));
         }*/
 
-        zux.addIODevice((byte) 0xCC, new ZuxIO(keyboard, new ZuxTerminal(screen)));
+        zux.addIODevice((short) 0x0CC, new ZuxIO(keyboard, new ZuxTerminal(screen)));
         IOManagementUnit MMU = new IOManagementUnit(zux);
-        zux.addIODevice(new byte[]{(byte)PHYS_COPY_CMD, (byte)PHYS_COPY_DAT}, new ZuxIO(MMU, MMU));
+        zux.addIODevice(new short[]{PHYS_COPY_CMD, PHYS_COPY_DAT}, new ZuxIO(MMU, MMU));
 
         ZuxLogger zuxLogger = new ZuxLogger(zux);
-        zux.addIODevice(new byte[]{(byte)LOGGER_CMD, (byte)LOGGER_DAT}, new ZuxIO(zuxLogger, zuxLogger));
+        zux.addIODevice(new short[]{LOGGER_CMD, LOGGER_DAT}, new ZuxIO(zuxLogger, zuxLogger));
 
         disassembler = new Z80Disassembler(cpu);
         disassembler.setComputer(zux);

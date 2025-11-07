@@ -37,7 +37,7 @@ class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-//System.out.println("getKeyCode:" + e.getKeyCode());
+System.out.println("getKeyCode:" + e.getKeyCode());
         switch(e.getKeyCode()) {
             case VK_1: A11.clear(0); break;
             case VK_2: A11.clear(1); break;

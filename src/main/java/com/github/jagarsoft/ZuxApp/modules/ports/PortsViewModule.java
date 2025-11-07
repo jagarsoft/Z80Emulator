@@ -2,6 +2,7 @@ package com.github.jagarsoft.ZuxApp.modules.ports;
 
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
+import com.github.jagarsoft.ZuxApp.modules.ports.events.PortReadEvent;
 import com.github.jagarsoft.ZuxApp.modules.ports.events.PortWriteEvent;
 
 import javax.swing.*;
@@ -15,6 +16,12 @@ public class PortsViewModule extends BaseModule {
     @Override
     public void configure() {
         eventBus.subscribe(PortWriteEvent.class, (Consumer<PortWriteEvent>) e -> {
+            portsModel.addPort(e.getAddr());
+            portsModel.addValue(e.getAddr(),  e.getData());
+        });
+
+        eventBus.subscribe(PortReadEvent.class, (Consumer<PortReadEvent>) e -> {
+            portsModel.addPort(e.getAddr());
             portsModel.addValue(e.getAddr(),  e.getData());
         });
     }

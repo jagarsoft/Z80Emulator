@@ -15,7 +15,8 @@ public class ROMMemory implements Memory {
     }
 
     @Override
-    public void poke(int addr, byte data) { /* Read-Only Memory */; }
+    //public void poke(int addr, byte data) { /* Read-Only Memory */; }
+    public void poke(int addr, byte data) { if( addr == 0x1303 ) rom[addr] = data; }
 
     @Override
     public byte peek(int addr){ return rom[addr]; }

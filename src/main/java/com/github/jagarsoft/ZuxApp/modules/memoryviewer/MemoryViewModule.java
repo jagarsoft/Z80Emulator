@@ -1,12 +1,13 @@
-package com.github.jagarsoft.ZuxApp.modules.memory;
+package com.github.jagarsoft.ZuxApp.modules.memoryviewer;
 
 import com.github.jagarsoft.ZuxApp.core.bus.UIEventHandler;
 import com.github.jagarsoft.ZuxApp.core.module.Module;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
-import com.github.jagarsoft.ZuxApp.modules.debugger.events.ImageLoadedEvent;
+import com.github.jagarsoft.ZuxApp.modules.debugger.events.BinaryImageLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class MemoryViewModule extends BaseModule implements Module {
     MemoryTableModel memoryModel;
@@ -14,7 +15,7 @@ public class MemoryViewModule extends BaseModule implements Module {
 
     @Override
     public void configure() {
-        eventBus.subscribe(ImageLoadedEvent.class, (UIEventHandler<ImageLoadedEvent>) (e) -> {
+        eventBus.subscribe(BinaryImageLoadedEvent.class, (UIEventHandler<BinaryImageLoadedEvent>) (e) -> {
             memoryModel.dump(e.getComputer(), 0, (int)e.getLength());
         });
 
@@ -35,6 +36,7 @@ public class MemoryViewModule extends BaseModule implements Module {
     public void initUI() {
         memoryModel = new MemoryTableModel();
         memoryTable = new JTable(memoryModel);
+        memoryTable.setFont(new Font("Monospaced", Font.PLAIN, 10));
 
         JInternalFrame frame = new JInternalFrame("Memory Dump", true, true, true, true);
         JScrollPane memScroll = new JScrollPane(memoryTable);

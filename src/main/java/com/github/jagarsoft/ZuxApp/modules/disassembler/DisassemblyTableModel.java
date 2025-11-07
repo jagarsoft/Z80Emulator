@@ -1,10 +1,13 @@
 package com.github.jagarsoft.ZuxApp.modules.disassembler;
 
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import com.github.jagarsoft.Instruction;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class DisassemblyTableModel extends AbstractTableModel {
     private final InstructionList<Instruction> instructions = new InstructionList<>();
@@ -49,7 +52,7 @@ public class DisassemblyTableModel extends AbstractTableModel {
         instructions.add(pc, instruction);
     }
 
-    public Instruction get(int row) {
+    public Instruction getInstruction(int row) {
         return instructions.get(row);
     }
 
@@ -72,6 +75,14 @@ public class DisassemblyTableModel extends AbstractTableModel {
 
     public void clear() {
         instructions.clear();
+    }
+
+    public Instruction getInstructionByPC(int pc) {
+        return instructions.getByAddress(pc);
+    }
+
+    public List<Map.Entry<Integer, Instruction>> search(String query) {
+        return instructions.search(query);
     }
 }
 

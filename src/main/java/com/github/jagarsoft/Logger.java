@@ -2,7 +2,7 @@ package com.github.jagarsoft;
 
 public class Logger {
     public static void info(String s) {
-        //System.out.println(s);
+        System.out.println(s);
     }
 
     public static void reg(String reg, int w) {
@@ -21,8 +21,8 @@ public class Logger {
         System.out.println("Halt instruction executed");
     }
 
-    public static void halted() {
-        System.out.println("Halted: NOP executed");
+    public static void halted(int tstate) {
+        System.out.println("Halted: NOP executed. Tstate: " + tstate);
     }
 
     public static void write(String s) { System.out.println("str:"+s); }

@@ -29,6 +29,7 @@ public interface Z80OpCode {
     void FDCB_prefix();
 
     void NOP();
+    void NONI(); // NOP + next instruct no interrupts
     void EX_AF_AF_();
     void DJNZ();
     void JR();
@@ -39,13 +40,13 @@ public interface Z80OpCode {
     
     void LD_BC_A();
     void LD_DE_A();
-    void LD_nn_HL();
-    void LD_nn_A();
+    void LD_mm_HL();
+    void LD_mm_A();
 
     void LD_A_BC();
     void LD_A_DE();
-    void LD_HL_nn();
-    void LD_A_nn();
+    void LD_HL_mm();
+    void LD_A_mm();
     
     void INC_rp_p();
     void DEC_rp_p();
@@ -82,13 +83,16 @@ public interface Z80OpCode {
     void EXX();
     void JP_HL();
     void LD_SP_HL();
-
+    void LD_SP_IX();
+    void LD_SP_IY();
     void JP_cc_y_nn();
 
     void JP_nn();
     void OUT_n_A();
     void IN_A_n();
     void EX_SP_HL();
+    void EX_SP_IX();
+    void EX_SP_IY();
     void EX_DE_HL();
     void DI();
     void EI();
@@ -112,18 +116,12 @@ public interface Z80OpCode {
     /* CB Prefix */
 
     void RLC_r_z();
-
     void RRC_r_z();
-
     void RL_r_z();
-/*      CBopCodes[0][0][3] = opC::RR_r_z;
-        CBopCodes[0][0][4] = opC::SLA_r_z;
-        CBopCodes[0][0][5] = opC::SRA_r_z;
-        CBopCodes[0][0][6] = opC::SLL_r_z;*/
     void RR_r_z();
     void SLA_r_z();
     void SRA_r_z();
-    void SLL_r_z();
+    void SLL_r_z(); // undocumented
     void SRL_r_z();
 
     void BIT_y_r_z();
@@ -152,8 +150,8 @@ public interface Z80OpCode {
     void LD_R_A();
     void LD_A_I();
     void LD_A_R();
-    //void RRD();
-    //void RLD();
+    void RRD();
+    void RLD();
 
     void LDI();
     void LDD();
@@ -175,12 +173,34 @@ public interface Z80OpCode {
     /* DD prefix */
 
     void LD_IX_nn();
+    void INC_IX();
     void DEC_IX();
+    void INC_IX_d();
+    void DEC_IX_d();
+    void LD_IXH_n(); // undocumented
+    void LD_IXL_n(); // undocumented
+    void LD_IX_d_r_z();
+    void LD_IX_d_n();
     void LD_r_y_IX_d();
     void ADD_IX_rp_p();
+    void ADC_A_IX_d();
+    void SUB_IX_d();
+    void SBC_A_IX_d();
+    void AND_IX_d();
+    void XOR_IX_d();
+    void OR_IX_d();
+    void CP_IX_d();
     void POP_IX();
+    void LD_mm_IX();
+    void LD_IX_mm();
     void JP_IX();
     void PUSH_IX();
+    void ADD_A_IX_d();
+
+    /* DDCB prefix */
+    void BIT_y_IX_d();
+    void RES_y_IX_d();
+    void SET_y_IX_d();
 
     /* FD prefix */
 
@@ -188,17 +208,29 @@ public interface Z80OpCode {
     void LD_IY_d_r_z();
     void INC_IY_d();
     void DEC_IY_d();
+    void LD_IYH_n(); // undocumented
+    void LD_IYL_n(); // undocumented
     void LD_IY_d_n();
     void LD_r_y_IY_d();
+    void ADD_IY_rp_p();
+    void ADC_A_IY_d();
+    void SBC_A_IY_d();
+    void AND_IY_d();
+    void XOR_IY_d();
+    void OR_IY_d();
     void BIT_y_IY_d();
     void RES_y_IY_d();
     void ADD_A_IY_d();
     void SET_y_IY_d();
+    void INC_IY();
+    void DEC_IY();
 
     void CP_IY_d();
     void SUB_IY_d();
 
     void POP_IY();
+    void LD_mm_IY();
+    void LD_IY_mm();
     void JP_IY();
     void PUSH_IY();
 

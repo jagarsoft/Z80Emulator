@@ -2,13 +2,12 @@ package com.github.jagarsoft.ZuxApp.modules.debugger.events;
 
 import com.github.jagarsoft.Computer;
 import com.github.jagarsoft.ZuxApp.core.bus.Event;
-import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
 
-public class ImageLoadedEvent implements Event {
+public class BinaryImageLoadedEvent implements Event {
     private final Computer currentComputer;
     private final long length;
 
-    public ImageLoadedEvent(Computer currentComputer, long length) {
+    public BinaryImageLoadedEvent(Computer currentComputer, long length) {
         this.currentComputer = currentComputer;
         this.length = length;
     }

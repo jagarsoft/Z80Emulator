@@ -7,12 +7,12 @@ import com.github.jagarsoft.ZuxApp.infrastructure.bus.SimpleCommandBus;
 import com.github.jagarsoft.ZuxApp.infrastructure.bus.AsyncEventBus;
 import com.github.jagarsoft.ZuxApp.modules.computer.ComputerModule;
 import com.github.jagarsoft.ZuxApp.modules.console.ConsoleModule;
+import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegionModule;
 import com.github.jagarsoft.ZuxApp.modules.debugger.DebuggerModule;
 import com.github.jagarsoft.ZuxApp.modules.disassembler.DisassemblerModule;
-import com.github.jagarsoft.ZuxApp.modules.memory.MemoryViewModule;
+import com.github.jagarsoft.ZuxApp.modules.memoryviewer.MemoryViewModule;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.MemoryConfigModule;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.MainModule;
-
 import com.github.jagarsoft.ZuxApp.modules.logger.LoggerModule;
 import com.github.jagarsoft.ZuxApp.modules.ports.PortsViewModule;
 import com.github.jagarsoft.ZuxApp.modules.registers.RegistersViewModule;
@@ -36,26 +36,9 @@ public class Bootstrap {
         this.eventBus = new AsyncEventBus();
         this.commandBus = new SimpleCommandBus();
 
-        /*
-        import com.github.jagarsoft.ZuxApp.core.commands.CreateUserCommand;
-        import com.github.jagarsoft.ZuxApp.core.events.UserCreatedEvent;
-        import com.github.jagarsoft.ZuxApp.infrastructure.handlers.CreateUserHandler;
-
-        // Listener para eventos de usuario creado
-        eventBus.subscribe(UserCreatedEvent.class, event -> {
-            System.out.println("Listener: Notificación enviada al usuario " + event.getUsername());
-        });
-
-        // Registro del handler
-        commandBus.registerHandler(CreateUserCommand.class, new CreateUserHandler(eventBus));
-
-        // Ejecución de un comando que dispara un evento
-        commandBus.execute(new CreateUserCommand("Javier"));
-         */
-
         //this.mainModule = new MainModule(commandBus, eventBus);
         List<Module> modules = Arrays.asList(
-                new MainModule()
+                  new MainModule()
                 , new LoggerModule()
                 , new ConsoleModule()
                 //, new HelloWorldModule()
@@ -66,6 +49,7 @@ public class Bootstrap {
                 , new MemoryViewModule()
                 , new PortsViewModule()
                 , new SymbolTableModule()
+                , new DataRegionModule()
                 , new DisassemblerModule()
                 , new DebuggerModule()
         );

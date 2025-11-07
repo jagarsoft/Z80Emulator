@@ -39,6 +39,6 @@ class Z80ForTesting extends Z80 {
     public void setBC_(short bc){ alternative.B = (byte)((bc & 0xFF00) >> 8); alternative.C = (byte)(bc & 0x00FF); }
     public void setDE_(short de){ alternative.D = (byte)((de & 0xFF00) >> 8); alternative.E = (byte)(de & 0x00FF); }
 
-    public int getPC() { return PC; }
+    public int getPC() { return PC & 0x0FFFF; }
     protected void setPC(int pc) { PC = pc; }
 }

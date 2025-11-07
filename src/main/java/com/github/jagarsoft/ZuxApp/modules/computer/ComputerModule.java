@@ -6,6 +6,7 @@ import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.ComputerLoadImageCommand;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
+import com.github.jagarsoft.ZuxApp.modules.computer.commands.LoadRawCodeAndRunCommand;
 import com.github.jagarsoft.ZuxApp.modules.logger.events.LogEvent;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.commands.GetMemoryConfiguration;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigChangedEvent;
@@ -88,8 +89,8 @@ public class ComputerModule extends BaseModule {
 
                 size = (int)file.length();
                 if( size > computer.getMemorySize() ) {
-                    //eventBus.publish(new ImageExceedsMemory(size, computer.getMemSize()));
-                    System.out.println("ImageExceedsMemory " + size + " " + computer.getBankSize());
+                    //eventBus.publish(new ImageExceedsMemory(size, computer.getMemorySize()));
+                    System.out.println("ImageExceedsMemory " + size + " > " + computer.getMemorySize());
                     return;
                 }
 
@@ -101,6 +102,48 @@ public class ComputerModule extends BaseModule {
                 }
 
                 //eventBus.publish(new ImageLoadedEvent(computer, size));
+                /*computer.poke(0x0F44, (byte) 0);
+                computer.poke(0x0F45, (byte) 0);
+                computer.poke(0x0F46, (byte) 0);*/
+                computer.poke(0x1303, (byte) 0); // Overwrite HALT
+            }
+        });
+
+        commandBus.registerHandler(LoadRawCodeAndRunCommand.class, new CommandHandler<LoadRawCodeAndRunCommand>() {
+            @Override
+            public void handle(LoadRawCodeAndRunCommand command) {
+                FileInputStream dataStream;
+                File file = new File(command.binName);
+                int size;
+
+                try {
+                    dataStream = new FileInputStream(file);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                size = (int)file.length();
+                if( size > computer.getMemorySize() ) {
+                    //eventBus.publish(new ImageExceedsMemory(size, computer.getMemSize()));
+                    System.out.println("ImageExceedsMemory " + size + " " + computer.getBankSize());
+                    return;
+                }
+
+                int org = Integer.parseInt(command.init);
+                try {
+                    computer.loadBytes(dataStream, org, size);
+                    dataStream.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                //eventBus.publish(new ImageLoadedEvent(computer, size));
+                /*computer.poke(0x0F44, (byte) 0);
+                computer.poke(0x0F45, (byte) 0);
+                computer.poke(0x0F46, (byte) 0);*/
+
+                //computer.getCPU().setHL((short)org);
+                //computer.getCPU().JP_HL();
             }
         });
     }

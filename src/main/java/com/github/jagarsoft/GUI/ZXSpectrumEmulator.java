@@ -125,6 +125,7 @@ public class ZXSpectrumEmulator {
         spectrum.addMemory(0xC000, new RAMMemory(16 * 1024));
         spectrum.addIODevice((byte)0xFE, new ZXSpectrumIO(keyboard, new ZXBorder(screen)));
         disassembler = new Z80Disassembler(cpu);
+        cpu.setComputer(spectrum);
         disassembler.setComputer(spectrum);
 
         try {
@@ -162,7 +163,7 @@ Logger.info("Reading rom...: " + dataStream);
                 int pc = cpu.getPC();
                 Logger.info("fetch ");
                 byte opC = spectrum.peek(pc);
-                disassembler.fetch(opC);
+                disassembler.fetchInstruction(opC);
                 cpu.fetch(opC); // fetch opCode
                 Rectangle r = v.getRectangle();
                 if (r != null) {

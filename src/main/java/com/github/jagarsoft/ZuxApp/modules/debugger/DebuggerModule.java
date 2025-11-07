@@ -6,12 +6,14 @@ import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.computer.Z80Cpu;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.ComputerLoadImageCommand;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
+import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegion;
+import com.github.jagarsoft.ZuxApp.modules.dataregion.events.DataBlockMapLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.debugger.commands.*;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.*;
 import com.github.jagarsoft.ZuxApp.modules.disassembler.events.BreakpointToggledEvent;
 import com.github.jagarsoft.ZuxApp.modules.logger.events.LogEvent;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
-import com.github.jagarsoft.ZuxApp.modules.mainmodule.events.FileSelectedEvent;
+import com.github.jagarsoft.ZuxApp.modules.mainmodule.events.FileBinaryImageSelectedEvent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +44,8 @@ public class DebuggerModule extends BaseModule {
     // Coalescing de UI: un “tick” cada ~33ms (30 FPS)
     private volatile long lastUiPushMs = 0L;
     private int uiPushIntervalMs = 33;
+
+    DataRegion dataRegion;
 
     public enum DebuggerState {
         RUNNING,   // real, no events
@@ -139,19 +143,23 @@ public class DebuggerModule extends BaseModule {
 
         GetComputerCommand currentComputer = new GetComputerCommand();
         commandBus.execute(currentComputer);
-        this.cpu = new Z80Cpu(currentComputer.getCpu());
+        this.cpu = new Z80Cpu(currentComputer.getCpu(), eventBus);
 
         // TODO UIEventHandler probably
-        eventBus.subscribe(FileSelectedEvent.class, (Consumer<FileSelectedEvent>) (e) -> {
+        eventBus.subscribe(FileBinaryImageSelectedEvent.class, (Consumer<FileBinaryImageSelectedEvent>) (e) -> {
             File currentFile = e.getSelectedFile();
             commandBus.execute(new ComputerLoadImageCommand(currentFile));
             // TODO delegar en ComputerLoadImageCommand si la carga tiene exito
-            eventBus.publish(new ImageLoadedEvent(currentComputer.getComputer(), currentComputer.getComputer().getMemorySize() /*currentFile.length()*/));
+            eventBus.publish(new BinaryImageLoadedEvent(currentComputer.getComputer(), currentComputer.getComputer().getMemorySize() /*currentFile.length()*/));
         });
 
-        eventBus.subscribe(ImageLoadedEvent.class, (Consumer<ImageLoadedEvent>) (e) -> {
+        eventBus.subscribe(BinaryImageLoadedEvent.class, (Consumer<BinaryImageLoadedEvent>) (e) -> {
             //commandBus.execute(new DebuggerRunCommand()); // RUN ??
             commandBus.execute(new DebuggerPauseCommand()); // PAUSE ??
+        });
+
+        eventBus.subscribe(DataBlockMapLoadedEvent.class, (Consumer<DataBlockMapLoadedEvent>) e->{
+            dataRegion = e.getDataRegion();
         });
     }
 
@@ -223,11 +231,10 @@ public class DebuggerModule extends BaseModule {
         runDebugger();
         while (running.get() && !cpu.isHalted()) {
             int pc = cpu.getPC();
-            if ( ! isBreakpointHit(pc) )
+            if ( ! isBreakpointHit(pc) && ! isDataRegion(pc) )
                 cpu.step();
-            // else
-                //notificationStrategy.onInstruction(cpu, eventBus);
-                // break! running == false
+            else
+                break;
         }
 
         if (cpu.isHalted()) {
@@ -240,6 +247,15 @@ public class DebuggerModule extends BaseModule {
     private boolean isBreakpointHit(int pc) {
         if (breakpoints.isBreakpoint(pc)) {
             pauseDebugger("BREAKPOINT");
+            eventBus.publish(new BreakpointHitEvent(pc));
+            return true;
+        } else
+            return false;
+    }
+
+    private boolean isDataRegion(int pc) {
+        if( dataRegion.isDataRegion(pc) ) {
+            pauseDebugger("DATAREGION");
             eventBus.publish(new BreakpointHitEvent(pc));
             return true;
         } else

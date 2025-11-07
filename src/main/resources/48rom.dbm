@@ -1,0 +1,1340 @@
+; (R) JA.GAR. SOFT
+; jagarsoft2000@gmail.com
+;
+; Data Block Map File Descriptor
+;
+; Format:
+; Addr Directive Size [; comment]
+;
+; Addr
+; 0x prefixed hex
+; h subfixed hex
+; otherwise decimal
+;
+; Directives
+; DEFB
+; DEFW
+; DEFM            no endding mark  
+; DEFS    -> DEFB
+; ASCII80 -> DEFM finished by byte with bit 7 set
+; ASCIIZ  -> DEFM finished by byte '\0'
+;
+; Size
+; Count of bytes. It will be interpreted as Directive saying
+
+0x0013      DEFB    5
+0x0025      DEFB    3
+0x002B      DEFB    5
+0x005F      DEFB    7
+0x0095      ASCII80 368
+;               
+0x0205      DEFM    24  ; KEYTABLE_A. The main key table - L mode and CAPS SHIFT.
+0x021D      DEFB    1   ; SYMBOL SHIFT
+0x021E      DEFM    7
+0x0225      DEFB    1   ; SPACE
+0x0226      DEFB    1   ; ENTER
+0x0227      DEFM    5
+;
+0x022C      DEFB    1   ; READ. KEYTABLE_B. Extended mode. Letter keys and unshifted.
+0x022D      DEFB    1   ; BIN
+0x022E      DEFB    1   ; LPRINT
+0x022F      DEFB    1   ; DATA
+0x0230      DEFB    1   ; TAN
+0x0231      DEFB    1   ; SGN
+0x0232      DEFB    1   ; ABS
+0x0233      DEFB    1   ; SQR
+0x0234      DEFB    1   ; CODE
+0x0235      DEFB    1   ; VAL
+0x0236      DEFB    1   ; LEN
+0x0237      DEFB    1   ; USR
+0x0238      DEFB    1   ; PI
+0x0239      DEFB    1   ; INKEY$
+0x023A      DEFB    1   ; PEEK
+0x023B      DEFB    1   ; TAB
+0x023C      DEFB    1   ; SIN
+0x023D      DEFB    1   ; INT
+0x023E      DEFB    1   ; RESTORE
+0x023F      DEFB    1   ; RND
+0x0240      DEFB    1   ; CHR$
+0x0241      DEFB    1   ; LLIST
+0x0242      DEFB    1   ; COS
+0x0243      DEFB    1   ; EXP
+0x0244      DEFB    1   ; STR$
+0x0245      DEFB    1   ; LN
+;
+0x0246      DEFB    1   ; ~. KEYTABLE_C. Extended mode. Letter keys and either shift.
+0x0247      DEFB    1   ; BRIGHT
+0x0248      DEFB    1   ; PAPER
+0x0249      DEFB    1   ; \
+0x024A      DEFB    1   ; ATN
+0x024B      DEFB    1   ; {
+0x024C      DEFB    1   ; }
+0x024D      DEFB    1   ; CIRCLE
+0x024E      DEFB    1   ; IN
+0x024F      DEFB    1   ; VAL$
+0x0250      DEFB    1   ; SCREEN$
+0x0251      DEFB    1   ; ATTR
+0x0252      DEFB    1   ; INVERSE
+0x0253      DEFB    1   ; OVER
+0x0254      DEFB    1   ; OUT
+0x0255      DEFB    1   ; ©
+0x0256      DEFB    1   ; ASN
+0x0257      DEFB    1   ; VERIFY
+0x0258      DEFB    1   ; |
+0x0259      DEFB    1   ; MERGE
+0x025A      DEFB    1   ; ]
+0x025B      DEFB    1   ; FLASH
+0x025C      DEFB    1   ; ACS
+0x025D      DEFB    1   ; INK
+0x025E      DEFB    1   ; [
+0x025F      DEFB    1   ; BEEP
+;
+0x0260      DEFB    1   ; DELETE. KEYTABLE_D. Control codes. Digit keys and CAPS SHIFT.
+0x0261      DEFB    1   ; EDIT
+0x0262      DEFB    1   ; CAPS LOCK
+0x0263      DEFB    1   ; TRUE VIDEO
+0x0264      DEFB    1   ; INV. VIDEO
+0x0265      DEFB    1   ; Cursor left
+0x0266      DEFB    1   ; Cursor down
+0x0267      DEFB    1   ; Cursor up
+0x0268      DEFB    1   ; Cursor right
+0x0269      DEFB    1   ; GRAPHICS
+;
+0x026A      DEFB    1   ; STOP. KEYTABLE_E. Symbol code. Letter keys and symbol shift.
+0x026B      DEFB    1   ; *
+0x026C      DEFB    1   ; ?
+0x026D      DEFB    1   ; STEP
+0x026E      DEFB    1   ; >=
+0x026F      DEFB    1   ; TO
+0x0270      DEFB    1   ; THEN
+0x0271      DEFB    1   ; ↑
+0x0272      DEFB    1   ; AT
+0x0273      DEFB    1   ; -
+0x0274      DEFB    1   ; +
+0x0275      DEFB    1   ; =
+0x0276      DEFB    1   ; .
+0x0277      DEFB    1   ; ,
+0x0278      DEFB    1   ; ;
+0x0279      DEFB    1   ; "
+0x027A      DEFB    1   ; <=
+0x027B      DEFB    1   ; <
+0x027C      DEFB    1   ; NOT
+0x027D      DEFB    1   ; >
+0x027E      DEFB    1   ; OR
+0x027F      DEFB    1   ; /
+0x0280      DEFB    1   ; <>
+0x0281      DEFB    1   ; £
+0x0282      DEFB    1   ; AND
+0x0283      DEFB    1   ; :
+;
+0x0284      DEFB    1   ; FORMAT. KEYTABLE_F. Extended mode. Digit keys and symbol shift.
+0x0285      DEFB    1   ; DEF FN
+0x0286      DEFB    1   ; FN
+0x0287      DEFB    1   ; LINE
+0x0288      DEFB    1   ; OPEN
+0x0289      DEFB    1   ; CLOSE
+0x028A      DEFB    1   ; MOVE
+0x028B      DEFB    1   ; ERASE
+0x028C      DEFB    1   ; POINT
+0x028D      DEFB    1   ; CAT
+;
+; BEEP
+0x03F9      DEFB    1   ; duplicate: t, P, P
+0x03FA      DEFB    1   ; int: t, P, i (where i=INT P)
+0x03FB      DEFB    1   ; st_mem_0: t, P, i (mem-0 holds i)
+0x03FC      DEFB    1   ; subtract: t, p (where p is the fractional part of P)
+0x03FD      DEFB    1   ; stk_data: Stack the decimal value K=0.0577622606 (which is a little below 12*(2↑0.5)-1)
+0x03FE      DEFB    5   ; 
+0x0403      DEFB    1   ; multiply: t, pK
+0x0404      DEFB    1   ; stk_one: t, pK, 1
+0x0405      DEFB    1   ; addition: t, pK+1
+0x0406      DEFB    1   ; end_calc
+;
+0x0439      DEFB    1   ; multiply: t, C(pK+1)
+0x043A      DEFB    1   ; end_calc
+;
+0x043F      DEFB    1   ; st_mem_0: Copy the frequency (f) to mem-0
+0x0440      DEFB    1   ; delete: t
+0x0441      DEFB    1   ; duplicate: t, t
+0x0442      DEFB    1   ; end_calc
+;
+0x044B      DEFB    1   ; get_mem_0: t, f
+0x044C      DEFB    1   ; multiply: f*t
+0x044D      DEFB    1   ; get_mem_0: f*t, f
+0x044E      DEFB    1   ; stk_data: Stack the value (3.5*10↑6)/8=437500
+0x044F      DEFB    5
+0x0454      DEFB    1   ; exchange: f*t, 437500, f
+0x0455      DEFB    1   ; division: f*t, 437500/f
+0x0456      DEFB    1   ; stk_data: f*t, 437500/f, 30.125
+0x0457      DEFB    2
+0x0459      DEFB    1   ; subtract: f*t, 437500/f-30.125
+0x045A      DEFB    1   ; end_calc
+;
+0x046D      DEFB    1   ; Report B - integer out of range.
+; SEMITONES
+0x046E      DEFB    5   ; 261.63 Hz - C
+0x0473      DEFB    5   ; 277.18 Hz - C#
+0x0478      DEFB    5   ; 293.66 Hz - D
+0x047D      DEFB    5   ; 311.13 Hz - D#
+0x0482      DEFB    5   ; 329.63 Hz - E
+0x0487      DEFB    5   ; 349.23 Hz - F
+0x048C      DEFB    5   ; 369.99 Hz - F#
+0x0491      DEFB    5   ; 392.00 Hz - G
+0x0496      DEFB    5   ; 415.30 Hz - G#
+0x049B      DEFB    5   ; 440.00 Hz - A
+0x04A0      DEFB    5   ; 466.16 Hz - A#
+0x04A5      DEFB    5   ; 493.88 Hz - B
+;
+0x0553      DEFB    1   ; Report D - BREAK-CONT repeats.
+0x0643      DEFB    1   ; Report F - Invalid file name.
+0x0671      DEFB    1   ; Report 2 - Variable not found.
+0x0807      DEFB    1   ; Report R - Tape loading error.
+; THE CASSETTE MESSAGES
+0x09A1      ASCII80 83  
+; THE 'CONTROL CHARACTER' TABLE
+0x0A11      DEFB    1   ; +06: PRINT comma (PO_COMMA)
+0x0A12      DEFB    1   ; +07: EDIT (PO_QUEST)
+0x0A13      DEFB    1   ; +08: Cursor left (PO_BACK_1)
+0x0A14      DEFB    1   ; +09: Cursor right (PO_RIGHT)
+0x0A15      DEFB    1   ; +0A: Cursor down (PO_QUEST)
+0x0A16      DEFB    1   ; +0B: Cursor up (PO_QUEST)
+0x0A17      DEFB    1   ; +0C: DELETE (PO_QUEST)
+0x0A18      DEFB    1   ; +0D: ENTER (PO_ENTER)
+0x0A19      DEFB    1   ; +0E: Not used (PO_QUEST)
+0x0A1A      DEFB    1   ; +0F: Not used (PO_QUEST)
+0x0A1B      DEFB    1   ; +10: INK control (PO_1_OPER)
+0x0A1C      DEFB    1   ; +11: PAPER control (PO_1_OPER)
+0x0A1D      DEFB    1   ; +12: FLASH control (PO_1_OPER)
+0x0A1E      DEFB    1   ; +13: BRIGHT control (PO_1_OPER)
+0x0A1F      DEFB    1   ; +14: INVERSE control (PO_1_OPER)
+0x0A20      DEFB    1   ; +15: OVER control (PO_1_OPER)
+0x0A21      DEFB    1   ; +16: AT control (PO_2_OPER)
+0x0A22      DEFB    1   ; +17: TAB control (PO_2_OPER)
+;
+0x0C87      DEFB    1   ; Report 5 - Out of screen.
+; Scroll?
+0x0CF8      ASCII80 8
+;
+0x0D01      DEFB    1   ; Report D - BREAK - CONT repeats.
+;
+0x0F0B      DEFB    1   ; Report D - BREAK - CONT repeats.
+; EDITKEYS
+0x0FA0      DEFB    1   ; EDIT (ED_EDIT)
+0x0FA1      DEFB    1   ; Cursor left (ED_LEFT)
+0x0FA2      DEFB    1   ; Cursor right (ED_RIGHT)
+0x0FA3      DEFB    1   ; Cursor down (ED_DOWN)
+0x0FA4      DEFB    1   ; Cursor up (ED_UP)
+0x0FA5      DEFB    1   ; DELETE (ED_DELETE)
+0x0FA6      DEFB    1   ; ENTER (ED_ENTER)
+0x0FA7      DEFB    1   ; SYMBOL SHIFT (ED_SYMBOL)
+0x0FA8      DEFB    1   ; GRAPHICS (ED_GRAPH)
+; THE REPORT MESSAGES
+0x1391      ASCII80 452
+; CHANINFO
+0x15AF      DEFW    1   ; PRINT_OUT	Keyboard.
+0x15B1      DEFW    1   ; KEY_INPUT
+0x15B3      DEFM    1   ; "K"
+0x15B4      DEFW    1   ; PRINT_OUT	Screen.
+0x15B6      DEFW    1   ; REPORT_J
+0x15B8      DEFM    1   ; "S"
+0x15B9      DEFW    1   ; ADD_CHAR	Work space.
+0x15BB      DEFW    1   ; REPORT_J
+0x15BD      DEFM    1   ; "R"
+0x15BE      DEFW    1   ; PRINT_OUT	Printer.
+0x15C0      DEFW    1   ; REPORT_J
+0x15C2      DEFM    1   ; "P"
+0x15C3      DEFB    1   ; $80 End of table
+;
+0x15C5      DEFB    1   ; Report J - Invalid I/O device
+; 
+;Initially there are seven streams - +FD to +03.
+;STRMDATA
+0x15C6      DEFW    1   ; +FD: Leads to channel 'K' (keyboard)
+0x15C8      DEFW    1   ; +FE: Leads to channel 'S' (screen)
+0x15CA      DEFW    1   ; +FF: Leads to channel 'R' (work space)
+0x15CC      DEFW    1   ; +00: Leads to channel 'K' (keyboard)
+0x15CE      DEFW    1   ; +01: Leads to channel 'K' (keyboard)
+0x15D0      DEFW    1   ; +02: Leads to channel 'S' (screen)
+0x15D2      DEFW    1   ; +03: Leads to channel 'P' (printer)
+;
+0x15E5      DEFB    1   ; Report 8 - End of file.
+;
+0x160F      DEFB    1   ; Report O - Invalid stream.
+; CHANCODE
+0x162D      DEFM    2   ; Channel 'K', offset +06 (CHAN_K).
+0x162F      DEFM    2   ; Channel 'S', offset +12 (CHAN_S).
+0x1631      DEFM    2   ; Channel 'P', offset +1B (CHAN_P).
+0x1633      DEFB    1   ; End marker.
+; CLOSESTRM
+0x1716      DEFM    2   ; Channel 'K', offset +05 (CLOSE_STR)
+0x1718      DEFM    2   ; Channel 'S', offset +03 (CLOSE_STR)
+0x171A      DEFM    2   ; Channel 'P', offset +01 (CLOSE_STR)
+;
+0x1726      DEFB    1   ; Report O - Invalid stream.
+;
+0x1737      DEFB    1   ; exchange
+0x1738      DEFB    1   ; end_calc
+;
+0x1766      DEFB    1   ; Report F - Invalid file name.
+; OPENSTRM
+0x177A      DEFM    2   ; Channel 'K', offset +06 (OPEN_K)
+0x177C      DEFM    2   ; Channel 'S', offset +08 (OPEN_S)
+0x177E      DEFM    2   ; Channel 'P', offset +0A (OPEN_P)
+0x1780      DEFB    1   ; End marker.
+;SYNTAX
+0x1A48      DEFB    1   ; P_DEF_FN
+0x1A49      DEFB    1   ; P_CAT
+0x1A4A      DEFB    1   ; P_FORMAT
+0x1A4B      DEFB    1   ; P_MOVE
+0x1A4C      DEFB    1   ; P_ERASE
+0x1A4D      DEFB    1   ; P_OPEN
+0x1A4E      DEFB    1   ; P_CLOSE
+0x1A4F      DEFB    1   ; P_MERGE
+0x1A50      DEFB    1   ; P_VERIFY
+0x1A51      DEFB    1   ; P_BEEP
+0x1A52      DEFB    1   ; P_CIRCLE
+0x1A53      DEFB    1   ; P_INK
+0x1A54      DEFB    1   ; P_PAPER
+0x1A55      DEFB    1   ; P_FLASH
+0x1A56      DEFB    1   ; P_BRIGHT
+0x1A57      DEFB    1   ; P_INVERSE
+0x1A58      DEFB    1   ; P_OVER
+0x1A59      DEFB    1   ; P_OUT
+0x1A5A      DEFB    1   ; P_LPRINT
+0x1A5B      DEFB    1   ; P_LLIST
+0x1A5C      DEFB    1   ; P_STOP
+0x1A5D      DEFB    1   ; P_READ
+0x1A5E      DEFB    1   ; P_DATA
+0x1A5F      DEFB    1   ; P_RESTORE
+0x1A60      DEFB    1   ; P_NEW
+0x1A61      DEFB    1   ; P_BORDER
+0x1A62      DEFB    1   ; P_CONT
+0x1A63      DEFB    1   ; P_DIM
+0x1A64      DEFB    1   ; P_REM
+0x1A65      DEFB    1   ; P_FOR
+0x1A66      DEFB    1   ; P_GO_TO
+0x1A67      DEFB    1   ; P_GO_SUB
+0x1A68      DEFB    1   ; P_INPUT
+0x1A69      DEFB    1   ; P_LOAD
+0x1A6A      DEFB    1   ; P_LIST
+0x1A6B      DEFB    1   ; P_LET
+0x1A6C      DEFB    1   ; P_PAUSE
+0x1A6D      DEFB    1   ; P_NEXT
+0x1A6E      DEFB    1   ; P_POKE
+0x1A6F      DEFB    1   ; P_PRINT
+0x1A70      DEFB    1   ; P_PLOT
+0x1A71      DEFB    1   ; P_RUN
+0x1A72      DEFB    1   ; P_SAVE
+0x1A73      DEFB    1   ; P_RANDOM
+0x1A74      DEFB    1   ; P_IF
+0x1A75      DEFB    1   ; P_CLS
+0x1A76      DEFB    1   ; P_DRAW
+0x1A77      DEFB    1   ; P_CLEAR
+0x1A78      DEFB    1   ; P_RETURN
+0x1A79      DEFB    1   ; P_COPY
+; The parameter table.
+0x1A7A      DEFB    1   ; CLASS_01
+0x1A7B      DEFM    1
+0x1A7C      DEFB    1   ; CLASS_02
+0x1A7D      DEFB    1   ; CLASS_06
+0x1A7E      DEFB    1   ; CLASS_00
+0x1A7F      DEFW    1   ; GO_TO	
+0x1A81      DEFB    1   ; CLASS_06
+0x1A82      DEFB    1   ; THEN
+0x1A83      DEFB    1   ; CLASS_05
+0x1A84      DEFW    1   ; IF_CMD	
+0x1A86      DEFB    1   ; CLASS_06
+0x1A87      DEFB    1   ; CLASS_00
+0x1A88      DEFW    1   ; GO_SUB	
+0x1A8A      DEFB    1   ; CLASS_00
+0x1A8B      DEFW    1   ; STOP	
+0x1A8D      DEFB    1   ; CLASS_00
+0x1A8E      DEFW    1   ; RETURN	
+0x1A90      DEFB    1   ; CLASS_04
+0x1A91      DEFM    1
+0x1A92      DEFB    1   ; CLASS_06
+0x1A93      DEFB    1   ; TO
+0x1A94      DEFB    1   ; CLASS_06
+0x1A95      DEFB    1   ; CLASS_05
+0x1A96      DEFW    1   ; FOR	
+0x1A98      DEFB    1   ; CLASS_04
+0x1A99      DEFB    1   ; CLASS_00
+0x1A9A      DEFW    1   ; NEXT	
+0x1A9C      DEFB    1   ; CLASS_05
+0x1A9D      DEFW    1   ; PRINT	
+0x1A9F      DEFB    1   ; CLASS_05
+0x1AA0      DEFW    1   ; INPUT	
+0x1AA2      DEFB    1   ; CLASS_05
+0x1AA3      DEFW    1   ; DIM	
+0x1AA5      DEFB    1   ; CLASS_05
+0x1AA6      DEFW    1   ; REM	
+0x1AA8      DEFB    1   ; CLASS_00
+0x1AA9      DEFW    1   ; NEW	
+0x1AAB      DEFB    1   ; CLASS_03
+0x1AAC      DEFW    1   ; RUN	
+0x1AAE      DEFB    1   ; CLASS_05
+0x1AAF      DEFW    1   ; LIST	
+0x1AB1      DEFB    1   ; CLASS_08
+0x1AB2      DEFB    1   ; CLASS_00
+0x1AB3      DEFW    1   ; POKE	
+0x1AB5      DEFB    1   ; CLASS_03
+0x1AB6      DEFW    1   ; RANDOMIZE	
+0x1AB8      DEFB    1   ; CLASS_00
+0x1AB9      DEFW    1   ; CONTINUE	
+0x1ABB      DEFB    1   ; CLASS_03
+0x1ABC      DEFW    1   ; CLEAR	
+0x1ABE      DEFB    1   ; CLASS_00
+0x1ABF      DEFW    1   ; CLS	
+0x1AC1      DEFB    1   ; CLASS_09
+0x1AC2      DEFB    1   ; CLASS_00
+0x1AC3      DEFW    1   ; PLOT	
+0x1AC5      DEFB    1   ; CLASS_06
+0x1AC6      DEFB    1   ; CLASS_00
+0x1AC7      DEFW    1   ; PAUSE	
+0x1AC9      DEFB    1   ; CLASS_05
+0x1ACA      DEFW    1   ; READ	
+0x1ACC      DEFB    1   ; CLASS_05
+0x1ACD      DEFW    1   ; DATA	
+0x1ACF      DEFB    1   ; CLASS_03
+0x1AD0      DEFW    1   ; RESTORE	
+0x1AD2      DEFB    1   ; CLASS_09
+0x1AD3      DEFB    1   ; CLASS_05
+0x1AD4      DEFW    1   ; DRAW	
+0x1AD6      DEFB    1   ; CLASS_00
+0x1AD7      DEFW    1   ; COPY	
+0x1AD9      DEFB    1   ; CLASS_05
+0x1ADA      DEFW    1   ; LPRINT	
+0x1ADC      DEFB    1   ; CLASS_05
+0x1ADD      DEFW    1   ; LLIST	
+0x1ADF      DEFB    1   ; CLASS_0B
+0x1AE0      DEFB    1   ; CLASS_0B
+0x1AE1      DEFB    1   ; CLASS_0B
+0x1AE2      DEFB    1   ; CLASS_0B
+0x1AE3      DEFB    1   ; CLASS_08
+0x1AE4      DEFB    1   ; CLASS_00
+0x1AE5      DEFW    1   ; BEEP	
+0x1AE7      DEFB    1   ; CLASS_09
+0x1AE8      DEFB    1   ; CLASS_05
+0x1AE9      DEFW    1   ; CIRCLE	
+0x1AEB      DEFB    1   ; CLASS_07
+0x1AEC      DEFB    1   ; CLASS_07
+0x1AED      DEFB    1   ; CLASS_07
+0x1AEE      DEFB    1   ; CLASS_07
+0x1AEF      DEFB    1   ; CLASS_07
+0x1AF0      DEFB    1   ; CLASS_07
+0x1AF1      DEFB    1   ; CLASS_08
+0x1AF2      DEFB    1   ; CLASS_00
+0x1AF3      DEFW    1   ; OUT_CMD	
+0x1AF5      DEFB    1   ; CLASS_06
+0x1AF6      DEFB    1   ; CLASS_00
+0x1AF7      DEFW    1   ; BORDER	
+0x1AF9      DEFB    1   ; CLASS_05
+0x1AFA      DEFW    1   ; DEF_FN	
+0x1AFC      DEFB    1   ; CLASS_06
+0x1AFD      DEFM    1	
+0x1AFE      DEFB    1   ; CLASS_0A
+0x1AFF      DEFB    1   ; CLASS_00
+0x1B00      DEFW    1   ; OPEN	
+0x1B02      DEFB    1   ; CLASS_06
+0x1B03      DEFB    1   ; CLASS_00
+0x1B04      DEFW    1   ; CLOSE	
+0x1B06      DEFB    1   ; CLASS_0A
+0x1B07      DEFB    1   ; CLASS_00
+0x1B08      DEFW    1   ; CAT_ETC	
+0x1B0A      DEFB    1   ; CLASS_0A
+0x1B0B      DEFM    1
+0x1B0C      DEFB    1   ; CLASS_0A
+0x1B0D      DEFB    1   ; CLASS_00
+0x1B0E      DEFW    1   ; CAT_ETC	
+0x1B10      DEFB    1   ; CLASS_0A
+0x1B11      DEFB    1   ; CLASS_00
+0x1B12      DEFW    1   ; CAT_ETC	
+0x1B14      DEFB    1   ; CLASS_00
+0x1B15      DEFW    1   ; CAT_ETC	
+;
+0x1B7C      DEFB    1   ; Report L - BREAK into program.
+;
+0x1BB1      DEFB    1   ; Report 0 - OK.
+;
+0x1BED      DEFB    1   ; Report N - Statement lost.
+; CMDCLASS
+0x1C01      DEFB    1   ; CLASS_00
+0x1C02      DEFB    1   ; CLASS_01
+0x1C03      DEFB    1   ; CLASS_02
+0x1C04      DEFB    1   ; CLASS_03
+0x1C05      DEFB    1   ; CLASS_04
+0x1C06      DEFB    1   ; CLASS_05
+0x1C07      DEFB    1   ; CLASS_06
+0x1C08      DEFB    1   ; CLASS_07
+0x1C09      DEFB    1   ; CLASS_08
+0x1C0A      DEFB    1   ; CLASS_09
+0x1C0B      DEFB    1   ; CLASS_0A
+0x1C0C      DEFB    1   ; CLASS_0B
+;
+0x1C2F      DEFB    1   ; Report 2 - Variable not found.
+;
+0x1C8B      DEFB    1   ; Report C - Nonsense in BASIC.
+; STOP command
+0x1CEF      DEFB    1
+;
+0x1CF7      DEFB    1   ; $02 delete
+0x1CF8      DEFB    1   ; $38 end_calc
+;
+; STEP implicit argument
+0x1D14      DEFB    1   ; stk_one
+0x1D15      DEFB    1   ; end_calc
+;
+0x1D17      DEFB    1   ; $C0 st_mem_0: v, l, s (mem-0=s)
+0x1D18      DEFB    1   ; $02 delete: v, l
+0x1D19      DEFB    1   ; $01 exchange: l, v
+0x1D1A      DEFB    1   ; $E0 get_mem_0: l, v, s
+0x1D1B      DEFB    1   ; $01 exchange: l, s, v
+0x1D1C      DEFB    1   ; $38 end_calc
+;
+0x1D36      DEFB    1   ; $02 delete: l
+0x1D37      DEFB    1   ; $02 delete: -
+0x1D38      DEFB    1   ; $38 end_calc: DE still points to 'l'
+;
+0x1D85      DEFB    1   ; Report I - FOR without NEXT.
+;
+0x1DBE      DEFB    1   ; $E0 get_mem_0: v
+0x1DBF      DEFB    1   ; $E2 get_mem_2: v, s
+0x1DC0      DEFB    1   ; $0F addition: v+s
+0x1DC1      DEFB    1   ; $C0 st_mem_0: v+s (v is replaced by v+s in mem-0)
+0x1DC2      DEFB    1   ; $02 delete: -
+0x1DC3      DEFB    1   ; $38 end_calc: -
+;
+0x1DD9      DEFB    1   ; Report 1 - NEXT without FOR.
+;
+0x1DDB      DEFB    1   ; $E1 get_mem_1: l
+0x1DDC      DEFB    1   ; $E0 get_mem_0: l, v
+0x1DDD      DEFB    1   ; $E2 get_mem_2: l, v, s
+0x1DDE      DEFB    1   ; $36 less_0: l, v,( 1/0)
+0x1DDF      DEFB    2   ; $00 jump_true to NEXT_1: l, v, (1/0)
+0x1DE1      DEFB    1   ; $01 exchange: v, l
+0x1DE2      DEFB    1   ; NEXT_1: $03	subtract: v-l or l-v
+0x1DE3      DEFB    1   ; $37 greater_0: (1/0)
+0x1DE4      DEFB    2   ; $00 jump_true to NEXT_2: (1/0)
+0x1DE6      DEFB    1   ; $38 end_calc: -
+0x1DE9      DEFB    1   ; NEXT_2: $38 end_calc: -
+;
+0x1E09      DEFB    1   ; Report E - Out of DATA.
+;
+0x1EA0      DEFB    1   ; Report B - Integer out of range.
+;
+0x1EDB      DEFB    1   ; Report M - RAMTOP no good.
+;
+0x1F39      DEFB    1   ; Report 7 - RETURN without GOSUB.
+;
+0x21CF      DEFB    1   ; Report C - Nonsense in BASIC.
+;
+0x21D5      DEFB    1   ; Report H - STOP in INPUT.
+;
+0x2245      DEFB    1   ; Report K - Invalid colour.
+;
+0x232E      DEFB    1   ; $2A abs: X, Y, Z
+0x232F      DEFB    1   ; $3D re_stack: Z is re-stacked; its exponent is therefore available.
+0x2330      DEFB    1   ; $38 end_calc
+;
+0x2337      DEFB    1   ; $02 delete: X, Y
+0x2338      DEFB    1   ; $38 end_calc
+;
+0x233C      DEFB    1   ; $A3 stk_pi_2: X, Y, Z, π/2
+0x233D      DEFB    1   ; $38 end_calc
+;
+0x2341      DEFB    1   ; $C5 st_mem_5: (2π is copied to mem-5)
+0x2342      DEFB    1   ; $02 delete: X, Y, Z
+0x2343      DEFB    1   ; $38 end_calc
+;
+0x2349      DEFB    1   ; $31 duplicate: X, Y, Z, Z
+0x234A      DEFB    1   ; $E1 get_mem_1: X, Y, Z, Z, SIN (π/A)
+0x234B      DEFB    1   ; $04 multiply: X, Y, Z, Z*SIN (π/A)
+0x234C      DEFB    1   ; $38 end_calc
+;
+0x2353      DEFB    1   ; $02 delete: X, Y, Z
+0x2354      DEFB    1   ; $02 delete: X, Y
+0x2355      DEFB    1   ; $38 end_calc
+;
+0x235B      DEFB    1   ; $C2 st_mem_2: (Z*SIN (π/A) to mem-2 for now)
+0x235C      DEFB    1   ; $01 exchange: X, Y, Z*SIN (π/A), Z
+0x235D      DEFB    1   ; $C0 st_mem_0: X, Y, Z*SIN (π/A), Z (Z is copied to mem-0)
+0x235E      DEFB    1   ; $02 delete: X, Y, Z*SIN (π/A)
+0x235F      DEFB    1   ; $03 subtract: X, Y-Z*SIN (π/A)
+0x2360      DEFB    1   ; $01 exchange: Y-Z*SIN (π/A), X
+0x2361      DEFB    1   ; $E0 get_mem_0: Y-Z*SIN (π/A), X, Z
+0x2362      DEFB    1   ; $0F addition: Y-Z*SIN (π/A), X+Z
+0x2363      DEFB    1   ; $C0 st_mem_0: (X+Z is copied to mem-0)
+0x2364      DEFB    1   ; $01 exchange: X+Z, Y-Z*SIN (π/A)
+0x2365      DEFB    1   ; $31 duplicate: X+Z, Y-Z*SIN (π/A), Y-Z*SIN (π/A)
+0x2366      DEFB    1   ; $E0 get_mem_0: sa, sb, sb, sa
+0x2367      DEFB    1   ; $01 exchange: sa, sb, sa, sb
+0x2368      DEFB    1   ; $31 duplicate: sa, sb, sa, sb, sb
+0x2369      DEFB    1   ; $E0 get_mem_0: sa, sb, sa, sb, sb, sa
+0x236A      DEFB    1   ; $A0 stk_zero: sa, sb, sa, sb, sb, sa, 0
+0x236B      DEFB    1   ; $C1 st_mem_1: (mem-1 is set to zero)
+0x236C      DEFB    1   ; $02 delete: sa, sb, sa, sb, sb, sa
+0x236D      DEFB    1   ; $38 end_calc
+;
+0x2395      DEFB    1   ; $C5 st_mem_5: (G is copied to mem-5)
+0x2396      DEFB    1   ; $A2 stk_half: X, Y, G, 0.5
+0x2397      DEFB    1   ; $04 multiply: X, Y, G/2
+0x2398      DEFB    1   ; $1F sin: X, Y, SIN (G/2)
+0x2399      DEFB    1   ; $31 duplicate: X, Y, SIN (G/2), SIN (G/2)
+0x239A      DEFB    1   ; $30 f_not: X, Y, SIN (G/2), (0/1)
+0x239B      DEFB    1   ; $30 f_not: X, Y, SIN (G/2), (1/0)
+0x239C      DEFB    1   ; $00 jump_true: X, Y, SIN (G/2)
+0x239D      DEFB    1   ; $06 to DR_SIN_NZ (if SIN (G/2)=0 i.e. G=2πN just draw a straight line).
+0x239E      DEFB    1   ; $02 delete: X, Y
+0x239F      DEFB    1   ; $38 end_calc
+;
+0x23A3      DEFB    1   ; DR_SIN_NZ: $C0 st_mem_0: (SIN (G/2) is copied to mem-0)
+0x23A4      DEFB    1   ; $02 delete: X, Y are now on the stack.
+0x23A5      DEFB    1   ; $C1 st_mem_1: (Y is copied to mem-1).
+0x23A6      DEFB    1   ; $02 delete: X
+0x23A7      DEFB    1   ; $31 duplicate: X, X
+0x23A8      DEFB    1   ; $2A abs: X, X' (X'=ABS X)
+0x23A9      DEFB    1   ; $E1 get_mem_1: X, X', Y
+0x23AA      DEFB    1   ; $01 exchange: X, Y, X'
+0x23AB      DEFB    1   ; $E1 get_mem_1: X, Y, X', Y
+0x23AC      DEFB    1   ; $2A abs: X, Y, X', Y' (Y'=ABS Y)
+0x23AD      DEFB    1   ; $0F addition: X, Y, X'+Y'
+0x23AE      DEFB    1   ; $E0 get_mem_0: X, Y, X'+Y', SIN (G/2)
+0x23AF      DEFB    1   ; $05 division: X, Y, (X'+Y')/SIN (G/2)=Z', say
+0x23B0      DEFB    1   ; $2A abs: X, Y, Z (Z=ABS Z')
+0x23B1      DEFB    1   ; $E0 get_mem_0: X, Y, Z, SIN (G/2)
+0x23B2      DEFB    1   ; $01 exchange: X, Y, SIN (G/2), Z
+0x23B3      DEFB    1   ; $3D re_stack: (Z is re-stacked to make sure that its exponent is available).
+0x23B4      DEFB    1   ; $38 end_calc
+;
+0x23BB      DEFB    1   ; $02 delete: X, Y, SIN (G/2)
+0x23BC      DEFB    1   ; $02 delete: X, Y
+0x23BD      DEFB    1   ; $38 end_calc
+;
+0x23C6      DEFB    1   ; $02 delete: X, Y, SIN(G/2)
+0x23C7      DEFB    1   ; $E1 get_mem_1: X, Y, SIN(G/2), SIN(G/2*A)
+0x23C8      DEFB    1   ; $01 exchange: X, Y, SIN(G/2*A), SIN(G/2)
+0x23C9      DEFB    1   ; $05 division: X, Y, SIN(G/2*A)/SIN(G/2)=W
+0x23CA      DEFB    1   ; $C1 st_mem_1: (W is copied to mem-1).
+0x23CB      DEFB    1   ; $02 delete: X, Y
+0x23CC      DEFB    1   ; $01 exchange: Y, X
+0x23CD      DEFB    1   ; $31 duplicate: Y, X, X
+0x23CE      DEFB    1   ; $E1 get_mem_1: Y, X, X, W
+0x23CF      DEFB    1   ; $04 multiply: Y, X, X*W
+0x23D0      DEFB    1   ; $C2 st_mem_2: (X*W is copied to mem-2).
+0x23D1      DEFB    1   ; $02 delete: Y, X
+0x23D2      DEFB    1   ; $01 exchange: X, Y
+0x23D3      DEFB    1   ; $31 duplicate: X, Y, Y
+0x23D4      DEFB    1   ; $E1 get_mem_1: X, Y, Y, W
+0x23D5      DEFB    1   ; $04 multiply: X, Y, Y*W
+0x23D6      DEFB    1   ; $E2 get_mem_2: X, Y, Y*W, X*W
+0x23D7      DEFB    1   ; $E5 get_mem_5: X, Y, Y*W, X*W,G
+0x23D8      DEFB    1   ; $E0 get_mem_0: X, Y, Y*W, X*W, G, G/A
+0x23D9      DEFB    1   ; $03 subtract: X, Y, Y*W, X*W, G-G/A
+0x23DA      DEFB    1   ; $A2 stk_half: X, Y, Y*W, X*W, G-G/A, 1/2
+0x23DB      DEFB    1   ; $04 multiply: X, Y, Y*W, X*W, G/2-G/2*A=F
+0x23DC      DEFB    1   ; $31 duplicate: X, Y, Y*W, X*W, F, F
+0x23DD      DEFB    1   ; $1F sin: X, Y, Y*W, X*W, F, SIN F
+0x23DE      DEFB    1   ; $C5 st_mem_5: (SIN F is copied to mem-5).
+0x23DF      DEFB    1   ; $02 delete: X, Y, Y*W, X*W,F
+0x23E0      DEFB    1   ; $20 cos: X, Y, Y*W, X*W, COS F
+0x23E1      DEFB    1   ; $C0 st_mem_0: (COS F is copied to mem-0).
+0x23E2      DEFB    1   ; $02 delete: X, Y, Y*W, X*W
+0x23E3      DEFB    1   ; $C2 st_mem_2: (X*W is copied to mem-2).
+0x23E4      DEFB    1   ; $02 delete: X, Y, Y*W
+0x23E5      DEFB    1   ; $C1 st_mem_1: (Y*W is copied to mem-1).
+0x23E6      DEFB    1   ; $E5 get_mem_5: X, Y, Y*W, SIN F
+0x23E7      DEFB    1   ; $04 multiply: X, Y, Y*W*SIN F
+0x23E8      DEFB    1   ; $E0 get_mem_0: X, Y, Y*W*SIN F, X*W
+0x23E9      DEFB    1   ; $E2 get_mem_2: X, Y, Y*W*SIN F, X*W, COS F
+0x23EA      DEFB    1   ; $04 multiply: X, Y, Y*W*SIN F, X*W*COS F
+0x23EB      DEFB    1   ; $0F addition: X, Y, Y*W*SIN F+X*W*COS F=U
+0x23EC      DEFB    1   ; $E1 get_mem_1: X, Y, U, Y*W
+0x23ED      DEFB    1   ; $01 exchange: X, Y, Y*W, U
+0x23EE      DEFB    1   ; $C1 st_mem_1: (U is copied to mem-1)
+0x23EF      DEFB    1   ; $02 delete: X, Y, Y*W
+0x23F0      DEFB    1   ; $E0 get_mem_0: X, Y, Y*W, COS F
+0x23F1      DEFB    1   ; $04 multiply: X, Y, Y*W*COS F
+0x23F2      DEFB    1   ; $E2 get_mem_2: X, Y, Y*W*COS F, X*W
+0x23F3      DEFB    1   ; $E5 get_mem_5: X, Y, Y*W*COS F, X*W, SIN F
+0x23F4      DEFB    1   ; $04 multiply: X, Y, Y*W*COS F, X*W*SIN F
+0x23F5      DEFB    1   ; $03 subtract: X, Y, Y*W*COS F-X*W*SIN F=V
+0x23F6      DEFB    1   ; $C2 st_mem_2: (V is copied to mem-2).
+0x23F7      DEFB    1   ; $2A abs: X, Y, V' (V'=ABS V)
+0x23F8      DEFB    1   ; $E1 get_mem_1: X, Y, V', U
+0x23F9      DEFB    1   ; $2A abs: X, Y, V', U' (U'=ABS U)
+0x23FA      DEFB    1   ; $0F addition: X, Y, U'+V'
+0x23FB      DEFB    1   ; $02 delete: X, Y
+0x23FC      DEFB    1   ; $38 end_calc: (DE now points to U'+V').
+;
+0x2406      DEFB    1   ; $01 exchange: Y, X
+0x2407      DEFB    1   ; $38 end_calc
+;
+0x240F      DEFB    1   ; $C0 st_mem_0: (X0 is copied to mem-0).
+0x2410      DEFB    1   ; $0F addition: Y, X0+X
+0x2411      DEFB    1   ; $01 exchange: X0+X, Y
+0x2412      DEFB    1   ; $38 end_calc
+;
+0x241A      DEFB    1   ; $C5 st_mem_5: (Y0 is copied to mem-5).
+0x241B      DEFB    1   ; $0F addition: X0+X, Y0+Y
+0x241C      DEFB    1   ; $E0 get_mem_0: X0+X, Y0+Y, X0
+0x241D      DEFB    1   ; $E5 get_mem_5: X0+X, Y0+Y, X0, Y0
+0x241E      DEFB    1   ; $38 end_calc
+;
+0x2426      DEFB    1   ; $E1 get_mem_1: Un-1
+0x2427      DEFB    1   ; $31 duplicate: Un-1, Un-1
+0x2428      DEFB    1   ; $E3 get_mem_3: Un-1, Un-1, COS(G/A)
+0x2429      DEFB    1   ; $04 multiply: Un-1, Un-1*COS(G/A)
+0x242A      DEFB    1   ; $E2 get_mem_2: Un-1, Un-1*COS(G/A), Vn-1
+0x242B      DEFB    1   ; $E4 get_mem_4: Un-1, Un-1*COS(G/A), Vn-1, SIN(G/A)
+0x242C      DEFB    1   ; $04 multiply: Un-1, Un-1*COS(G/A), Vn-1*SIN(G/A)
+0x242D      DEFB    1   ; $03 subtract: Un-1, Un-1*COS(G/A)-Vn-1*SIN(G/A)=Un
+0x242E      DEFB    1   ; $C1 st_mem_1: (Un is copied to mem-1).
+0x242F      DEFB    1   ; $02 delete: Un-1
+0x2430      DEFB    1   ; $E4 get_mem_4: Un-1, SIN(G/A)
+0x2431      DEFB    1   ; $04 multiply: Un-1*SIN(G/A)
+0x2432      DEFB    1   ; $E2 get_mem_2: Un-1*SIN(G/A), Vn-1
+0x2433      DEFB    1   ; $E3 get_mem_3: Un-1*SIN(G/A), Vn-1, COS(G/A)
+0x2434      DEFB    1   ; $04 multiply: Un-1*SIN(G/A), Vn-1*COS(G/A)
+0x2435      DEFB    1   ; $0F addition: Un-1*SIN(G/A)+Vn-1*COS(G/A)=Vn
+0x2436      DEFB    1   ; $C2 st_mem_2: (Vn is copied to mem-2).
+0x2437      DEFB    1   ; $02 delete: (As noted in the text, the stack in fact holds X0+X, Y0+Y, Xn and Yn).
+0x2438      DEFB    1   ; $38 end_calc
+;
+0x243B      DEFB    1   ; $C0 st_mem_0: (Yn is copied to mem-0).
+0x243C      DEFB    1   ; $02 delete: X0+X, Y0+Y, Xn
+0x243D      DEFB    1   ; $E1 get_mem_1: X0+X, Y0+Y, Xn, Un
+0x243E      DEFB    1   ; $0F addition: X0+X, Y0+Y, Xn+Un=Xn+1
+0x243F      DEFB    1   ; $31 duplicate: X0+X, Y0+Y, Xn+1, Xn+1
+0x2440      DEFB    1   ; $38 end_calc
+;
+0x2448      DEFB    1   ; $03 subtract: X0+X, Y0+Y, Xn+1, Xn+1, Xn'-Xn'=Un'
+0x2449      DEFB    1   ; $E0 get_mem_0: X0+X, Y0+Y, Xn+1, Un', Yn
+0x244A      DEFB    1   ; $E2 get_mem_2: X0+X, Y0+Y, Xn+1, Un', Yn, Vn
+0x244B      DEFB    1   ; $0F addition: X0+X, Y0+Y, Xn+1, Un', Yn+Vn=Yn+1
+0x244C      DEFB    1   ; $C0 st_mem_0: (Yn+1 is copied to mem-0).
+0x244D      DEFB    1   ; $01 exchange: X0+X, Y0+Y, Xn+1, Yn+1, Un'
+0x244E      DEFB    1   ; $E0 get_mem_0: X0+X, Y0+Y, Xn+1, Yn+1, Un', Yn+1
+0x244F      DEFB    1   ; $38 end_calc
+;
+0x2457      DEFB    1   ; $03 subtract: X0+X, Y0+Y, Xn+1, Yn+1, Un', Vn'
+0x2458      DEFB    1   ; $38 end_calc
+;
+0x2460      DEFB    1   ; $02 delete: The co-ordinates of the end of the last arc that was drawn are now deleted from the stack.
+0x2461      DEFB    1   ; $02
+0x2462      DEFB    1   ; $01 exchange: Y0+Y, X0+X
+0x2463      DEFB    1   ; $38 end_calc
+;
+0x246B      DEFB    1   ; $03 subtract: Y0+Y, X0+X-Xz'
+0x246C      DEFB    1   ; $01 exchange: X0+X-Xz', Y0+Y
+0x246D      DEFB    1   ; $38 end_calc
+;
+0x2475      DEFB    1   ; $03 subtract: X0+X-Xz', Y0+Y-Yz'
+0x2476      DEFB    1   ; $38
+;
+0x247E      DEFB    1   ; $31 duplicate: Z, Z
+0x247F      DEFB    1   ; $28 sqr: Z, SQR Z
+0x2480      DEFB    1   ; $34 stk_data: Z, SQR Z, 2
+0x2481      DEFB    2
+0x2483      DEFB    1   ; $01 exchange: Z, 2, SQR Z
+0x2484      DEFB    1   ; $05 division: Z, 2/SQR Z
+0x2485      DEFB    1   ; $E5 get_mem_5: Z, 2/SQR Z, G
+0x2486      DEFB    1   ; $01 exchange: Z, G, 2/SQR Z
+0x2487      DEFB    1   ; $05 division: Z, G*SQR Z/2
+0x2488      DEFB    1   ; $2A abs: Z, G'*SQR Z/2 (G'=ABS G)
+0x2489      DEFB    1   ; $38 end_calc: Z, G'*SQR Z/2=A1, say
+;
+0x249C      DEFB    1   ; $E5 get_mem_5: Z, A, G
+0x249D      DEFB    1   ; $01 exchange: Z, G, A
+0x249E      DEFB    1   ; $05 division: Z, G/A
+0x249F      DEFB    1   ; $31 duplicate: Z, G/A, G/A
+0x24A0      DEFB    1   ; $1F sin: Z, G/A, SIN (G/A)
+0x24A1      DEFB    1   ; $C4 st_mem_4: (SIN (G/A) is copied to mem-4)
+0x24A2      DEFB    1   ; $02 delete: Z, G/A
+0x24A3      DEFB    1   ; $31 duplicate: Z, G/A, G/A
+0x24A4      DEFB    1   ; $A2 stk_half: Z, G/A, G/A, 0.5
+0x24A5      DEFB    1   ; $04 multiply: Z, G/A, G/2*A
+0x24A6      DEFB    1   ; $1F sin: Z, G/A, SIN (G/2*A)
+0x24A7      DEFB    1   ; $C1 st_mem_1: (SIN (G/2*A) is copied to mem-1)
+0x24A8      DEFB    1   ; $01 exchange: Z, SIN (G/2*A), G/A
+0x24A9      DEFB    1   ; $C0 st_mem_0: (G/A is copied to mem-0)
+0x24AA      DEFB    1   ; $02 delete: Z, SIN (G/2*A)=S
+0x24AB      DEFB    1   ; $31 duplicate: Z, S, S
+0x24AC      DEFB    1   ; $04 multiply: Z, S*S
+0x24AD      DEFB    1   ; $31 duplicate: Z, S*S, S*S
+0x24AE      DEFB    1   ; $0F addition: Z, 2*S*S
+0x24AF      DEFB    1   ; $A1 stk_one: Z, 2*S*S, 1
+0x24B0      DEFB    1   ; $03 subtract: Z, 2*S*S-1
+0x24B1      DEFB    1   ; $1B negate: Z, 1-2*S*S=COS (G/A)
+0x24B2      DEFB    1   ; $C3 st_mem_3: (COS (G/A) is copied to mem-3)
+0x24B3      DEFB    1   ; $02 delete: Z
+0x24B4      DEFB    1   ; $38 end_calc
+;
+0x24FA      DEFB    1   ; Report B - Integer out of range.
+;
+; SCANFUNC
+0x2596      DEFM    2   ; S_QUOTE
+0x2598      DEFM    2   ; S_BRACKET
+0x259A      DEFB    2   ; S_DECIMAL
+0x259C      DEFM    2   ; S_U_PLUS
+0x259E      DEFB    2   ; S_FN
+0x25A0      DEFB    2   ; S_RND
+0x25A2      DEFB    2   ; S_PI
+0x25A4      DEFB    2   ; S_INKEY
+0x25A6      DEFB    2   ; S_DECIMAL
+0x25A8      DEFB    2   ; S_SCREEN
+0x25AA      DEFB    2   ; S_ATTR
+0x25AC      DEFB    2   ; S_POINT
+0x25AE      DEFB    1   ; End marker.
+;
+0x2605      DEFB    1   ; $A1	stk_one
+0x2606      DEFB    1   ; $0F	addition: The 'last value' is now SEED+1.
+0x2607      DEFB    1   ; $34	stk_data: Put the number 75 on the calculator stack.
+0x2608      DEFB    2
+0x260A      DEFB    1   ; $04	multiply: 'last value' (SEED+1)*75.
+0x260B      DEFB    1   ; $34	stk_data: Put the number 65537 on the calculator stack.
+0x260C      DEFB    5
+0x2611      DEFB    1   ; $32 n_mod_m: Divide (SEED+1)*75 by 65537 to give a 'remainder' and an 'answer'.
+0x2612      DEFB    1   ; $02 delete: Discard the 'answer'.
+0x2613      DEFB    1   ; $A1 stk_one
+0x2614      DEFB    1   ; $03 subtract: The 'last value' is now 'remainder' - 1.
+0x2615      DEFB    1   ; $31 duplicate: Make a copy of the 'last value'.
+0x2616      DEFB    1   ; $38 end_calc: The calculation is finished.
+;
+0x262D      DEFB    1   ; $A3 stk_pi_2: The value of π/2 is put on the calculator stack as the 'last value'.
+0x262E      DEFB    1   ; $38 end_calc
+;
+0x2757      DEFB    1   ; $3B fp_calc_2: (perform the actual operation)
+0x2758      DEFB    1   ; $38 end_calc
+; OPERATORS
+0x2795      DEFM    2   ; +
+0x2797      DEFM    2   ; -
+0x2799      DEFM    2   ; *
+0x279B      DEFM    2   ; /
+0x279D      DEFB    2   ; ↑
+0x279F      DEFM    2   ; =
+0x27A1      DEFM    2   ; >
+0x27A3      DEFM    2   ; <
+0x27A5      DEFB    2   ; <=
+0x27A7      DEFB    2   ; >=
+0x27A9      DEFB    2   ; <>
+0x27AB      DEFB    2   ; OR
+0x27AD      DEFB    2   ; AND
+0x27AF      DEFB    1   ; End marker.
+; PRIORITIES
+0X27B0      DEFB    1   ; -
+0X27B1      DEFB    1   ; *
+0X27B2      DEFB    1   ; /
+0X27B3      DEFB    1   ; ↑
+0X27B4      DEFB    1   ; OR
+0X27B5      DEFB    1   ; AND
+0X27B6      DEFB    1   ; <=
+0X27B7      DEFB    1   ; >=
+0X27B8      DEFB    1   ; <>
+0X27B9      DEFB    1   ; >
+0X27BA      DEFB    1   ; <
+0X27BB      DEFB    1   ; =
+0X27BC      DEFB    1   ; +
+;
+0x2813      DEFB    1   ; Report P - FN without DEF.
+;
+0x288C      DEFB    1   ; Report Q - Parameter error.
+;
+0x2A21      DEFB    1   ; Report 3 - Subscript out of range.
+;
+0x2B5B      DEFB    1   ; $02 delete
+0x2B5C      DEFB    1   ; $38 end_calc
+;
+0x2CD3      DEFB    1   ; $A0 stk_zero
+0x2CD4      DEFB    1   ; $38 end_calc
+;
+0x2CD6      DEFB    1   ; $A1 stk_one
+0x2CD7      DEFB    1   ; $C0 st_mem_0
+0x2CD8      DEFB    1   ; $02 delete
+0x2CD9      DEFB    1   ; $38 end_calc
+;
+0x2CE1      DEFB    1   ; $E0 get_mem_0: V, D, N
+0x2CE2      DEFB    1   ; $A4 stk_ten: V, D, N, 10
+0x2CE3      DEFB    1   ; $05 division: V, D, N/10
+0x2CE4      DEFB    1   ; $C0 st_mem_0: V, D, N/10 (N/10 is copied to mem-0)
+0x2CE5      DEFB    1   ; $04 multiply: V, D*N/10
+0x2CE6      DEFB    1   ; $0F addition: V+D*N/10
+0x2CE7      DEFB    1   ; $38 end_calc
+;
+0x2D38      DEFB    1   ; $38 end_calc. Use the calculator to make HL point to STKEND-5.
+;
+0x2D3D      DEFB    1   ; $A0 stk_zero: (the 'last value' is now zero)
+0x2D3E      DEFB    1   ; $38 end_calc
+;
+0x2D45      DEFB    1   ; $01 exchange: D, V
+0x2D46      DEFB    1   ; $A4 stk_ten: D, V, 10
+0x2D47      DEFB    1   ; $04 multiply: D, 10*V
+0x2D48      DEFB    1   ; $0F addition: D+10*V
+0x2D49      DEFB    1   ; $38 end_calc: D+10*V (this is 'V' for the next pass through the loop)
+;
+0x2D5D      DEFB    1   ; $A4 stk_ten: x, 10
+0x2D5E      DEFB    1   ; $38 end_calc: x, 10
+;
+0x2D66      DEFB    1   ; $C1 st_mem_1: (10↑(2↑n) is copied to mem-1)
+0x2D67      DEFB    1   ; $E0 get_mem_0: x', 10↑(2↑n), (1/0)
+0x2D68      DEFB    1   ; $00 jump_true to E_DIVSN: x', 10↑(2↑n)
+0x2D69      DEFB    1   ; $04 
+0x2D6A      DEFB    1   ; $04 multiply: x'*10↑(2↑n)=x"
+0x2D6B      DEFB    1   ; $33 jump to E_FETCH: x''
+0x2D6C      DEFB    1   ; $02
+0x2D6D      DEFB    1   ; E_DIVSN $05 division: x/10↑(2↑n)=x'' (x'' is x'*10↑(2↑n) or x'/10↑(2↑n) according as m is '+' or '-')
+0x2D6E      DEFB    1   ; E_FETCH $E1 get_mem_1: x'', 10↑(2↑n)
+0x2D6F      DEFB    1   ; $38	end_calc: x'', 10↑(2↑n)
+;
+0x2D75      DEFB    1   ; $31 duplicate: x'', 10↑(2↑n), 10↑(2↑n)
+0x2D76      DEFB    1   ; $04 multiply: x'', 10↑(2↑(n+1))
+0x2D77      DEFB    1   ; $38 end_calc: x'', 10↑(2↑(n+1))
+;
+0x2D7C      DEFB    1   ; $02 delete. Use the calculator to delete the final power of 10 reached leaving the 'last value' x*10↑m on the stack.
+0x2D7D      DEFB    1   ; $38 end_calc
+;
+0x2DA3      DEFB    1   ; $38 end_calc. Use the calculator to make HL point to STKEND-5.
+;
+0x2DA9      DEFB    1   ; $A2 stk_half: V, 0.5
+0x2DAA      DEFB    1   ; $0F addition: V+0.5
+0x2DAB      DEFB    1   ; $27 int: INT (V+0.5)
+0x2DAC      DEFB    1   ; $38 end_calc
+;
+0x2DAE      DEFB    1   ; $02 delete. Use the calculator to delete the integer from the stack; DE still points to it in memory (at STKEND).
+0x2DAF      DEFB    1   ; $38 end_calc
+;
+0x2DCC      DEFB    1   ; $34	stk_data: log 2 to the base 10 is now stacked
+0x2DCD      DEFB    5
+0x2DD2      DEFB    1   ; $04	multiply: A*log 2 i.e. log (2↑A)
+0x2DD3      DEFB    1   ; $27	int: INT log (2↑A)
+0x2DD4      DEFB    1   ; $38	end_calc
+;
+0x2DE4      DEFB    1   ; $31 duplicate: x, x
+0x2DE5      DEFB    1   ; $36 less_0: x, (1/0) Logical value of x.
+0x2DE6      DEFB    2   ; $00 jump_true to PF_NEGTVE: x
+0x2DE8      DEFB    1   ; $31 duplicate: x, x
+0x2DE9      DEFB    1   ; $37 greater_0: x, (1/0) Logical value of x.
+0x2DEA      DEFB    2   ; $00 jump_true to PF_POSTVE: x Hereafter x'=ABS x.
+0x2DEC      DEFB    1   ; $02 delete: -
+0x2DED      DEFB    1   ; $38 end_calc: -
+;
+0x2DF2      DEFB    1   ; PF_NEGTVE $2A	abs: x' x'=ABS x.
+0x2DF3      DEFB    1   ; $38 nd_calc: x'
+;
+0x2DF8      DEFB    1   ; PF_POSTVE $A0 stk_zero: The 15 bytes of mem-3, mem-4 and mem-5 are now initialised to zero to be used for a print buffer and two counters.
+0x2DF9      DEFB    3
+0x2DFC      DEFB    1   ; $02	delete: The stack is cleared, except for x'.
+0x2DFD      DEFB    1   ; $38	end_calc: x'
+;
+0x2E02      DEFB    1   ; $31 duplicate: x', x'
+0x2E03      DEFB    1   ; $27 int: x', INT (x')=i
+0x2E04      DEFB    1   ; $C2 st_mem_2: (i is stored in mem-2).
+0x2E05      DEFB    1   ; $03 subtract: x'-i=f
+0x2E06      DEFB    1   ; $E2 get_mem_2: f, i
+0x2E07      DEFB    1   ; $01 exchange: i, f
+0x2E08      DEFB    1   ; $C2 st_mem_2: (f is stored in mem-2).
+0x2E09      DEFB    1   ; $02 delete: i
+0x2E0A      DEFB    1   ; $38 end_calc: i
+;
+0x2E25      DEFB    1   ; $E2 get_mem_2: i, f
+0x2E26      DEFB    1   ; $38 end_calc: i, f
+;
+0x2E3A      DEFB    1   ; $31 duplicate: i, y, y
+0x2E3B      DEFB    1   ; $27 int: i, y, INT (y)=i2
+0x2E3C      DEFB    1   ; $C1 st_mem_1: (i2 is copied to mem-1).
+0x2E3D      DEFB    1   ; $03 subtract: i, y-i2
+0x2E3E      DEFB    1   ; $E1 get_mem_1: i, y-i2, i2
+0x2E3F      DEFB    1   ; $38 end_calc: i, f2, i2 (f2=y-i2)
+;
+0x2ECC      DEFB    1   ; $02 delete: - (i is now deleted).
+0x2ECD      DEFB    1   ; $E2 get_mem_2: f
+0x2ECE      DEFB    1   ; $38 end_calc: f
+;
+0x2F31      DEFB    1   ; $02 delete: -
+0x2F32      DEFB    1   ; $38 end_calc: -
+;
+0x31AE      DEFB    1   ; Report 6 - Arithmetic overflow.
+; CONSTANTS
+0x32C5      DEFB    3   ; zero (00 00 00 00 00)
+0x32C8      DEFB    4   ; one (00 00 01 00 00)
+0x32CC      DEFB    2   ; a half (80 00 00 00 00)
+0x32CE      DEFB    5   ; a half of pi (81 49 0F DA A2)
+0x32D3      DEFB    4   ; ten (00 00 0A 00 00)
+; CALCADDR
+0x32D7      DEFW    1   ; jump_true	+00
+0x32D9      DEFW    1   ; exchange	+01
+0x32DB      DEFW    1   ; delete	+02
+0x32DD      DEFW    1   ; subtract	+03
+0x32DF      DEFW    1   ; multiply	+04
+0x32E1      DEFW    1   ; division	+05
+0x32E3      DEFW    1   ; to_power	+06
+0x32E5      DEFW    1   ; no_or_no	+07
+0x32E7      DEFW    1   ; no_and_no	+08
+0x32E9      DEFW    1   ; compare	+09: <= (numbers)
+0x32EB      DEFW    1   ; compare	+0A: >= (numbers)
+0x32ED      DEFW    1   ; compare	+0B: <> (numbers)
+0x32EF      DEFW    1   ; compare	+0C: > (numbers)
+0x32F1      DEFW    1   ; compare	+0D: < (numbers)
+0x32F3      DEFW    1   ; compare	+0E: = (numbers)
+0x32F5      DEFW    1   ; addition	+0F
+0x32F7      DEFW    1   ; str_no	+10
+0x32F9      DEFW    1   ; compare	+11: <= (strings)
+0x32FB      DEFW    1   ; compare	+12: >= (strings)
+0x32FD      DEFW    1   ; compare	+13: <> (strings)
+0x32FF      DEFW    1   ; compare	+14: > (strings)
+0x3301      DEFW    1   ; compare	+15: < (strings)
+0x3303      DEFW    1   ; compare	+16: = (strings)
+0x3305      DEFW    1   ; strs_add	+17
+0x3307      DEFW    1   ; val	+18 (VAL$)
+0x3309      DEFW    1   ; usr	+19
+0x330B      DEFW    1   ; read_in	+1A
+0x330D      DEFW    1   ; negate	+1B
+0x330F      DEFW    1   ; code	+1C
+0x3311      DEFW    1   ; val	+1D (VAL)
+0x3313      DEFW    1   ; len	+1E
+0x3315      DEFW    1   ; sin	+1F
+0x3317      DEFW    1   ; cos	+20
+0x3319      DEFW    1   ; tan	+21
+0x331B      DEFW    1   ; asn	+22
+0x331D      DEFW    1   ; acs	+23
+0x331F      DEFW    1   ; atn	+24
+0x3321      DEFW    1   ; ln	+25
+0x3323      DEFW    1   ; exp	+26
+0x3325      DEFW    1   ; int	+27
+0x3327      DEFW    1   ; sqr	+28
+0x3329      DEFW    1   ; sgn	+29
+0x332B      DEFW    1   ; abs	+2A
+0x332D      DEFW    1   ; peek	+2B
+0x332F      DEFW    1   ; f_in	+2C
+0x3331      DEFW    1   ; usr_no	+2D
+0x3333      DEFW    1   ; str	+2E
+0x3335      DEFW    1   ; chrs	+2F
+0x3337      DEFW    1   ; f_not	+30
+0x3339      DEFW    1   ; duplicate	+31
+0x333B      DEFW    1   ; n_mod_m	+32
+0x333D      DEFW    1   ; jump	+33
+0x333F      DEFW    1   ; stk_data	+34
+0x3341      DEFW    1   ; dec_jr_nz	+35
+0x3343      DEFW    1   ; less_0	+36
+0x3345      DEFW    1   ; greater_0	+37
+0x3347      DEFW    1   ; end_calc	+38
+0x3349      DEFW    1   ; get_argt	+39
+0x334B      DEFW    1   ; truncate	+3A
+0x334D      DEFW    1   ; fp_calc_2	+3B
+0x334F      DEFW    1   ; e_to_fp	+3C
+0x3351      DEFW    1   ; re_stack	+3D
+0x3353      DEFW    1   ; series	+3E
+0x3355      DEFW    1   ; stk_con	+3F
+0x3357      DEFW    1   ; st_mem	+40
+0x3359      DEFW    1   ; get_mem	+41
+;
+0x344D      DEFB    1   ; $31 duplicate: Z, Z
+0x344E      DEFB    1   ; $0F addition: 2*Z
+0x344F      DEFB    1   ; $C0 st_mem_0: 2*Z (mem-0 holds 2*Z)
+0x3450      DEFB    1   ; $02 delete: -
+0x3451      DEFB    1   ; $A0 stk_zero: 0
+0x3452      DEFB    1   ; $C2 st_mem_2: 0 (mem-2 holds 0)
+;
+0x3453      DEFB    1   ; G_LOOP $31 duplicate: B(R), B(R)
+0x3454      DEFB    1   ; $E0 get_mem_0: B(R), B(R), 2*Z
+0x3455      DEFB    1   ; $04 multiply: B(R), 2*B(R)*Z
+0x3456      DEFB    1   ; $E2 get_mem_2: B(R),2*B(R)*Z, B(R-1)
+0x3457      DEFB    1   ; $C1 st_mem_1: mem-1 holds B(R-1)
+0x3458      DEFB    1   ; $03 subtract: B(R), 2*B(R)*Z-B(R-1)
+0x3459      DEFB    1   ; $38 end_calc
+;
+0x3460      DEFB    1   ; $0F addition: B(R), 2*B(R)*Z-B(R-1)+A(R+1)
+0x3461      DEFB    1   ; $01 exchange: 2*B(R)*Z-B(R-1)+A(R+1), B(R)
+0x3462      DEFB    1   ; $C2 st_mem_2: mem-2 holds B(R)
+0x3463      DEFB    1   ; $02 delete: 2*B(R)*Z-B(R-1)+A(R+1)=B(R+1)
+0x3464      DEFB    2   ; $35 dec_jr_nz to G_LOOP: B(R+1)
+0x3466      DEFB    1   ; $E1 get_mem_1: B(N), B(N-2)
+0x3467      DEFB    1   ; $03 subtract: B(N)-B(N-2)
+0x3468      DEFB    1   ; $38 end_calc
+;
+0x34E8      DEFB    1   ; Report A - Invalid argument.
+;
+0x358A      DEFB    1   ; $A0 stk_zero
+0x358B      DEFB    1   ; $38 end_calc
+;
+0x35DD      DEFB    1   ; Report B - Integer out of range.
+;
+0x36A1      DEFB    1   ; $C0 st_mem_0: N, M (mem-0 holds M)
+0x36A2      DEFB    1   ; $02 delete: N
+0x36A3      DEFB    1   ; $31 duplicate: N, N
+0x36A4      DEFB    1   ; $E0 get_mem_0: N, N, M
+0x36A5      DEFB    1   ; $05 division: N, N/M
+0x36A6      DEFB    1   ; $27 int: N, INT (N/M)
+0x36A7      DEFB    1   ; $E0 get_mem_0: N, INT (N/M), M
+0x36A8      DEFB    1   ; $01 exchange: N, M, INT (N/M)
+0x36A9      DEFB    1   ; $C0 st_mem_0: N, M, INT (N/M) (mem-0 holds INT (N/M))
+0x36AA      DEFB    1   ; $04 multiply: N, M*INT (N/M)
+0x36AB      DEFB    1   ; $03 subtract: N-M*INT (N/M)
+0x36AC      DEFB    1   ; $E0 get_mem_0: N-M*INT (N/M), INT (N/M)
+0x36AD      DEFB    1   ; $38 end_calc
+;
+0x36B0      DEFB    1   ; $31	duplicate: X, X
+0x36B1      DEFB    1   ; $36	less_0: X, (1/0)
+0x36B2      DEFB    2   ; $00	jump_true to X_NEG: X
+0x36B4      DEFB    1   ; $3A	truncate: I(X)
+0x36B5      DEFB    1   ; $38	end_calc
+;
+0x36B7      DEFB    1   ; X_NEG $31 duplicate: X, X
+0x36B8      DEFB    1   ; $3A truncate: X, I(X)
+0x36B9      DEFB    1   ; $C0 st_mem_0: X, I(X) (mem-0 holds I(X))
+0x36BA      DEFB    1   ; $03 subtract: X-I(X)
+0x36BB      DEFB    1   ; $E0 get_mem_0: X-I(X), I(X)
+0x36BC      DEFB    1   ; $01 exchange: I(X), X-I(X)
+0x36BD      DEFB    1   ; $30 f_not: I(X), (1/0)
+0x36BE      DEFB    2   ; jump_true to EXIT: I(X)
+0x36C0      DEFB    1   ; $A1 stk_one: I(X), 1
+0x36C1      DEFB    1   ; $03 subtract: I(X)-1
+0x36C2      DEFB    1   ; EXIT $38 end_calc: I(X) or I(X)-1
+;
+0x36C5      DEFB    1   ; $3D re_stack: X (in full floating-point form)
+0x36C6      DEFB    1   ; $34 stk_data: X, 1/LN 2
+0x36C7      DEFB    5
+0x36CC      DEFB    1   ; $04 multiply: X/LN 2=Y
+0x36CD      DEFB    1   ; $31 duplicate: Y, Y
+0x36CE      DEFB    1   ; $27 int: Y, INT Y=N
+0x36CF      DEFB    1   ; $C3 st_mem_3: Y, N (mem-3 holds N)
+0x36D0      DEFB    1   ; $03 subtract: Y-N=W
+0x36D1      DEFB    1   ; $31 duplicate: W, W
+0x36D2      DEFB    1   ; $0F addition: 2*W
+0x36D3      DEFB    1   ; $A1 stk_one: 2*W, 1
+0x36D4      DEFB    1   ; $03 subtract: 2*W-1=Z
+0x36D5      DEFB    1   ; $88 series_08: Z
+0x36D6      DEFB    2
+0x36D8      DEFB    3
+0x36DB      DEFB    4
+0x36DF      DEFB    4
+0x36E3      DEFB    5
+0x36E8      DEFB    5
+0x36ED      DEFB    5
+0x36F2      DEFB    5
+0x36F7      DEFB    1   ; $E3 get_mem_3: 2**W, N
+0x36F8      DEFB    1   ; $38 end_calc
+;
+0x3704      DEFB    1   ; Report 6 - Number too big.
+;
+0x370F      DEFB    1   ; $02 delete (the stack is now empty)
+0x3710      DEFB    1   ; $A0 stk_zero: 0
+0x3711      DEFB    1   ; $38 end_calc
+;
+0x3714      DEFB    1   ; $3D re_stack: X (in full floating-point form)
+0x3715      DEFB    1   ; $31 duplicate: X, X
+0x3716      DEFB    1   ; $37 greater_0: X, (1/0)
+0x3717      DEFB    1   ; $00 jump_true to VALID: X
+0x3718      DEFB    1   ; $04 multiply: X
+0x3719      DEFB    1   ; $38 end_calc: X
+0x371B      DEFB    1   ; Report A - Invalid argument.
+0x371C      DEFB    1   ; VALID $A0 stk_zero: X, 0 (the deleted 1 is overwritten with zero)
+0x371D      DEFB    1   ; $02 delete: X
+0x371E      DEFB    1   ; $38 end_calc: X
+;
+0x3726      DEFB    1   ; $34 stk_data: X', e, 128
+0x3727      DEFB    2
+0x3729      DEFB    1   ; $03 subtract: X', e'
+0x372A      DEFB    1   ; $01 exchange: e', X'
+0x372B      DEFB    1   ; $31 duplicate: e', X', X'
+0x372C      DEFB    1   ; $34 stk_data: e', X', X', 0.8
+0x372D      DEFB    5
+0x3732      DEFB    1   ; $03 subtract: e', X', X'-0.8
+0x3733      DEFB    1   ; $37 greater_0: e', X', (1/0)
+0x3734      DEFB    2   ; $00 jump_true to GRE_8: e', X'
+0x3736      DEFB    1   ; $01 exchange: X', e'
+0x3737      DEFB    1   ; $A1 stk_one: X', e', 1
+0x3738      DEFB    1   ; $03 subtract: X', e'-1
+0x3739      DEFB    1   ; $01 exchange: e'-1, X'
+0x373A      DEFB    1   ; $38 end_calc
+;
+0x373D      DEFB    1   ; GRE_8 $01 exchange: X', e' (X'>0.8) or 2*X', e'-1 (X'<=0.8)
+0x373E      DEFB    1   ; $34 stk_data: X', e', LN 2 or 2*X', e'-1, LN 2
+0x373F      DEFB    5
+0x3744      DEFB    1   ; $04 multiply: X', e'*LN 2=Y1 or 2*X', (e'-1)*LN 2=Y2
+0x3745      DEFB    1   ; $01 exchange: Y1, X' (X'>0.8) or Y2, 2*X' (X'<=0.8)
+0x3746      DEFB    1   ; $A2 stk_half: Y1, X', .5 or Y2, 2*X', .5
+0x3747      DEFB    1   ; $03 subtract: Y1, X'-.5 or Y2, 2*X'-.5
+0x3748      DEFB    1   ; $A2 stk_half: Y1, X'-.5, .5 or Y2, 2*X'-.5, .5
+0x3749      DEFB    1   ; $03 subtract: Y1, X'-1 or Y2, 2*X'-1
+0x374A      DEFB    1   ; $31 duplicate: Y, X'-1, X'-1 or Y2, 2*X'-1, 2*X'-1
+0x374B      DEFB    1   ; $34 stk_data: Y1, X'-1, X'-1, 2.5 or Y2, 2*X'-1, 2*X'-1, 2.5
+0x374C      DEFB    2
+0x374E      DEFB    1   ; $04 multiply: Y1, X'-1, 2.5*X'-2.5 or Y2, 2*X'-1, 5*X'-2.5
+0x374F      DEFB    1   ; $A2 stk_half: Y1, X'-1, 2.5*X'-2.5, .5 or Y2, 2*X'-1, 5*X'-2.5, .5
+0x3750      DEFB    1   ; $03 subtract: Y1, X'-1, 2.5*X'-3=Z or Y2, 2*X'-1, 5*X'-3=Z
+0x3751      DEFB    1   ; $8C series_0C: Y1, X'-1, Z or Y2, 2*X'-1, Z
+0x3752      DEFB    2
+0x3754      DEFB    2
+0x3756      DEFB    3
+0x3759      DEFB    3
+0x375C      DEFB    3
+0x375F      DEFB    4
+0x3763      DEFB    4
+0x3767      DEFB    4
+0x376B      DEFB    5
+0x3770      DEFB    5
+0x3775      DEFB    5
+0x377A      DEFB    5
+0x377F      DEFB    1   ; $04 multiply: Y1=LN (2**e'), LN X' or Y2=LN (2**(e'-1)), LN (2*X')
+0x3780      DEFB    1   ; $0F addition: LN (2**e')*X')=LN X or LN (2**(e'-1)*2*X')=LN X
+0x3781      DEFB    1   ; $38 end_calc: LN X
+;
+0x3784      DEFB    1   ; $3D re_stack: X (in full floating-point form)
+0x3785      DEFB    1   ; $34 stk_data: X, 1/2π
+0x3786      DEFB    5
+0x378B      DEFB    1   ; $04 multiply: X/2π
+0x378C      DEFB    1   ; $31 duplicate: X/2π, X/2π
+0x378D      DEFB    1   ; $A2 stk_half: X/2π, X/2π, 0.5
+0x378E      DEFB    1   ; $0F addition: X/2π, X/2π+0.5
+0x378F      DEFB    1   ; $27 int: X/2π, INT (X/2π+0.5)
+0x3790      DEFB    1   ; $03 subtract: X/2π-INT (X/2π+0.5)=Y
+0x3791      DEFB    1   ; $31 duplicate: Y, Y
+0x3792      DEFB    1   ; $0F addition: 2*Y
+0x3793      DEFB    1   ; $31 duplicate: 2*Y, 2*Y
+0x3794      DEFB    1   ; $0F addition: 4*Y
+0x3795      DEFB    1   ; $31 duplicate: 4*Y, 4*Y
+0x3796      DEFB    1   ; $2A abs: 4*Y, ABS (4*Y)
+0x3797      DEFB    1   ; $A1 stk_one: 4*Y, ABS (4*Y), 1
+0x3798      DEFB    1   ; $03 subtract: 4*Y, ABS (4*Y)-1=Z
+0x3799      DEFB    1   ; $31 duplicate: 4*Y, Z, Z
+0x379A      DEFB    1   ; $37 greater_0: 4*Y, Z, (1/0)
+0x379B      DEFB    1   ; $C0 st_mem_0: (mem-0 holds the result of the test)
+0x379C      DEFB    2   ; $00 jump_true to ZPLUS: 4*Y, Z
+0x379E      DEFB    1   ; $02 delete: 4*Y
+;
+0x379F      DEFB    1   ; $38 end_calc: 4*Y=V (case i)
+0x37A1      DEFB    1   ; ZPLUS $A1	stk_one: 4*Y, Z, 1
+0x37A2      DEFB    1   ; $03 subtract: 4*Y, Z-1
+0x37A3      DEFB    1   ; $01 exchange: Z-1, 4*Y
+0x37A4      DEFB    1   ; $36 less_0: Z-1, (1/0)
+0x37A5      DEFB    2   ; $00 jump_true to YNEG: Z-1
+0x37A7      DEFB    1   ; $1B negate: 1-Z
+0x37A8      DEFB    1   ; YNEG $38 end_calc: 1-Z=V (case ii) or Z-1=V (case iii)
+;
+0x37AB      DEFB    1   ; $39 get_argt: V
+0x37AC      DEFB    1   ; $2A abs: ABS V
+0x37AD      DEFB    1   ; $A1 stk_one: ABS V, 1
+0x37AE      DEFB    1   ; $03 subtract: ABS V-1
+0x37AF      DEFB    1   ; $E0 get_mem_0: ABS V-1, (1/0)
+0x37B0      DEFB    2   ; $00 jump_true to C_ENT: ABS V-1=W
+0x37B2      DEFB    1   ; $1B negate: 1-ABS V
+0x37B3      DEFB    2   ; $33 jump to C_ENT: 1-ABS V=W
+;
+0x37B7      DEFB    1   ; C_ENT	$31	duplicate: W, W
+0x37B8      DEFB    1   ; $31 duplicate: W, W, W
+0x37B9      DEFB    1   ; $04 multiply: W, W*W
+0x37BA      DEFB    1   ; $31 duplicate: W, W*W, W*W
+0x37BB      DEFB    1   ; $0F addition: W, 2*W*W
+0x37BC      DEFB    1   ; $A1 stk_one: W, 2*W*W, 1
+0x37BD      DEFB    1   ; $03 subtract: W, 2*W*W-1=Z
+0x37BE      DEFB    1   ; $86 series_06: W, Z
+0x37BF      DEFB    2
+0x37C1      DEFB    3
+0x37C4      DEFB    4
+0x37C8      DEFB    5
+0x37CD      DEFB    5
+0x37D2      DEFB    5
+0x37D7      DEFB    1   ; $04 multiply: SIN (π*W/2)=SIN X (or COS X)
+0x37D8      DEFB    1   ; $38 end_calc
+;
+0x37DB      DEFB    1   ; $31 duplicate: X, X
+0x37DC      DEFB    1   ; $1F sin: X, SIN X
+0x37DD      DEFB    1   ; $01 exchange: SIN X, X
+0x37DE      DEFB    1   ; $20 cos: SIN X, COS X
+0x37DF      DEFB    1   ; $05 division: SIN X/COS X=TAN X (report arithmetic overflow if needed)
+0x37E0      DEFB    1   ; $38 end_calc: TAN X
+;
+0x37EB      DEFB    1   ; $A1 stk_one: X, 1
+0x37EC      DEFB    1   ; $1B negate: X, -1
+0x37ED      DEFB    1   ; $01 exchange: -1, X
+0x37EE      DEFB    1   ; $05 division: -1/X
+0x37EF      DEFB    1   ; $31 duplicate: -1/X, -1/X
+0x37F0      DEFB    1   ; $36 less_0: -1/X, (1/0)
+0x37F1      DEFB    1   ; $A3 stk_pi_2: -1/X, (1/0), π/2
+0x37F2      DEFB    1   ; $01 exchange: -1/X, π/2, (1/0)
+0x37F3      DEFB    2   ; $00 jump_true to CASES for case ii: -1/X, π/2
+0x37F5      DEFB    1   ; $1B negate: -1/X, -π/2
+0x37F6      DEFB    2   ; $33 jump to CASES for case iii: -1/X, -π/2
+;
+0x37F9      DEFB    1   ; $A0 stk_zero: Y, 0; continue for case i: W=0
+0x37FA      DEFB    1   ; CASE $01 exchange: W, Y
+0x37FB      DEFB    1   ; $31 uplicate: W, Y, Y
+0x37FC      DEFB    1   ; $31 uplicate: W, Y, Y, Y
+0x37FD      DEFB    1   ; $04 ultiply: W, Y, Y*Y
+0x37FE      DEFB    1   ; $31 uplicate: W, Y, Y*Y, Y*Y
+0x37FF      DEFB    1   ; $0F ddition: W, Y, 2*Y*Y
+0x3800      DEFB    1   ; $A1 tk_one: W, Y, 2*Y*Y, 1
+0x3801      DEFB    1   ; $03 subtract: W, Y, 2*Y*Y-1=Z
+0x3802      DEFB    1   ; $8C series_0C: W, Y, Z
+0x3803      DEFB    2
+0x3805      DEFB    2
+0x3807      DEFB    3
+0x380A      DEFB    3
+0x380D      DEFB    3
+0x3810      DEFB    4
+0x3814      DEFB    4
+0x3818      DEFB    3
+0x381B      DEFB    5
+0x3820      DEFB    5
+0x3825      DEFB    5
+0x382A      DEFB    5
+0x382F      DEFB    1   ; $04 multiply: W, ATN X (case i) or W, ATN (-1/X) (cases ii and iii)
+0x3830      DEFB    1   ; $0F addition: ATN X (all cases now)
+0x3831      DEFB    1   ; $38 end_calc
+;
+0x3834      DEFB    1   ; $31 duplicate: X, X
+0x3835      DEFB    1   ; $31 duplicate: X, X, X
+0x3836      DEFB    1   ; $04 multiply: X, X*X
+0x3837      DEFB    1   ; $A1 stk_one: X, X*X, 1
+0x3838      DEFB    1   ; $03 subtract: X, X*X-1
+0x3839      DEFB    1   ; $1B negate: X, 1-X*X
+0x383A      DEFB    1   ; $28 sqr: X, SQR (1-X*X)
+0x383B      DEFB    1   ; $A1 stk_one: X, SQR (1-X*X), 1
+0x383C      DEFB    1   ; $0F addition: X, 1+SQR (1-X*X)
+0x383D      DEFB    1   ; $05 division: X/(1+SQR (1-X*X))=TAN (Y/2)
+0x383E      DEFB    1   ; $24 atn: Y/2
+0x383F      DEFB    1   ; $31 duplicate: Y/2, Y/2
+0x3840      DEFB    1   ; $0F addition: Y=ASN X
+0x3841      DEFB    1   ; $38 end_calc
+;
+0x3844      DEFB    1   ; $22 asn: ASN X
+0x3845      DEFB    1   ; $A3 stk_pi_2: ASN X, π/2
+0x3846      DEFB    1   ; $03 subtract: ASN X-π/2
+0x3847      DEFB    1   ; $1B negate: π/2-ASN X=ACS X
+0x3848      DEFB    1   ; $38 end_calc
+;
+0x384B      DEFB    1   ; $31 duplicate: X, X
+0x384C      DEFB    1   ; $30 f_not: X, (1/0)
+0x384D      DEFB    2   ; $00 jump_true to LAST: X
+0x384F      DEFB    1   ; $A2 stk_half: X, 0.5
+0x3850      DEFB    1   ; $38 end_calc
+;
+0x3852      DEFB    1   ; $01 exchange: Y, X
+0x3853      DEFB    1   ; $31 duplicate: Y, X, X
+0x3854      DEFB    1   ; $30 f_not: Y, X, (1/0)
+0x3855      DEFB    2   ; $00 jump_true to XIS0: Y, X
+0x3857      DEFB    1   ; $25 ln: Y, LN X
+0x3858      DEFB    1   ; $04 multiply: Y*LN X
+0x3859      DEFB    1   ; $38 end_calc
+;
+0x385D      DEFB    1   ; XIS0 $02 delete: Y
+0x385E      DEFB    1   ; $31 duplicate: Y, Y
+0x385F      DEFB    1   ; $30 f_not: Y, (1/0)
+0x3860      DEFB    2   ; $00 jump_true to ONE: Y
+0x3862      DEFB    1   ; $A0 stk_zero: Y, 0
+0x3863      DEFB    1   ; $01 exchange: 0, Y
+0x3864      DEFB    1   ; $37 greater_0: 0, (1/0)
+0x3865      DEFB    2   ; $00 jump_true to LAST: 0
+0x3867      DEFB    1   ; $A1 stk_one: 0, 1
+0x3868      DEFB    1   ; $01 exchange: 1, 0
+0x3869      DEFB    1   ; $05 division: Exit via division as dividing by zero gives 'arithmetic overflow'.
+0x386A      DEFB    1   ; ONE $02 delete: -
+0x386B      DEFB    1   ; $A1 stk_one: 1
+0x386C      DEFB    1   ; LAST $38 end_calc: (1/0)
+; Unused
+0x386E      DEFS    1170
+; Character set
+0x3D00      DEFB    768  
+; VRAM          
+0x4000      DEFS    6144
+0x5800      DEFS    768
