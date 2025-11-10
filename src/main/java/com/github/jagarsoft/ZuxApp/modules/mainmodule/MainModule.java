@@ -74,7 +74,7 @@ public class MainModule extends BaseModule {
     }
 
     public void initUI() {
-        JFrame frame = new JFrame("Zux Application");
+        JFrame frame = new JFrame("Z80 Emulation Workbench");
         frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
         frame.setSize(800, 600);
         frame.setLocationRelativeTo(null);
@@ -91,7 +91,7 @@ public class MainModule extends BaseModule {
         JMenuItem openFileItem = new JMenuItem("Load binary image...");
         openFileItem.addActionListener(new FIleBrowser(eventBus, new FileBinaryImageSelectedEvent()) );
 
-        JMenuItem openFileCode = new JMenuItem("Load raw code...");
+        JMenuItem openFileCode = new JMenuItem("Load raw code..."); // TODO pending remove
         openFileCode.addActionListener(rawCodeInit());
 
         JMenuItem exitFileItem = new JMenuItem("Exit");

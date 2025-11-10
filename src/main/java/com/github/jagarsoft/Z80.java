@@ -1,6 +1,5 @@
 package com.github.jagarsoft;
 
-import javax.swing.*;
 import java.util.BitSet;
 
 public class Z80 implements Z80OpCode {
@@ -1466,18 +1465,27 @@ public class Z80 implements Z80OpCode {
     // http://www.z80.info/zip/z80-documented.pdf
     // https://stackoverflow.com/a/57837042/2928048
     // https://web.archive.org/web/20080216035732/http://www.geocities.com/SiliconValley/Peaks/3938/z80code.htm#DAA
+    // https://jnz.dk/z80/daa.html
     @Override
     //public void DAA() { System.out.println("DAA TODO ERROR"); }
     public void DAA() {
         if(false)
             DAA_stackoverflow();
-        else if(true)
+        else if(false)
             DAA_chatGPT();
+        else if(false)
+            DAA_ramsoft();
+        else if(true)
+            DAA_undoc(); // OK !!!
+        else if(false)
+            DAA_speccy(); // OK
+        else if(false)
+            DAA_perl();
         else
             DAA_mio();
     }
 
-    public void DAA_stackoverflow() {
+    private void DAA_stackoverflow() {
             int t = 0;
 
             if(getHF() || ((A & 0x0F) > 9) )
@@ -1544,7 +1552,7 @@ public class Z80 implements Z80OpCode {
             //flags.Y = A & BIT_3;
     }
 
-    public void DAA_chatGPT() {
+    private void DAA_chatGPT() {
         int a = Byte.toUnsignedInt(A); // A es tu acumulador de 8 bits
         boolean n = getNF();                // Flag N (indica si fue resta)
         boolean h = getHF();                // Flag H (Half Carry)
@@ -1605,7 +1613,7 @@ public class Z80 implements Z80OpCode {
             resCF();
     }
 
-    public void DAA_mio() {
+    private void DAA_ramsoft() {
 
         int ah = A & 0x0F0;
         int al = A & 0x0F;
@@ -1632,11 +1640,11 @@ public class Z80 implements Z80OpCode {
                     }
                 } else { // H == 1
                     if( 0 <= ah && ah <= 0x90 &&
-                        0 <= al && al <= 3 ) {              // 5
+                        0 <= al && al <= 9 ) {   // al <= 3           // 5
                         correction = 0x06;
                         setHF();
                     } else if( 0xA0 <= ah && ah <= 0xF0 &&
-                                  0 <= al && al <= 3 ) {    // 6
+                                  0 <= al && al <= 9 ) {   // al <= 3    // 6
                         correction = 0x66;
                         setHF();
                         setCF();
@@ -1644,11 +1652,11 @@ public class Z80 implements Z80OpCode {
                 }
             } else { // C = 1
                 if(!getHF()) {
-                    if( 0 <= ah && ah <= 0x20 &&
+                    if( /*0 <= ah && ah <= 0x20 &&*/
                         0 <= al && al <= 9 ) {              // 7
                         correction = 0x60;
                         setCF();
-                    } else if( 0 <= ah && ah <= 0x20 &&
+                    } else if(/*0 <= ah && ah <= 0x20 &&*/
                             0x0A <= al && al <= 0x0F ) {    // 8
                         correction = 0x66;
                         setCF();
@@ -1669,7 +1677,7 @@ public class Z80 implements Z80OpCode {
                         correction = 0x00;
                     }
                 } else {
-                    if( 0 <= ah && ah <= 0x90 &&            // ! 0x80
+                    if( 0xA0 <= ah && ah <= 0xF0 && // 0 <= ah && ah <= 0x80 &&
                         6 <= al && al <= 0x0F ) {           // 11
                         //correction = (byte) 0xFA;
                         correction = (byte) 6;
@@ -1677,10 +1685,10 @@ public class Z80 implements Z80OpCode {
                 }
             } else { // C = 1
                 if(!getHF()) {
-                    if( 0x70 <= ah && ah <= 0xF0 &&
+                    if( /*0x70 <= ah && ah <= 0xF0 &&*/
                            0 <= al && al <= 9 ) {              // 12
                         //correction = (byte) 0xA0;
-                        correction = (byte) 96;
+                        correction = (byte) 0x60;
                         setCF();
                     }
                 } else {
@@ -1723,6 +1731,340 @@ public class Z80 implements Z80OpCode {
         regTouched(RegTouched.A);
     }
 
+    private void DAA_undoc() {
+
+        int ah = A & 0x0F0;
+        int al = A & 0x0F;
+        byte correction = 0;
+
+        if(!getCF()) {
+            if(!getHF()) {
+                if( 0 <= ah && ah <= 0x90 &&
+                    0 <= al && al <= 9 ) {              // 1
+                    correction = 0x00;
+                } else if( 0 <= ah && ah <= 0x80 &&
+                        0x0A <= al && al <= 0x0F ) {    // 3
+                    correction = 0x06;
+                } else if(0xA0 <= ah && ah <= 0xF0 &&
+                             0 <= al && al <= 0x09 ) {
+                    correction = 0x60;                  // 4
+                } else if(0x90 <= ah && ah <= 0xF0 &&
+                          0x0A <= al && al <= 0x0F ) {  // 8
+                    correction = 0x66;
+                }
+            } else {
+                if( 0 <= ah && ah <= 0x90 &&
+                    0 <= al && al <= 0x09 ) {           // 2
+                    correction = 0x06;
+                } else if( 0 <= ah && ah <= 0x80 &&
+                        0x0A <= al && al <= 0x0F ) {    // 3
+                    correction = 0x06;
+                } else if(0x90 <= ah && ah <= 0xF0 &&
+                        0x0A <= al && al <= 0x0F ) {    // 8
+                    correction = 0x66;
+                } else if (0xA0 <= ah && ah <= 0xF0 &&
+                        0 <= al && al <= 9) {           // 9
+                    correction = 0x66;
+                }
+            }
+        } else { // C = 1
+            if(!getHF()) {
+                if( 0 <= al && al <= 0x9 ) {
+                    correction = 0x60;                  // 5
+                } else if( 0x0A <= al && al <= 0x0F ) { // 7
+                    correction = 0x66;
+                }
+            } else {
+                if( 0 <= al && al <= 0x9 ) {            // 6
+                    correction = 0x66;
+                } else if( 0x0A <= al && al <= 0x0F ) { // 7
+                    correction = 0x66;
+                }
+            }
+        }
+
+        // Flags affected
+
+        if(!getCF()) {
+            if( 0 <= ah && ah <= 0x09 &&
+             0x09 <= al && al <= 0x09 ) {           // 1
+                resCF(); // !
+            } if( 0 <= ah && ah <= 0x80 &&
+               0x0A <= al && al <= 0x0F ) {         // 2
+                resCF(); // !
+            } else if( 0x90 <= ah && ah <= 0xF0 &&
+                       0x0A <= al && al <= 0x0F ) { // 3
+                setCF();
+            } else if (0xA0 <= ah && ah <= 0xF0 &&
+                          0 <= al && al <= 0x09 ) { // 4
+                setCF();
+            }
+        } else { // C = 1
+            setCF(); // !                           // 5
+        }
+
+        if(!getNF()) {
+            if(!getHF()) {  // !
+                if(0 <= al && al <= 0x09 ) {            // 1
+                    resHF();
+                } else if(0x0A <= al && al <= 0x0F ) {  // 2 // !
+                    setHF();
+                }
+            } else {
+                if(0 <= al && al <= 0x09 ) {            // 1
+                    resHF();
+                } else if(0x0A <= al && al <= 0x0F ) {  // 2 // !
+                    setHF();
+                }
+            }
+        } else { // N = 1
+            if(!getHF()) {
+                resHF();                                // 3 !
+            } else {
+                if( 0x06 <= al && al <= 0x0F ) {        // 4
+                    resHF();
+                } else if( 0 <= al && al <= 0x05 ) {    // 5
+                    setHF();
+                }
+            }
+        }
+
+        if( !getNF() )
+            A += (byte) correction;
+        else
+            A -= (byte) correction;
+
+        A &= 0x0FF;
+
+        if( (A & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( A == 0 )
+            setZF();
+        else
+            resZF();
+
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        //flags.X = A & BIT_5;
+        //flags.Y = A & BIT_3;
+        regTouched(RegTouched.A);
+    }
+
+    private void DAA_speccy() {
+        int a = A & 0x0FF;
+        int correction = 0;
+        boolean oc = getCF(); // old carry
+
+        if( getHF() || (a & 0x0F) > 0x09 )
+            correction  |= 6;
+
+        if( getCF() || a > 0x099 )
+            correction |= 0x60;
+
+        /*if( getNF() )
+            correction = -correction;*/
+
+        if( a > 0x099 )
+            oc = true;
+
+        if( !getNF() )
+            DAA_ADD(correction);
+        else
+            DAA_SUB(correction);
+
+        if( oc )
+            setCF();
+        else
+            resCF();
+    }
+
+    private void DAA_perl() {
+        int a = A & 0x0FF;
+        int correction = 0;
+        boolean oc = getCF(); // old carry
+
+        if( getHF() || (a & 0x0F) > 0x09 )
+            correction  |= 6;
+
+        if( getCF() || a > 0x09F )
+            correction |= 0x60;
+
+        if( !getNF() ) {
+            if ((a > 0x90) && ((a & 0x0f) > 0x09)) {
+                correction |= 0x60;
+            }
+        }
+
+        /*if( getNF() )
+            correction = -correction;*/
+
+        if( a > 0x099 )
+            oc = true;
+
+        if( !getNF() )
+            DAA_ADD(correction);
+        else
+            DAA_SUB(correction);
+
+        if( oc )
+            setCF();
+        else
+            resCF();
+    }
+
+    private void DAA_ADD(int correction) {
+        int x = A & 0xFF;
+        int result;
+
+        int y = (byte) correction;
+
+        result = x + y;
+        boolean isHalfCarry = (((x & 0x0F) + (y & 0x0F)) & 0xF0) != 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( iSOverflowADD(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( (result & 0xFF00) != 0 )
+            setCF();
+        else
+            resCF();
+
+        BitSet pA = BitSet.valueOf(new byte[]{(byte) (result & 0xFF)});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        resNF();
+
+        setA((byte) (result & 0xFF));
+    }
+
+    private void DAA_SUB(int correction) {
+        int x = A & 0xFF;
+
+        int y = (byte) correction;
+
+        int result = x - y;
+        boolean isHalfCarry = ((x & 0x0F) - (y & 0x0F)) < 0;
+
+        if( (result & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( (result & 0x00FF) == 0 )
+            setZF();
+        else
+            resZF();
+
+        if( isHalfCarry )
+            setHF();
+        else
+            resHF();
+
+        if( isOverflowSUB(x, y, result) )
+            setVF();
+        else
+            resVF();
+
+        if( result < 0 )
+            setCF();
+        else
+            resCF();
+
+        BitSet pA = BitSet.valueOf(new byte[]{(byte) (result & 0xFF)});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
+        setNF();
+
+        setA((byte) (result & 0xFF));
+    }
+
+    private void DAA_mio() {
+        int ah = A & 0x0F0;
+        int al = A & 0x0F;
+        byte correction = 0;
+
+        if(!getHF()) { // H = 0 ADD
+            if( 0 <= ah && ah <= 0x08 ) {
+                if( 0x0A <= al && al <= 0x0F ) {
+                    correction = 6;
+                    setHF();
+                }
+            } else {
+                if( 0x0A <= ah && ah <= 0x0F ) {
+                    if( 0 <= al && al <= 0x09 ) {
+                        correction = 0x60;
+                        setCF();
+                    } else if( 0x0A <= al && al <= 0x0F ) {
+                        correction = 0x66;
+                        setHF();
+                        setCF();
+                    }
+                } // ah == 9
+            }
+        } else { // H = 1 SUB
+
+        }
+
+        if( !getNF() )
+            A += (byte) correction;
+        else
+            A -= (byte) correction;
+
+        A &= 0x0FF;
+        regTouched(RegTouched.A);
+
+        // Flags affected
+
+        if( (A & 0x80) != 0 )
+            setSF();
+        else
+            resSF();
+
+        if( A == 0 )
+            setZF();
+        else
+            resZF();
+
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+    }
 
     @Override
     public void CPL() {
@@ -1946,6 +2288,13 @@ public class Z80 implements Z80OpCode {
             setCF();
         else
             resCF();
+
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
 
         setNF();
 
