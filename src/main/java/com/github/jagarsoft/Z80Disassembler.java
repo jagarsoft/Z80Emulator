@@ -82,6 +82,10 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         }
     }
 
+    public void setOrigin(int org) {
+        PC = org;
+    }
+
     public int getPC() {
 assert cpu != null;
         if(cpu != null)
