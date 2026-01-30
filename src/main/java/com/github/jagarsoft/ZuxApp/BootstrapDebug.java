@@ -1,10 +1,12 @@
 package com.github.jagarsoft.ZuxApp;
 
 import com.github.jagarsoft.ZuxApp.core.bus.CommandBus;
+import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
 import com.github.jagarsoft.ZuxApp.core.bus.EventBus;
 import com.github.jagarsoft.ZuxApp.core.module.Module;
 import com.github.jagarsoft.ZuxApp.infrastructure.bus.SimpleCommandBus;
 import com.github.jagarsoft.ZuxApp.infrastructure.bus.AsyncEventBus;
+import com.github.jagarsoft.ZuxApp.infrastructure.commands.GetBootstrapCommand;
 import com.github.jagarsoft.ZuxApp.modules.computer.ComputerModule;
 import com.github.jagarsoft.ZuxApp.modules.console.ConsoleModule;
 import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegionModule;
@@ -22,11 +24,13 @@ import com.github.jagarsoft.ZuxApp.modules.zxspectrum.ZXSpectrumModule;
 import java.util.Arrays;
 import java.util.List;
 
-public class Bootstrap {
+public class BootstrapDebug implements Bootstrap {
+    private String image = null;
+    private String dataRegion = null;
+    private final Bootstrap that = this;
 
     private EventBus eventBus;
     private CommandBus commandBus;
-    private MainModule mainModule;
 
     /*
      *  Startup
@@ -44,7 +48,7 @@ public class Bootstrap {
                 //, new HelloWorldModule()
                 , new MemoryConfigModule(64, 1) // TODO Create with default values from commandline options or property file
                 , new ZXSpectrumModule()
-                , new ComputerModule()
+                , new ComputerModule(image,  dataRegion)
                 , new RegistersViewModule()
                 , new MemoryViewModule()
                 , new PortsViewModule()
@@ -54,14 +58,17 @@ public class Bootstrap {
                 , new DebuggerModule()
         );
 
+        commandBus.registerHandler(GetBootstrapCommand.class, new CommandHandler<GetBootstrapCommand>() {
+            @Override
+            public void handle(GetBootstrapCommand command) {
+                command.setBootstrap(that);
+            }
+        });
+
         for (Module module : modules) {
             module.register(commandBus, eventBus);
             module.initUI();
         }
-    }
-
-    public void launchMainWindow() {
-        //javax.swing.SwingUtilities.invokeLater(() -> mainModule.setVisible(true));
     }
 
     /*
@@ -73,5 +80,15 @@ public class Bootstrap {
 
     public void withdraw() {
         //mainModule.dispose(); // TODO who calls it?
+    }
+
+    @Override
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    @Override
+    public void setDataRegion(String dataRegion) {
+        this.dataRegion = dataRegion;
     }
 }

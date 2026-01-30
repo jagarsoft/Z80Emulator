@@ -1,11 +1,13 @@
 package com.github.jagarsoft.ZuxApp.modules.disassembler;
 
+import com.github.jagarsoft.Instruction;
+
 import java.util.*;
 
 public class InstructionList<T> {
     private TreeMap<Integer, T> treeMap = new TreeMap<>();
 
-    public void add(Integer clave, T valor) {
+    public void add(int clave, T valor) {
         treeMap.put(clave, valor);
     }
 
@@ -15,14 +17,21 @@ public class InstructionList<T> {
 
     public T get(int index) { // Used by getValueAt from DisassemblyTableModel
         List<T> values = new ArrayList<>(treeMap.values());
-        if (index >= 0 && index < values.size()) {
+        /*if (index >= 0 && index < values.size()) {
             return values.get(index);
+        }*/
+        for(T i : values) {
+            if( ((Instruction)i).getIndex() >= index )
+                return i; // TODO usar una lista indexada por index que devuelva addr. Actualizada al llamar a add()
         }
+        System.out.println("getByAddress no fue null pero no encontro index "+index);
         return null;
     }
 
-    public T getByAddress(Integer address) {
-        return treeMap.get(address);
+    public T getByAddress(int address) {
+        T instruction = treeMap.get(address);
+        assert(instruction != null);
+        return instruction;
     }
 
     public List<T> getInstructions() {

@@ -11,6 +11,11 @@ public class ZXKeyboardTapeAndBorder implements IODevice {
     }
 
     @Override
+    public void write(int addr, byte data, int tstate) {
+
+    }
+
+    @Override
     public byte read(int addr) {
         return 0;
     }

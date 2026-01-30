@@ -1,4 +1,4 @@
-package com.github.jagarsoft.ZuxApp.core.commands;
+/*package com.github.jagarsoft.ZuxApp.core.commands;
 
 import com.github.jagarsoft.ZuxApp.core.bus.Command;
 
@@ -12,4 +12,4 @@ public class CreateUserCommand implements Command {
     public String getUsername() {
         return username;
     }
-}
+}*/

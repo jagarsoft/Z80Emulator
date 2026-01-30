@@ -32,6 +32,11 @@ public class IOManagementUnit implements IODevice {
     }
 
     @Override
+    public void write(int addr, byte data, int tstate) {
+        this.write(addr, data);
+    }
+
+    @Override
     public byte read(int addr) {
         return (byte) 0xFF;
     }

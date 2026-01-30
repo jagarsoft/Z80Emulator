@@ -22,7 +22,7 @@ public class MemoryTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int row, int col) {
-        int offset = row * 16;
+        int offset = row * 16; // show 16 bytes per row
         return switch (col) {
             case 0 -> String.format("%04X", startAddress + offset);
             case 1 -> {

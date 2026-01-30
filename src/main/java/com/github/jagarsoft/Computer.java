@@ -1,8 +1,11 @@
 package com.github.jagarsoft;
 
+import com.github.jagarsoft.ZuxApp.core.bus.EventBus;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.util.BitSet;
 import java.util.HashMap;
 
@@ -12,6 +15,7 @@ public class Computer {
     HashMap<Short, IODevice> ioBanks = new HashMap<Short, IODevice>();
 
     int sizeMask = 0;
+    private EventBus eventBus;
 
     public Computer(){
     }
@@ -26,13 +30,18 @@ public class Computer {
     }
 
     public void run(){
-        for (;;) {
+        new Thread(()->{
+            for (;;) {
+            /* debugger purpose only
             int pc = cpu.getPC();
             byte opC = this.peek(pc);
 //Logger.info("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC));
             cpu.fetch(opC); // fetch opCode
             //if( opC == 0x76) break; // is HALT?
-        }
+             */
+                cpu.fetch();
+            }
+        }).start();
     }
 
     public Z80 getCPU() {
@@ -107,17 +116,19 @@ public class Computer {
     }
 
     public byte peek(int addr) {
-//addr = addr&0xFFFF;
-        if( banks.containsKey( base2key(addr /*&0xFFFF*/) ) ) {
+        addr = addr & 0x0000FFFF;
+        if( banks.containsKey( base2key(addr) ) ) {
             return banks.get(base2key(addr)).peek(addr - (addr & sizeMask));
         } else
             return (byte) 0xFF; // Pull-up!
     }
 
     public void poke(int addr, byte data) {
-//addr = addr&0xFFFF;
-        if( banks.containsKey( base2key(addr /*&0xFFFF*/) ) )
-            banks.get(base2key(addr /*&0xFFFF*/)).poke(addr - (addr & sizeMask), data);
+        addr = addr & 0x0000FFFF;
+        if( banks.containsKey( base2key(addr) ) )
+            banks.get(base2key(addr)).poke(addr - (addr & sizeMask), data);
+        else
+            throw  new IllegalArgumentException("No such bank address " + addr);
     }
 
     public byte read(short addr) {
@@ -130,6 +141,11 @@ public class Computer {
     public void write(short addr, byte data) {
         if( ioBanks.containsKey(addr) )
             ioBanks.get(addr /*& 0x00FF*/).write(addr /*& 0x00FF*/, data);
+    }
+
+    public void write(short addr, byte data, int tstate) {
+        if( ioBanks.containsKey(addr) )
+            ioBanks.get(addr /*& 0x00FF*/).write(addr /*& 0x00FF*/, data, tstate);
     }
 
     public void load(InputStream dataStream) throws IOException {
@@ -191,6 +207,34 @@ assert dataStream != null;
         } while(true); // length > 0
     }
 
+    public void loadBytes(RandomAccessFile dataStream, int init, long length) throws IOException {
+        assert dataStream != null;
+
+        if( init < 0 )
+            init *= -1;
+
+        int bank_size = banks.get(base2key(0)).getSize();
+
+        do {
+            long left_to_load = length; // sentinel = end condition
+            int base = base2key(init);
+            if( base < 0 )
+                base *= -1;
+            Memory bank = banks.get(base);
+assert bank != null;
+            int relative = init - base; // != 0 for 1st bank only, else 0
+            if (relative + length > bank_size)
+                left_to_load = bank_size - relative;
+
+            bank.load(dataStream, relative, (int)left_to_load);
+
+            if (left_to_load == length) return;
+
+            length -= left_to_load;
+            init += left_to_load; // next bank
+        } while(true); // length > 0
+    }
+
     public boolean isSameBank(short org, short dst, short cont) {
         return false;
         /*return base2key(org) == base2key(dst)
@@ -230,5 +274,17 @@ assert dataStream != null;
     public void freeMemory() {
         sizeMask = 0;
         banks.clear();
+    }
+
+    public void setPC(int init) {
+        cpu.PC = init;
+    }
+
+    public void setEventBus(EventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+
+    public EventBus getEventBus() {
+        return this.eventBus;
     }
 }

@@ -151,7 +151,7 @@ public class Untap {
     }
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         Block blk;
         int blockIndex = -1;
         String fileTap;

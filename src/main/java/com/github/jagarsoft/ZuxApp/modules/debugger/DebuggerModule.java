@@ -40,6 +40,7 @@ public class DebuggerModule extends BaseModule {
     //private NotificationStrategy notificationStrategy = new NoEventsStrategy();
     private NotificationStrategy notificationStrategy = new StepStrategy();
     //private NotificationStrategy notificationStrategy = new SnapshotStrategy();
+    private boolean stopOnHALT = false;
 
     // Coalescing de UI: un “tick” cada ~33ms (30 FPS)
     private volatile long lastUiPushMs = 0L;
@@ -93,6 +94,9 @@ public class DebuggerModule extends BaseModule {
         commandBus.registerHandler(DebuggerPauseCommand.class, new CommandHandler<DebuggerPauseCommand>() {
             @Override public void handle(DebuggerPauseCommand cmd) {
                 if (running.compareAndSet(true, false)) {
+                    pauseDebugger("PAUSE");
+                } else {
+                    System.out.println("[DEBUGGER] Already paused.");
                     pauseDebugger("PAUSE");
                 }
             }
@@ -149,11 +153,12 @@ public class DebuggerModule extends BaseModule {
         eventBus.subscribe(FileBinaryImageSelectedEvent.class, (Consumer<FileBinaryImageSelectedEvent>) (e) -> {
             File currentFile = e.getSelectedFile();
             commandBus.execute(new ComputerLoadImageCommand(currentFile));
-            // TODO delegar en ComputerLoadImageCommand si la carga tiene exito
-            eventBus.publish(new BinaryImageLoadedEvent(currentComputer.getComputer(), currentComputer.getComputer().getMemorySize() /*currentFile.length()*/));
+            // AQUI TODO delegar en ComputerLoadImageCommand si la carga tiene exito
+            // eventBus.publish(new BinaryImageLoadedEvent(currentComputer.getComputer(), currentComputer.getComputer().getMemorySize() /*currentFile.length()*/));
         });
 
         eventBus.subscribe(BinaryImageLoadedEvent.class, (Consumer<BinaryImageLoadedEvent>) (e) -> {
+            //commandBus.execute(new DebuggerResetCommand()); // Reset and get ready!
             //commandBus.execute(new DebuggerRunCommand()); // RUN ??
             commandBus.execute(new DebuggerPauseCommand()); // PAUSE ??
         });
@@ -221,7 +226,7 @@ public class DebuggerModule extends BaseModule {
         stepDebugger();
         cpu.step();
         notificationStrategy.onInstruction(cpu, eventBus);
-        if (cpu.isHalted()) {
+        if (stopOnHALT && cpu.isHalted()) {
             pauseDebugger("HALTED");
             notificationStrategy.onPause(cpu, eventBus);
         }
@@ -229,7 +234,7 @@ public class DebuggerModule extends BaseModule {
 
     private void runLoop() {
         runDebugger();
-        while (running.get() && !cpu.isHalted()) {
+        while (running.get() && (stopOnHALT ? !cpu.isHalted() : true) ) {
             int pc = cpu.getPC();
             if ( ! isBreakpointHit(pc) && ! isDataRegion(pc) )
                 cpu.step();
@@ -237,7 +242,7 @@ public class DebuggerModule extends BaseModule {
                 break;
         }
 
-        if (cpu.isHalted()) {
+        if (stopOnHALT && cpu.isHalted()) {
             pauseDebugger("HALTED");
         }
 

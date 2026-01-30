@@ -14,7 +14,10 @@ import javax.swing.event.InternalFrameListener;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HexFormat;
+
+import static java.lang.Thread.sleep;
 
 public class ZXSpectrumModule extends BaseModule {
     JInternalFrame frame;
@@ -30,7 +33,7 @@ public class ZXSpectrumModule extends BaseModule {
 
                 short[] ports = new short[8+256];
 
-                ports[0] = (short)0x0FEFE;
+                ports[0] = (short)0x0FEFE; // TODO
                 ports[1] = (short)0x0FDFE;
                 ports[2] = (short)0x0FBFE;
                 ports[3] = (short)0x0F7FE;
@@ -43,7 +46,7 @@ public class ZXSpectrumModule extends BaseModule {
                     ports[i+8] = (short)((i<<8) | 0x0FE);
                 }
 
-                computer.addMemory(0x0000, new ROMMemory(16 * 1024));
+                computer.addMemory(0x0000, new ROMMemory(16 * 1024)); // TODO Must come from Config
                 computer.addMemory(0x4000, new VRAM(screen));
                 computer.addMemory(0x8000, new RAMMemory(16 * 1024));
                 computer.addMemory(0xC000, new RAMMemory(16 * 1024));
@@ -82,12 +85,14 @@ public class ZXSpectrumModule extends BaseModule {
         frame.setVisible(true);
 
         try {
-            //screen.loadSCRFile(new File("C:\\Users\\fjgarrido\\Downloads\\Alstrad.scr"));
-            //screen.loadSCRFile(new File("C:\\Users\\fjgarrido\\Downloads\\Amaurote.scr"));
-
             // https://atornblad.github.io/zx-spectrum-bitmap/
-            screen.loadSCRFile(new File("C:\\Users\\fjgarrido\\Downloads\\reset.tap"));
-        } catch (IOException e) {
+            URL resource = getClass().getClassLoader().getResource("reset.tap");
+            if (resource != null) {
+                screen.loadSCRFile(new File(resource.toURI()));
+                sleep(1000);
+            }
+
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 

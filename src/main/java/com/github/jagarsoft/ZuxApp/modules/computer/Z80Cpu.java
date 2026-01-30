@@ -18,7 +18,7 @@ public class Z80Cpu implements IZ80Cpu {
 
     @Override
     public void step() {
-        System.out.println("Z80 step: " + String.format("%04X", getPC()));
+        //System.out.println("Z80 step: " + String.format("%04X", getPC()));
         eventBus.publish(new StepEvent(getPC()));
         cpu.fetch();
     }

@@ -45,9 +45,8 @@ N+3     1       Checksum byte of data block
 
     public TAP(Computer currentComp) {
         try {
-            s = new RAFSeekable("C:\\Users\\fjgarrido\\Downloads\\zexall.tap", "r");
-            //s = new RAFSeekable("C:\\Users\\fjgarrido\\Downloads\\PorompomPong.tap", "r");
-        } catch (IOException e) {
+            s = new RAFSeekable("zexall.tap", "r");
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         this.currentComp = currentComp;

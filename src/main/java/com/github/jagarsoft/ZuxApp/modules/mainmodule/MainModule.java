@@ -76,7 +76,7 @@ public class MainModule extends BaseModule {
     public void initUI() {
         JFrame frame = new JFrame("Z80 Emulation Workbench");
         frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.setSize(800, 700);
         frame.setLocationRelativeTo(null);
 
         frame.setLayout(new BorderLayout());
@@ -91,14 +91,14 @@ public class MainModule extends BaseModule {
         JMenuItem openFileItem = new JMenuItem("Load binary image...");
         openFileItem.addActionListener(new FIleBrowser(eventBus, new FileBinaryImageSelectedEvent()) );
 
-        JMenuItem openFileCode = new JMenuItem("Load raw code..."); // TODO pending remove
-        openFileCode.addActionListener(rawCodeInit());
+        //JMenuItem openFileCode = new JMenuItem("Load raw code..."); // TODO pending remove
+        //openFileCode.addActionListener(rawCodeInit());
 
         JMenuItem exitFileItem = new JMenuItem("Exit");
-        exitFileItem.addActionListener(e -> System.exit(0));
+        exitFileItem.addActionListener(e -> System.exit(0)); // TODO Raise event instead
 
         fileMenu.add(openFileItem);
-        fileMenu.add(openFileCode);
+        //fileMenu.add(openFileCode);
         fileMenu.addSeparator();
         fileMenu.add(exitFileItem);
         menuBar.add(fileMenu);
@@ -106,7 +106,7 @@ public class MainModule extends BaseModule {
         frame.setVisible(true);
     }
 
-    private void openTestWindow() {
+    /*private void openTestWindow() {
         JInternalFrame internalFrame = new JInternalFrame("Test Window", true, true, true, true);
         internalFrame.setSize(300, 200);
         internalFrame.setVisible(true);
@@ -114,9 +114,9 @@ public class MainModule extends BaseModule {
         try {
             internalFrame.setSelected(true);
         } catch (java.beans.PropertyVetoException ignored) {}
-    }
+    }*/
 
-    private ActionListener rawCodeInit() {
+    /*private ActionListener rawCodeInit() {
         return new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -144,5 +144,5 @@ public class MainModule extends BaseModule {
                 frame.setVisible(true);
             }
         };
-    }
+    }*/
 }

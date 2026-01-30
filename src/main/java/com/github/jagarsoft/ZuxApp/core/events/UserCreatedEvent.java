@@ -1,4 +1,4 @@
-package com.github.jagarsoft.ZuxApp.core.events;
+/*package com.github.jagarsoft.ZuxApp.core.events;
 
 public class UserCreatedEvent {
     private final String username;
@@ -10,4 +10,4 @@ public class UserCreatedEvent {
     public String getUsername() {
         return username;
     }
-}
+}*/

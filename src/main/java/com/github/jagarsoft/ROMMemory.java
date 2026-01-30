@@ -2,6 +2,7 @@ package com.github.jagarsoft;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 
 public class ROMMemory implements Memory {
     private byte[] rom;
@@ -15,8 +16,8 @@ public class ROMMemory implements Memory {
     }
 
     @Override
-    //public void poke(int addr, byte data) { /* Read-Only Memory */; }
-    public void poke(int addr, byte data) { if( addr == 0x1303 ) rom[addr] = data; }
+    //public void poke(int addr, byte data) { /* Read-Only Memory */; } // TODO recover
+    public void poke(int addr, byte data) { if( addr == 0x1303 ) rom[addr] = data; } // TODO remove
 
     @Override
     public byte peek(int addr){ return rom[addr]; }
@@ -31,6 +32,11 @@ public class ROMMemory implements Memory {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void load(RandomAccessFile dataStream, int dest, int size) {
+        // TODO?
     }
 
     @Override

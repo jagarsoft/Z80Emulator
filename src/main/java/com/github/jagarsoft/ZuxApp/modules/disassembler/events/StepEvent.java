@@ -20,6 +20,6 @@ public class StepEvent implements Event {
 
     @Override
     public String getMessage() {
-        return "";
+        return String.format("%04X", pc);
     }
 }

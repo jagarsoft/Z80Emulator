@@ -1,4 +1,4 @@
-package com.github.jagarsoft.ZuxApp.infrastructure.handlers;
+/*package com.github.jagarsoft.ZuxApp.infrastructure.handlers;
 
 import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
 import com.github.jagarsoft.ZuxApp.core.commands.CreateUserCommand;
@@ -21,4 +21,4 @@ public class CreateUserHandler implements CommandHandler<CreateUserCommand> {
         // Dispara evento
         eventBus.publish(new UserCreatedEvent(command.getUsername()));
     }
-}
+}*/

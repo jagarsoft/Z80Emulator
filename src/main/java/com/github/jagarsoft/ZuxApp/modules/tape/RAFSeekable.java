@@ -1,8 +1,11 @@
 package com.github.jagarsoft.ZuxApp.modules.tape;
 
 // RAFSeekable.java (RandomAccessFile)
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -12,8 +15,11 @@ public class RAFSeekable implements Seekable {
 
     public final RandomAccessFile raf;
 
-    public RAFSeekable(String path, String mode) throws IOException {
-        this.raf = new RandomAccessFile(path, mode);
+    public RAFSeekable(String tap, String mode) throws IOException, URISyntaxException {
+        URL resource = getClass().getClassLoader().getResource(tap);
+        if (resource != null) {
+            this.raf = new RandomAccessFile(new File(resource.toURI()), mode);
+        } else this.raf = null;
         this.pos = 0;
     }
 

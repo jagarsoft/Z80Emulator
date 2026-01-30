@@ -1,8 +1,23 @@
 package com.github.jagarsoft;
 
+import com.github.jagarsoft.ZuxApp.modules.tape.TAP;
+
 import java.util.BitSet;
 
-public class Z80 implements Z80OpCode {
+public class Z80 implements Z80OpCode, Cloneable {
+
+    private final TAP tap;
+
+    @Override
+    public Z80 clone() {
+        try {
+            Z80 clone = (Z80) super.clone();
+            // TODO: copy mutable state here, so the clone can't change the internals of the original
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
 
     protected static class Register {
         public byte A;
@@ -34,7 +49,9 @@ public class Z80 implements Z80OpCode {
     protected OpCode[][][] DDCBopCodes= new OpCode[4][8][8];
     protected OpCode[][][] FDCBopCodes=new OpCode[4][8][8];
 
-    private int tstate = 0;
+    private long tstate = 0;
+    private long old_tstate = 0;
+    private long tstate_pseudo = 0; // TODO
 
     protected void dispatcher(Z80OpCode opC) {
         // According to
@@ -552,6 +569,12 @@ public class Z80 implements Z80OpCode {
             case 1: y = 7; break;
             case 2: y = 7; break;
         }*/
+        // TODO la instruccion a ejecutar no tiene por que ser siempre una RST.
+        // En Modo 1 sí es RST 38h (opCode = FFh) pero en el Modo 0 se le debe
+        // consultar a opCode = Computer.getInstructionOnInterrupt() que devolverá
+        // el resultado de Computer.setInstructionOnInterrupt(new InstructionOnInterrupt())
+        // En Modo 2 se debe aplicar el procedimiento de obtención de I como indice
+        // en una tabla
         y = 7; // RST 38h
         RST_y_8();
 
@@ -603,14 +626,27 @@ public class Z80 implements Z80OpCode {
         q = (y & 1);
     }
 
-    private void checkTstates() {
-        if( ++tstate > 300 ) {
+    private void checkTState_pseudo() {
+        tstate_pseudo += 11;
+        //if( ++tstate_pseudo > 300 ) {
+        if( tstate_pseudo % TSTATES_PER_FRAME == 0 ) {
             interrupt();
-            tstate = 0;
+            tstate_pseudo = 0;
         }
     }
 
-    public void fetch() { fetch(currentComp.peek(PC++)); }
+    public void fetch() {
+        if( PC == 0x04C2 ) {System.out.println("SAVE");}
+        if( PC == 0x04C2 ) {
+            tap.SA_BYTES();
+            PC = 0x053F; // SA_LD_RET
+        } else if( PC == 0x556 ) {
+            tap.LD_BYTES(currentComp, getA(), getIX(), getDE());
+            PC = 0x053F;  // SA_LD_RET
+        }
+
+        fetch(currentComp.peek(PC++));
+    }
 
     public void fetch(byte opC) {
         /*if( PC == 0 /#* 0x07e2 0x47CD 0x11DC PC == 0x16D2 || PC == 0x1297 || PC == 0x0D7F*#/ ) {
@@ -621,8 +657,8 @@ public class Z80 implements Z80OpCode {
         if( isHalted ) {
             PC--;
             NOP();
-            Logger.halted(tstate);
-            checkTstates();
+            //Logger.halted((int)tstate_pseudo); // TODO
+            checkTState_pseudo();
             return;
         }
 
@@ -651,7 +687,7 @@ public class Z80 implements Z80OpCode {
         if( IFF1 && IFF3 > 0 )
             IFF3--;
 
-        checkTstates();
+        checkTState_pseudo();
         measureSpeed();
     }
 
@@ -780,10 +816,12 @@ public class Z80 implements Z80OpCode {
 
     public Z80() {
         dispatcher(this);
+        tap = new TAP(currentComp);
     }
 
     public Z80(Z80OpCode opC) {
         dispatcher(opC);
+        tap = new TAP(currentComp);
     }
 
     // According to Reset Timing at http://www.z80.info/interrup.htm
@@ -920,7 +958,8 @@ public class Z80 implements Z80OpCode {
         return (byte) (IY & 0x0FF);
     }
 
-    protected short getWZ() { return (short) ((short) (W << 8) | (Z & 0xFF)); }
+    //protected short getWZ() { return (short) ((short) (W << 8) | (Z & 0xFF)); }
+    protected int getWZ() { return ((W << 8) | (Z & 0x00FF)) & 0x0000FFFF; }
 
     public void setBC(short bc) {
         setB((byte) ((bc & 0xFF00) >> 8));
@@ -1022,9 +1061,9 @@ public class Z80 implements Z80OpCode {
 	@Override
     public void NOP() {
         /* No Operation */
-        int nop = 0;
-        ++nop;
-        --nop;
+        for (int nop=0;nop<4;nop++)
+            ;
+        tstate+=4;
     }
 
     @Override
@@ -1042,14 +1081,18 @@ public class Z80 implements Z80OpCode {
         Z = getF();
         setF(getF_());
         setF_(Z);
+        tstate+=4;
     }
 
 	@Override
     public void DJNZ() {
         byte d = currentComp.peek(PC++);
 
-        if (--B != 0)
+        if (--B != 0) {
             PC += (short) d;
+            tstate+=5;
+        }
+        tstate+=8;
         regTouched(RegTouched.B);
     }
 
@@ -1079,8 +1122,12 @@ public class Z80 implements Z80OpCode {
                 ccSet = getCF();
         }
 
-        if (ccSet)
+        if (ccSet) {
             PC += (short) d;
+            tstate+=5;
+        }
+
+        tstate+=7;
     }
 
     @Override
@@ -1089,6 +1136,7 @@ public class Z80 implements Z80OpCode {
         W = currentComp.peek(PC++);
 
         set_rp_p();
+        tstate+=10;
     }
 
     @Override
@@ -1097,7 +1145,7 @@ public class Z80 implements Z80OpCode {
         int wz;
 
         get_rp_p();
-        wz = getWZ() & 0xFFFF;
+        wz = getWZ();
 
         hl += wz;
 
@@ -1139,7 +1187,7 @@ public class Z80 implements Z80OpCode {
             W = getIYH();
             Z = getIYL();
         }
-        wz = getWZ() & 0xFFFF;
+        wz = getWZ();
 
         hl += wz;
 
@@ -1264,6 +1312,8 @@ public class Z80 implements Z80OpCode {
         W = (byte) (W - c);
 
         set_rp_p();
+
+        tstate+=6;
     }
 
 	@Override
@@ -1308,6 +1358,8 @@ public class Z80 implements Z80OpCode {
             resVF();
 
         resNF();
+
+        tstate+=4;
     }
     
     @Override
@@ -1352,6 +1404,8 @@ public class Z80 implements Z80OpCode {
             resVF();
 
         setNF();
+
+        tstate+=4;
     }
 
 	@Override
@@ -1359,6 +1413,7 @@ public class Z80 implements Z80OpCode {
         Z = currentComp.peek(PC++);
 
         set_r_(y);
+        tstate+=7;
     }
 
 	@Override
@@ -1458,6 +1513,7 @@ public class Z80 implements Z80OpCode {
         resHF();
 
         regTouched(RegTouched.A);
+        tstate+=4;
     }
 
     // https://worldofspectrum.org/faq/reference/z80reference.htm#DAA
@@ -2098,6 +2154,7 @@ public class Z80 implements Z80OpCode {
 
         resNF();
         resHF();
+        tstate+=4;
     }
 
 	@Override
@@ -2112,6 +2169,8 @@ public class Z80 implements Z80OpCode {
         get_r_(z);
 
         set_r_(y);
+
+        tstate+=4;
     }
 
     private void get_r_(int yz) {
@@ -2717,6 +2776,8 @@ public class Z80 implements Z80OpCode {
         resCF();
         resNF();
         resHF();
+
+        tstate+=4;
     }
 
 	@Override
@@ -2745,6 +2806,8 @@ public class Z80 implements Z80OpCode {
         resCF();
         resNF();
         resHF();
+
+        tstate+=4;
     }
 
 	@Override
@@ -2821,7 +2884,9 @@ public class Z80 implements Z80OpCode {
             W = currentComp.peek(SP++);
 
             PC = getWZ();
+            tstate+=6;
         }
+        tstate+=5;
     }
 
 	@Override        
@@ -2854,6 +2919,7 @@ public class Z80 implements Z80OpCode {
         W = currentComp.peek(SP++);
 
         PC = getWZ();
+        //PC &= 0x0000_FFFF;
         regTouched(RegTouched.SP);
     }
 
@@ -2922,8 +2988,12 @@ public class Z80 implements Z80OpCode {
                 ccSet = getSF();
         }
 
-        if (ccSet)
+        if (ccSet) {
             PC = getWZ();
+            tstate+=9;
+        }
+
+        tstate+=1;
     }
 
 	@Override
@@ -2932,13 +3002,16 @@ public class Z80 implements Z80OpCode {
         W = currentComp.peek(PC++);
 
         PC = getWZ();
+        tstate+=10;
     }
 
 	@Override
     public void OUT_n_A() {
         Z = currentComp.peek(PC++);
         W = A;
-        currentComp.write(getWZ(), A);
+        tstate+=11;
+        currentComp.write((short)getWZ(), A, (int)(tstate - old_tstate));
+        old_tstate = tstate;
     }
 
 	@Override
@@ -2946,8 +3019,9 @@ public class Z80 implements Z80OpCode {
         Z = currentComp.peek(PC++);
         W = A;
 //Logger.info("IN port:"+Integer.toHexString(getWZ()));
-        setA(currentComp.read(getWZ()));
+        setA(currentComp.read((short)getWZ()));
 //Logger.info("IN A:"+Integer.toHexString(A));
+        tstate+=11;
     }
 
 	@Override
@@ -3304,6 +3378,8 @@ public class Z80 implements Z80OpCode {
         resCF();
         resNF();
         resHF();
+
+        tstate+=7;
     }
 
 	@Override
@@ -3494,6 +3570,8 @@ public class Z80 implements Z80OpCode {
         resHF();
 
         set_r_(z);
+
+        tstate+=8;
     }
 
     public void RR_r_z() {
@@ -3675,7 +3753,7 @@ public class Z80 implements Z80OpCode {
         int hl = getHL() & 0xFFFF;
 
         get_rp_p();
-        int wz = getWZ() & 0xFFFF;
+        int wz = getWZ();
 
         int result = hl - wz - carry;
 
@@ -3790,6 +3868,8 @@ public class Z80 implements Z80OpCode {
 
         resNF();
         setHF();
+
+        tstate+=8;
     }
 
 	@Override
@@ -3819,7 +3899,8 @@ public class Z80 implements Z80OpCode {
     public void OUT_C_r_y() {
         Z = C;
         W = B;
-        currentComp.write(getWZ(), A);
+        currentComp.write((short)getWZ(), A, (int)(tstate - old_tstate));
+        old_tstate = tstate;
     }
 
 	@Override
@@ -3827,7 +3908,7 @@ public class Z80 implements Z80OpCode {
         Z = C;
         W = B;
 //Logger.info("IN port:"+Integer.toHexString(getWZ()));
-        setA(currentComp.read(getWZ()));
+        setA(currentComp.read((short)getWZ()));
 //Logger.info("IN A:"+Integer.toHexString(A));
 
         BitSet pA = BitSet.valueOf(new byte[]{A});
@@ -4267,6 +4348,7 @@ public class Z80 implements Z80OpCode {
     public void INC_IX() {
         IX++;
         regTouched(RegTouched.IX);
+        tstate+=10;
     }
 
     @Override
@@ -4282,6 +4364,7 @@ public class Z80 implements Z80OpCode {
         Z = currentComp.peek(getIX()+d);
 
         set_r_(y);
+        tstate+=19;
     }
 
     @Override
@@ -4289,7 +4372,7 @@ public class Z80 implements Z80OpCode {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-        setIX(getWZ());
+        setIX((short)getWZ());
     }
 
     @Override
@@ -4302,7 +4385,7 @@ public class Z80 implements Z80OpCode {
             W = getIXH();
             Z = getIXL();
         }
-        wz = getWZ() & 0xFFFF;
+        wz = getWZ();
 
         hl += wz;
 
@@ -4461,6 +4544,7 @@ public class Z80 implements Z80OpCode {
     @Override
     public void JP_IX() {
         PC = getIX();
+        tstate+=8;
     }
 
     @Override
@@ -4478,7 +4562,7 @@ public class Z80 implements Z80OpCode {
         Z = currentComp.peek(SP++);
         W = currentComp.peek(SP++);
 
-        setIX(getWZ());
+        setIX((short)getWZ());
         regTouched(RegTouched.SP);
     }
 
@@ -4654,7 +4738,7 @@ public class Z80 implements Z80OpCode {
         Z = currentComp.peek(PC++);
         W = currentComp.peek(PC++);
 
-        setIY(getWZ());
+        setIY((short)getWZ());
     }
 
     @Override
@@ -4970,7 +5054,7 @@ public class Z80 implements Z80OpCode {
         Z = currentComp.peek(SP++);
         W = currentComp.peek(SP++);
 
-        setIY(getWZ());
+        setIY((short)getWZ());
         regTouched(RegTouched.SP);
     }
 }

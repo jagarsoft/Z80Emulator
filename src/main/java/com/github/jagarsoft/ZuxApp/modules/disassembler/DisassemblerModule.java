@@ -15,6 +15,8 @@ import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigChang
 import com.github.jagarsoft.ZuxApp.modules.disassembler.events.StepEvent;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -25,7 +27,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DisassemblerModule extends BaseModule {
-    static Z80Disassembler disassembler = new Z80Disassembler();
     DisassemblyTableModel disassemblyModel;
     JTable disassemblyTable;
     //SymbolTable ...
@@ -38,30 +39,30 @@ public class DisassemblerModule extends BaseModule {
     @Override
     public void configure() {
         eventBus.subscribe(BinaryImageLoadedEvent.class, (UIEventHandler<BinaryImageLoadedEvent>) (e) -> {
-            list(e.getComputer(), 0, e.getLength());
-            disassemblyModel.fireTableDataChanged(); // TODO evitarlo si se usa fireTableRowsInserted abajo
+            list(e.getComputer(), e.getOrigin(), e.getLength());
+            //disassemblyModel.fireTableDataChanged(); // TODO evitarlo si se usa fireTableRowsInserted abajo
         });
 
         eventBus.subscribe(DataBlockMapLoadedEvent.class, (Consumer<DataBlockMapLoadedEvent>) e->{
             dataRegion = e.getDataRegion();
         });
 
-        eventBus.subscribe(MemoryConfigChangedEvent.class, (UIEventHandler<MemoryConfigChangedEvent>) (e) -> {
+        /*eventBus.subscribe(MemoryConfigChangedEvent.class, (UIEventHandler<MemoryConfigChangedEvent>) (e) -> {
             // TODO no llega a actualizar la vista del Desensamblador
-            /*GetComputerCommand computerCommand = new GetComputerCommand();
+            GetComputerCommand computerCommand = new GetComputerCommand();
             commandBus.execute(computerCommand);
             Computer computer = computerCommand.getComputer();
             //list(computer, 0, computer.getMemorySize());
             list(computer, 0, e.getNumberPages() * e.getPageSize() * 1024);
-            disassemblyModel.fireTableDataChanged();*/
-        });
+            disassemblyModel.fireTableDataChanged();
+        });*/
 
         //eventBus.subscribe(CpuStateUpdatedEvent.class, (Consumer<CpuStateUpdatedEvent>) ev -> {
         eventBus.subscribe(CpuStateUpdatedEvent.class, (UIEventHandler<CpuStateUpdatedEvent>) ev -> {
             int pc = ev.getCpu().getPC();
-            if( ev.getCpu().isHalted() )
+            /*if( ev.getCpu().isHalted() )
                 disassemblyModel.setCurrentPC(pc-1);
-            else
+            else*/
                 disassemblyModel.setCurrentPC(pc);
 
             int index = disassemblyModel.getCurrentPCRow();
@@ -76,22 +77,29 @@ public class DisassemblerModule extends BaseModule {
             disassemblyModel.fireTableDataChanged();
         });
 
-        eventBus.subscribe(StepEvent.class, (Consumer<StepEvent>) (ev) -> {
+        // Log every single instruction stepped
+        /* eventBus.subscribe(StepEvent.class, (Consumer<StepEvent>) (ev) -> {
             Instruction instruction = disassemblyModel.getInstructionByPC(ev.getPC());
             System.out.println(instruction.toString());
-        });
+        });*/
     }
 
     private void list(Computer comp, int org, long size) {
+        Z80Disassembler disassembler = new Z80Disassembler();
         //disassemblyModel.clear();
         disassembler.setComputer(comp);
         //disassembler.setSymbolTable(symbolTable);
 
         disassembler.setDataBlock(dataRegion);
 
-        comp.reset();
-        comp.setOrigin(org);
+        //comp.reset();
+        //int oldPC = comp.getCPU().getPC();
+        //comp.setOrigin(org);
+        disassembler.setOrigin(org);
         int processed = 0;
+        int lastProcessed = processed;
+        if( disassemblyModel.getInstructionByPC(org) != null )
+            processed = disassemblyModel.getInstructionByPC(org).index;
         do {
             final int pc = disassembler.getPC();
             final Instruction instruction = disassembler.fetchInstruction();
@@ -100,10 +108,12 @@ public class DisassemblerModule extends BaseModule {
             processed++;
             // Update UI every 100 instructions
             if (processed % 100 == 0) {
-                disassemblyModel.fireTableDataChanged();
-                //disassemblyModel.fireTableRowsInserted(processed-100, processed-1);
+                //disassemblyModel.fireTableDataChanged();
+                disassemblyModel.fireTableRowsInserted(processed-100, processed-1);
+                lastProcessed = processed;
             }
         } while( (disassembler.getPC() - org) < size);
+        disassemblyModel.fireTableRowsInserted(lastProcessed, processed);
     }
 
     @Override
@@ -150,10 +160,10 @@ searchField.setName("symbolSearchField");
 
         //
         // Eventos
-        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { updateSearch(); }
-            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { updateSearch(); }
-            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { updateSearch(); }
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { updateSearch(); }
+            @Override public void removeUpdate(DocumentEvent e) { updateSearch(); }
+            @Override public void changedUpdate(DocumentEvent e) { updateSearch(); }
         });
 
         prevButton.addActionListener(e -> showPreviousMatch());

@@ -4,6 +4,7 @@ import com.github.jagarsoft.GUI.Screen;
 
 import java.awt.*;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 
 public class VRAM implements Memory {
     private int k = 0;
@@ -52,7 +53,12 @@ System.out.println("c="+pointLR[0]+" r="+pointLR[1]+" paper="+attr[0]+" ink="+at
 
     @Override
     public void load(InputStream dataStream, int dest, int size) {
+        //unused
+    }
 
+    @Override
+    public void load(RandomAccessFile dataStream, int dest, int size) {
+        // TODO?
     }
 
     @Override

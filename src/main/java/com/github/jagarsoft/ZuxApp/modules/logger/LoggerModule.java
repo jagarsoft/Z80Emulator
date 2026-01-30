@@ -6,6 +6,8 @@ import com.github.jagarsoft.ZuxApp.core.bus.UIEventHandler;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.core.events.LongTaskEvent;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
+import com.github.jagarsoft.ZuxApp.modules.disassembler.events.StepEvent;
+import com.github.jagarsoft.ZuxApp.modules.ports.events.PortReadEvent;
 
 import javax.swing.*;
 import java.util.concurrent.TimeUnit;
@@ -57,11 +59,14 @@ public class LoggerModule extends BaseModule {
             }
         });*/
 
+        // ENABLE LOGGER
         eventBus.subscribeToAll( new Consumer<Event>() {
             @Override
             public void accept(Event e) {
-                System.out.print("[LOG] " + e.getEventName() + ": " + e.getMessage()  + "\n");
-                logArea.append("[LOG] " + e.getEventName() + ": " + e.getMessage() + "\n");
+                if( ! (e instanceof StepEvent) && ! (e instanceof PortReadEvent) ) {
+                    logArea.append("[LOG] " + e.getEventName() + ": " + e.getMessage() + "\n");
+                    System.out.print("[LOG] " + e.getEventName() + ": " + e.getMessage() + "\n");
+                }
             }
         });
 

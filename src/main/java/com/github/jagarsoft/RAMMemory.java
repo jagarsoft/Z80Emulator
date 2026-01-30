@@ -3,6 +3,7 @@ package com.github.jagarsoft;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 
 public class RAMMemory implements Memory {
         private byte[] ram;
@@ -28,6 +29,15 @@ public class RAMMemory implements Memory {
                         throw new RuntimeException(e);
                 }
         }
+
+    public void load(RandomAccessFile dataStream, int dest, int size) {
+        try {
+            dataStream.read(ram, dest, size);
+        } catch (
+                IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
         @Override
         public void movemem(short org, short dst, short count, MovememDirection dir) {

@@ -7,19 +7,19 @@ import java.nio.charset.StandardCharsets;
 public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     Instruction instruction = new Instruction();
-    Z80 cpu;
+    //Z80 cpu;
 
     private DataRegion dataRegion;
 
     public Z80Disassembler() {
         dispatcher(this);
-        this.cpu = null;
+        //this.cpu = null;
         //this.reset();
     }
 
     public Z80Disassembler(Z80 cpu) {
         dispatcher(this);
-        this.cpu = cpu;
+        //this.cpu = cpu;
         //this.reset();
     }
 
@@ -29,7 +29,7 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }*/
 
     public void setComputer(Computer theComp) {
-        this.cpu = theComp.getCPU();
+        //this.cpu = theComp.getCPU();
         super.setComputer(theComp);
     }
 
@@ -87,27 +87,31 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
     public int getPC() {
-assert cpu != null;
+/*assert cpu != null;
         if(cpu != null)
             return cpu.PC;
         else
-            return PC;
+            return PC;*/
+        return super.getPCnonIncrement();
     }
 
     public Instruction fetchInstruction() {
-        if( dataRegion != null && dataRegion.isDataRegion(cpu.PC) ){
-            return fetchData(currentComp.peek(cpu.PC++));
+        //if( dataRegion != null && dataRegion.isDataRegion(cpu.PC) ){
+        if( dataRegion != null && dataRegion.isDataRegion(PC) ){
+            //return fetchData(currentComp.peek(cpu.PC++));
+            return fetchData(currentComp.peek(PC++));
         }
 
-        if(cpu != null)
+        /*if(cpu != null)
             return fetchInstruction(currentComp.peek(cpu.PC++));
-        else
+        else*/
             return fetchInstruction(currentComp.peek(PC++));
          }
 
     public Instruction fetchInstruction(byte opC) {
-        this.PC = this.getPC();
+        //this.PC = this.getPC();
         instruction.PC = this.PC - 1;
+        //instruction.PC = getPC();
         instruction.opCodes[0] = opC;
         instruction.opCodeCounter = 1;
         super.fetch(opC);
@@ -116,13 +120,14 @@ assert cpu != null;
         Instruction i = instruction;
         instruction = null;
         instruction = new Instruction();
-        cpu.PC = this.PC; //this.PC = this.getPC();
+        //cpu.PC = this.PC; //this.PC = this.getPC();
         return i;
     }
 
     public Instruction fetchData(byte opC) {
-        this.PC = this.getPC();
+        //this.PC = this.getPC();
         instruction.PC = this.PC - 1;
+        //instruction.PC = getPC();
         instruction.opCodes[0] = opC;
         instruction.opCodeCounter = 1;
         //super.fetch(opC);
@@ -138,7 +143,7 @@ assert cpu != null;
         Instruction i = instruction;
         instruction = null;
         instruction = new Instruction();
-        cpu.PC = this.PC; //this.PC = this.getPC();
+        //cpu.PC = this.PC; //this.PC = this.getPC();
         return i;
     }
 

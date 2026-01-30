@@ -345,7 +345,9 @@ public class ZXSpectrumScreen extends JPanel {
  */
 
     public void loadSCRFile(File file) throws IOException {
+        byte[] header = new byte[19]; // Skip TAP header
         try (FileInputStream in = new FileInputStream(file)) {
+            if (in.read(header) != 19) throw new IOException("Error leyendo bitmap");
             if (in.read(bitmap) != 6144) throw new IOException("Error leyendo bitmap");
             if (in.read(attributes) != 768) throw new IOException("Error leyendo atributos");
         }

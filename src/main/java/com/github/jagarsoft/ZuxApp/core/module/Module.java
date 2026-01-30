@@ -8,7 +8,7 @@ public interface Module {
     String getName();
 
     /**
-     * 1st step: Called from Bootstrap.initialize(). Then it calls to configure()
+     * 1st step: Called from BootstrapDebug.initialize(). Then it calls to configure()
      */
     void register(CommandBus commandBus, EventBus eventBus);
 
@@ -19,7 +19,7 @@ public interface Module {
     void configure();
 
     /**
-     * 2nd step: Called from Bootstrap.initialize() after be registered and configured
+     * 2nd step: Called from BootstrapDebug.initialize() after be registered and configured
      */
     void initUI();
 }

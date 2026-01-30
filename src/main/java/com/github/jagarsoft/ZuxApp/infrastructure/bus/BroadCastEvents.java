@@ -21,6 +21,12 @@ public class BroadCastEvents implements IODevice {
     }
 
     @Override
+    public void write(int addr, byte data, int tstate) {
+        ioDev.write(addr, data, tstate);
+        eventBus.publish(new PortWriteEvent(addr, data));
+    }
+
+    @Override
     public byte read(int addr) {
         byte data = ioDev.read(addr);
         eventBus.publish(new PortReadEvent(addr, data));

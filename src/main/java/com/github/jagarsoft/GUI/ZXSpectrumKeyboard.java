@@ -171,6 +171,11 @@ System.out.println("keyReleased:" + e.getKeyCode());
     }
 
     @Override
+    public void write(int addr, byte data, int tstate) {
+        this.write(addr, data);
+    }
+
+    @Override
     public byte read(int addr) {
         int row = ~((addr & 0xFF00) >> 8);
         int k = 0xFF;

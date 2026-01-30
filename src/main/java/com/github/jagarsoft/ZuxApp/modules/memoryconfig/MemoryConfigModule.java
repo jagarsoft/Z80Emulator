@@ -4,6 +4,7 @@ import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJMenuToMenuBarCommand;
+import com.github.jagarsoft.ZuxApp.modules.memoryconfig.commands.GetLoadExecConfiguration;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.commands.GetMemoryConfiguration;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigAcceptedEvent;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigCancelledEvent;
@@ -26,10 +27,14 @@ public class MemoryConfigModule extends BaseModule implements ChangeListener {
     private JRadioButton rb32k;
     private JRadioButton rb64k;
     private JSpinner spinner;
+    private JTextField loadAddrField;
+    private JCheckBox execAddrChkBox;
     private JInternalFrame frame;
     //private long memorySize = 0;
     private int pageSize = 64;
     private long numberPages;
+    private int loadAddr;
+    private boolean execOnLoad;
 
     public MemoryConfigModule(int pageSize, long numberPages) {
         // TODO check values. Use CONSTANT for min/max values
@@ -47,7 +52,14 @@ public class MemoryConfigModule extends BaseModule implements ChangeListener {
         eventBus.subscribe(MemoryConfigAcceptedEvent.class,
                 (Consumer<MemoryConfigAcceptedEvent>) e -> {
                     numberPages = round((Double) spinner.getValue());
-                    eventBus.publish(new MemoryConfigChangedEvent(pageSize, round((Double) spinner.getValue())));
+                    String s = loadAddrField.getText().trim();
+                    if (s.matches("0[xX][A-Fa-f].*")) {
+                        loadAddr = Integer.parseInt(s, 16);
+                    } else {
+                        loadAddr = Integer.parseInt(s, 10);
+                    }
+                    execOnLoad = execAddrChkBox.isSelected();
+                    eventBus.publish(new MemoryConfigChangedEvent(pageSize, round((Double) spinner.getValue()), execOnLoad));
                     frame.setVisible(false);
                 });
         eventBus.subscribe(MemoryConfigCancelledEvent.class,
@@ -59,6 +71,13 @@ public class MemoryConfigModule extends BaseModule implements ChangeListener {
             public void handle(GetMemoryConfiguration command) {
                 command.pageSize = pageSize;
                 command.numberPages = numberPages;
+            }
+        });
+        commandBus.registerHandler(GetLoadExecConfiguration.class, new CommandHandler<GetLoadExecConfiguration>() {
+            @Override
+            public void handle(GetLoadExecConfiguration command) {
+                command.init = loadAddr;
+                command.execOnLoad = execOnLoad;
             }
         });
     }
@@ -132,6 +151,16 @@ public class MemoryConfigModule extends BaseModule implements ChangeListener {
         spinnerPanel.add(new JLabel("(Max. 2^16)"));
 
         panel.add(spinnerPanel);
+
+        // Address
+        JLabel loadAddrLabel = new JLabel("Loading address:");
+        loadAddrField = new JTextField(10);
+        loadAddrField.setText("0");
+        execAddrChkBox = new JCheckBox("Execution address on load");
+
+        panel.add(loadAddrLabel);
+        panel.add(loadAddrField);
+        panel.add(execAddrChkBox);
 
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));

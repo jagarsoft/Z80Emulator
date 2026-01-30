@@ -4,10 +4,14 @@ import com.github.jagarsoft.ZuxApp.core.bus.Command;
 import com.github.jagarsoft.Computer;
 
 public class SetZXSpectrumDeviceBanksCommand implements Command {
+    public long numberPages;
+    public int pageSize;
     private Computer computer;
 
-    public SetZXSpectrumDeviceBanksCommand(Computer computer) {
+    public SetZXSpectrumDeviceBanksCommand(Computer computer, long numberPages, int pageSize) {
         setComputer(computer);
+        this.numberPages = numberPages;
+        this.pageSize = pageSize;
     }
 
     public void setComputer(Computer computer) {

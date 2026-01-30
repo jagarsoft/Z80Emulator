@@ -2,7 +2,9 @@ package com.github.jagarsoft.ZuxApp.modules.zxspectrum;
 
 import com.github.jagarsoft.Memory;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 
 public class VRAM implements Memory {
     public static final int VRAM_ORIGIN = 0x4000;
@@ -45,7 +47,17 @@ public class VRAM implements Memory {
 
     @Override
     public void load(InputStream dataStream, int dest, int size) {
+        //unused
+    }
 
+    @Override
+    public void load(RandomAccessFile dataStream, int dest, int size) {
+        try {
+            dataStream.read(ram, dest-(ZXSpectrumScreen.VRAM_BYTES + ZXSpectrumScreen.ATTR_BYTES), size);
+        } catch (
+                IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

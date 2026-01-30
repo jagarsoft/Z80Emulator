@@ -25,6 +25,7 @@ public class ConsoleModule extends BaseModule {
                     System.out.println(r.name() + ": cambio " + cpu.getReg(r.name()) );
                 }
             }
+            System.out.println("PC: cambio " + cpu.getPC() );
         });
     }
 

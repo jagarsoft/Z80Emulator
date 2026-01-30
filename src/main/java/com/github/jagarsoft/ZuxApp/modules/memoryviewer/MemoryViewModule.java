@@ -16,7 +16,7 @@ public class MemoryViewModule extends BaseModule implements Module {
     @Override
     public void configure() {
         eventBus.subscribe(BinaryImageLoadedEvent.class, (UIEventHandler<BinaryImageLoadedEvent>) (e) -> {
-            memoryModel.dump(e.getComputer(), 0, (int)e.getLength());
+            memoryModel.dump(e.getComputer(), e.getOrigin(), (int)e.getLength());
         });
 
         /*eventBus.subscribe(CpuStateUpdatedEvent.class, (Consumer<CpuStateUpdatedEvent>) ev -> {

@@ -41,7 +41,7 @@ public class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-System.out.println("getKeyCode:" + e.getKeyCode());
+//System.out.println("getKeyCode:" + e.getKeyCode());
         switch(e.getKeyCode()) {
             case VK_1: A11.clear(0); break;
             case VK_2: A11.clear(1); break;
@@ -92,9 +92,50 @@ System.out.println("getKeyCode:" + e.getKeyCode());
             case VK_SHIFT: A15.clear(1); break;
             case VK_SPACE: A15.clear(0); break;
 
+            // Special combinations
             case VK_BACK_SPACE:
                 A8.clear(0);         // Caps Shift
                 A12.clear(0); break; // 0 key
+            case VK_QUOTE:
+                A15.clear(1);        // Shift
+                A13.clear(0);        // P
+                break;
+            case VK_COMMA:
+                A15.clear(1);        // Shift
+                A15.clear(3);        // N
+                break;
+            case VK_PERIOD:
+                A15.clear(1);        // Shift
+                A15.clear(2);        // M
+                break;
+            case VK_SEMICOLON:
+                A15.clear(1);        // Shift
+                A13.clear(1);        // O
+                break;
+            case VK_COLON:
+                A15.clear(1);        // Shift
+                A8.clear(1);         // Z
+                break;
+            case VK_LEFT:
+            case VK_KP_LEFT:
+                A8.clear(0);         // Caps Shift
+                A11.clear(4);        // 5
+                break;
+            case VK_DOWN:
+            case VK_KP_DOWN:
+                A8.clear(0);         // Caps Shift
+                A12.clear(4);        // 6
+                break;
+            case VK_UP:
+            case VK_KP_UP:
+                A8.clear(0);         // Caps Shift
+                A12.clear(3);        // 7
+                break;
+            case VK_RIGHT:
+            case VK_KP_RIGHT:
+                A8.clear(0);        // Caps Shift
+                A12.clear(2);       // 8
+                break;
 
             /*default:
                 forgetKeys();*/
@@ -103,7 +144,7 @@ System.out.println("getKeyCode:" + e.getKeyCode());
     
     @Override
     public void keyReleased(KeyEvent e) {
-System.out.println("keyReleased:" + e.getKeyCode());
+//System.out.println("keyReleased:" + e.getKeyCode());
         switch(e.getKeyCode()) {
             case VK_1: A11.set(0); break;
             case VK_2: A11.set(1); break;
@@ -154,9 +195,54 @@ System.out.println("keyReleased:" + e.getKeyCode());
             case VK_SHIFT: A15.set(1); break;
             case VK_SPACE: A15.set(0); break;
 
+            // Special combinations
             case VK_BACK_SPACE:
-                A8.set(0);         // Caps Shift
-                A12.set(0); break; // 0 key
+                A8.set(0);           // Caps Shift
+                A12.set(0);          // 0 key
+                break;
+            case VK_QUOTE:
+                A15.set(1);         // Shift
+                A13.set(0);         // P
+                break;
+            case VK_COMMA:
+                A15.set(1);        // Shift
+                A15.set(3);       // N
+                break;
+            case VK_PERIOD:
+                A15.set(1);        // Shift
+                A15.set(2);       // M
+                break;
+            case VK_SEMICOLON:
+                A15.set(1);        // Shift
+                A13.set(1);        // O
+                break;
+            case VK_COLON:
+                A15.set(1);        // Shift
+                A8.set(1);         // Z
+                break;
+            case VK_LEFT:
+            case VK_KP_LEFT:
+                A8.set(0);        // Caps Shift
+                A11.set(4);       // 5
+                break;
+            case VK_DOWN:
+            case VK_KP_DOWN:
+                A8.set(0);        // Caps Shift
+                A12.set(4);       // 6
+                break;
+            case VK_UP:
+            case VK_KP_UP:
+                A8.set(0);        // Caps Shift
+                A12.set(3);       // 7
+                break;
+            case VK_RIGHT:
+            case VK_KP_RIGHT:
+                A8.set(0);        // Caps Shift
+                A12.set(2);       // 8
+                break;
+
+
+
 
             /*default:
                 forgetKeys();*/
@@ -166,6 +252,11 @@ System.out.println("keyReleased:" + e.getKeyCode());
     @Override
     public void write(int addr, byte data) {
         Logger.write("keyboard was written!: " + addr + " " + data);
+    }
+
+    @Override
+    public void write(int addr, byte data, int tstate) {
+        this.write(addr, data);
     }
 
     @Override
@@ -187,7 +278,6 @@ if( k != 0x1F ) {
     System.out.println("ZXSpectrumKeyboard.mask:" + Integer.toHexString(mask));
     System.out.println("k:" + Integer.toHexString(k));
 }
-
         return (byte) (k & 0x0FF);
     }
 
@@ -231,12 +321,13 @@ if( k != 0x1F ) {
         if(( row & (~0x7F) & 0xFF) != 0 )
             k &= A15.toByteArray()[0];
 
+/* SOLO PARA VER QUE TECLA PULSO
 if( k != 0x1F ) {
     System.out.println("ZXSpectrumKeyboard.read:"+Integer.toHexString(addr));
     System.out.println("ZXSpectrumKeyboard.row:"+Integer.toHexString(row));
     System.out.println("k:"+Integer.toHexString(k));
     // forgetKeys();
-}
+}*/
         return (byte) k;
     }
 
