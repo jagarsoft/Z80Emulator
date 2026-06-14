@@ -5,13 +5,13 @@ import com.github.jagarsoft.Instruction;
 import com.github.jagarsoft.Z80Disassembler;
 import com.github.jagarsoft.ZuxApp.core.bus.UIEventHandler;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
+import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
 import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegion;
 import com.github.jagarsoft.ZuxApp.modules.dataregion.events.DataBlockMapLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.CpuStateUpdatedEvent;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.BinaryImageLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.disassembler.events.BreakpointToggledEvent;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
-import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigChangedEvent;
 import com.github.jagarsoft.ZuxApp.modules.disassembler.events.StepEvent;
 
 import javax.swing.*;
@@ -78,10 +78,10 @@ public class DisassemblerModule extends BaseModule {
         });
 
         // Log every single instruction stepped
-        /* eventBus.subscribe(StepEvent.class, (Consumer<StepEvent>) (ev) -> {
+        eventBus.subscribe(StepEvent.class, (Consumer<StepEvent>) (ev) -> {
             Instruction instruction = disassemblyModel.getInstructionByPC(ev.getPC());
             System.out.println(instruction.toString());
-        });*/
+        });
     }
 
     private void list(Computer comp, int org, long size) {
@@ -98,8 +98,14 @@ public class DisassemblerModule extends BaseModule {
         disassembler.setOrigin(org);
         int processed = 0;
         int lastProcessed = processed;
-        if( disassemblyModel.getInstructionByPC(org) != null )
-            processed = disassemblyModel.getInstructionByPC(org).index;
+        Instruction firstInst = disassemblyModel.getInstructionByPC(org);
+        if( firstInst != null ) { // There are code in these rows
+            processed = firstInst.index;
+            disassemblyModel.removeFrom(org);
+            disassemblyModel.fireTableDataChanged();
+            size = 0x1_0000 - org; // rest of RAM
+            firstInst.hasBreakPoint = true;
+        }
         do {
             final int pc = disassembler.getPC();
             final Instruction instruction = disassembler.fetchInstruction();
@@ -172,6 +178,23 @@ searchField.setName("symbolSearchField");
 
         frame.setSize(500, 300);
         frame.setLocation(10, 10);
+
+        // Pop-up menu
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem updateItem = new JMenuItem("Update Instruction");
+        updateItem.addActionListener(e -> {
+            int row = disassemblyTable.getSelectedRow();
+            if (row >= 0) {
+                int address = disassemblyModel.getInstruction(row).getAddress();
+                int size = 0x1_0000 - address; // update all rows
+                GetComputerCommand computerCommand = new GetComputerCommand();
+                commandBus.execute(computerCommand);
+                Computer computer = computerCommand.getComputer();
+                eventBus.publish(new BinaryImageLoadedEvent(computer, address, size));
+            }
+        });
+        popupMenu.add(updateItem);
+        disassemblyTable.setComponentPopupMenu(popupMenu);
 
         this.commandBus.execute(new AddJInternalFrameToDesktopPaneCommand(frame));
         frame.setVisible(true);

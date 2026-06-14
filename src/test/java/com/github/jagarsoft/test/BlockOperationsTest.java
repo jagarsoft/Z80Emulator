@@ -1,6 +1,7 @@
 package com.github.jagarsoft.test;
 
 import com.github.jagarsoft.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,15 +41,17 @@ public class BlockOperationsTest {
         cpu.fetch(); // ED prefix + LDI
 
         assertAll("LDI Group",
-                () -> assertEquals((short) 0x1001, cpu.getHL(), "LDI Failed: HL not incremented. HL="+Integer.toHexString(cpu.getHL())),
-                () -> assertEquals((short) 0x1101, cpu.getDE(), "LDI Failed: DE not incremented. DE="+Integer.toHexString(cpu.getDE())),
-                () -> assertEquals((short) 0x0000, cpu.getBC(), "LDI Failed: BC not decremented. BC="+Integer.toHexString(cpu.getBC())),
+                () -> assertEquals((short) 0x1001, cpu.getHL(), "LDI Failed: HL not incremented. HL=" + Integer.toHexString(cpu.getHL())),
+                () -> assertEquals((short) 0x1101, cpu.getDE(), "LDI Failed: DE not incremented. DE=" + Integer.toHexString(cpu.getDE())),
+                () -> assertEquals((short) 0x0000, cpu.getBC(), "LDI Failed: BC not decremented. BC=" + Integer.toHexString(cpu.getBC())),
                 () -> assertEquals((byte) 0xAA, compTest.peek(0x1100), "LDI Failed: Data not copied"),
                 () -> assertNotEquals((byte) 0x00, compTest.peek(0x1100), "LDI Failed: Dest still 0x00"),
                 () -> assertFalse(cpu.getPF(), "LDI Failed: PF Flag incorrectly set when BC=0"),
                 () -> assertFalse(cpu.getNF(), "LDI Failed: N Flag incorrectly set"),
                 () -> assertFalse(cpu.getHF(), "LDI Failed: H Flag incorrectly set")
         );
+
+        fail("setPF");
     }
 
     @Test
@@ -71,15 +74,17 @@ public class BlockOperationsTest {
         cpu.fetch(); // ED prefix + LDD
 
         assertAll("LDD Group",
-                () -> assertEquals((short) 0x0FFF, cpu.getHL(), "LDD Failed: HL not decremented. HL="+Integer.toHexString(cpu.getHL())),
-                () -> assertEquals((short) 0x10FF, cpu.getDE(), "LDD Failed: DE not decremented. DE="+Integer.toHexString(cpu.getDE())),
-                () -> assertEquals((short) 0x0001, cpu.getBC(), "LDD Failed: BC not decremented. BC="+Integer.toHexString(cpu.getBC())),
+                () -> assertEquals((short) 0x0FFF, cpu.getHL(), "LDD Failed: HL not decremented. HL=" + Integer.toHexString(cpu.getHL())),
+                () -> assertEquals((short) 0x10FF, cpu.getDE(), "LDD Failed: DE not decremented. DE=" + Integer.toHexString(cpu.getDE())),
+                () -> assertEquals((short) 0x0001, cpu.getBC(), "LDD Failed: BC not decremented. BC=" + Integer.toHexString(cpu.getBC())),
                 () -> assertEquals((byte) 0xBB, compTest.peek(0x1100), "LDD Failed: Data not copied"),
                 () -> assertNotEquals((byte) 0x00, compTest.peek(0x1100), "LDD Failed: Dest still 0x00"),
                 () -> assertTrue(cpu.getPF(), "LDD Failed: PF Flag not set when BC>0"),
                 () -> assertFalse(cpu.getNF(), "LDD Failed: N Flag incorrectly set"),
                 () -> assertFalse(cpu.getHF(), "LDD Failed: H Flag incorrectly set")
         );
+
+        fail("resPF");
     }
 
     @Test
@@ -110,9 +115,9 @@ public class BlockOperationsTest {
         cpu.fetch(); // ED prefix + LDIR
 
         assertAll("LDIR Group",
-                () -> assertEquals((short) 0x1005, cpu.getHL(), "LDIR Failed: HL not incremented. HL="+Integer.toHexString(cpu.getHL())),
-                () -> assertEquals((short) 0x1105, cpu.getDE(), "LDIR Failed: DE not incremented. DE="+Integer.toHexString(cpu.getDE())),
-                () -> assertEquals((short) 0x0000, cpu.getBC(), "LDIR Failed: BC not decremented. BC="+Integer.toHexString(cpu.getBC())),
+                () -> assertEquals((short) 0x1005, cpu.getHL(), "LDIR Failed: HL not incremented. HL=" + Integer.toHexString(cpu.getHL())),
+                () -> assertEquals((short) 0x1105, cpu.getDE(), "LDIR Failed: DE not incremented. DE=" + Integer.toHexString(cpu.getDE())),
+                () -> assertEquals((short) 0x0000, cpu.getBC(), "LDIR Failed: BC not decremented. BC=" + Integer.toHexString(cpu.getBC())),
                 () -> assertEquals((byte) 0xA0, compTest.peek(0x1100), "LDIR Failed: Data not copied"),
                 () -> assertEquals((byte) 0xA1, compTest.peek(0x1101), "LDIR Failed: Data not copied"),
                 () -> assertEquals((byte) 0xA2, compTest.peek(0x1102), "LDIR Failed: Data not copied"),
@@ -157,9 +162,9 @@ public class BlockOperationsTest {
         cpu.fetch(); // ED prefix + LDRR
 
         assertAll("LDDR Group",
-                () -> assertEquals((short) 0x0FFF, cpu.getHL(), "LDDR Failed: HL not decremented. HL="+Integer.toHexString(cpu.getHL())),
-                () -> assertEquals((short) 0x10FF, cpu.getDE(), "LDDR Failed: DE not decremented. DE="+Integer.toHexString(cpu.getDE())),
-                () -> assertEquals((short) 0x0000, cpu.getBC(), "LDDR Failed: BC not decremented. BC="+Integer.toHexString(cpu.getBC())),
+                () -> assertEquals((short) 0x0FFF, cpu.getHL(), "LDDR Failed: HL not decremented. HL=" + Integer.toHexString(cpu.getHL())),
+                () -> assertEquals((short) 0x10FF, cpu.getDE(), "LDDR Failed: DE not decremented. DE=" + Integer.toHexString(cpu.getDE())),
+                () -> assertEquals((short) 0x0000, cpu.getBC(), "LDDR Failed: BC not decremented. BC=" + Integer.toHexString(cpu.getBC())),
                 () -> assertEquals((byte) 0xA0, compTest.peek(0x1100), "LDDR Failed: Data not copied"),
                 () -> assertEquals((byte) 0xA1, compTest.peek(0x1101), "LDDR Failed: Data not copied"),
                 () -> assertEquals((byte) 0xA2, compTest.peek(0x1102), "LDDR Failed: Data not copied"),
@@ -201,6 +206,8 @@ public class BlockOperationsTest {
                 () -> assertFalse(cpu.getPF(), "CPI Failed: PF Flag incorrectly set when BC=0"),
                 () -> assertTrue(cpu.getNF(), "CPI Failed: N Flag not set")
         );
+
+        fail("setPF");
     }
 
     @Test
@@ -228,10 +235,13 @@ public class BlockOperationsTest {
                 () -> assertTrue(cpu.getPF(), "CPD Failed: PF Flag not set when BC>0"),
                 () -> assertTrue(cpu.getNF(), "CPD Failed: N Flag not set")
         );
+
+        fail("resPF");
     }
 
-    //@Test
-    void SKIPtestCPIR() {
+    @Test
+    @Disabled("TODO")
+    void testCPIR() {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
@@ -241,12 +251,12 @@ public class BlockOperationsTest {
 
         String str = "Hello World";
         final int len = str.length();
-        char[] chars = new char[len+1];
+        char[] chars = new char[len + 1];
         str.getChars(0, len, chars, 0);
         chars[len] = 0;
 
-        for(int i=0; i<len+1; i++) {
-            compTest.poke(0x1000+i, (byte) chars[i]);
+        for (int i = 0; i < len + 1; i++) {
+            compTest.poke(0x1000 + i, (byte) chars[i]);
         }
         compTest.dump(0x1000, len);
 
@@ -259,12 +269,68 @@ public class BlockOperationsTest {
         cpu.fetch(); // ED prefix + CPI
 
         assertAll("CPIR Group",
-                () -> assertEquals((short) 0x1000+len, cpu.getHL(), "CPIR Failed: HL not incremented"),
+                () -> assertEquals((short) 0x1000 + len, cpu.getHL(), "CPIR Failed: HL not incremented"),
                 () -> assertEquals((short) 0x0000, cpu.getBC(), "CPIR Failed: BC not decremented"),
                 () -> assertTrue(cpu.getZF(), "CPIR Failed: Z Flag not set when match found"),
                 () -> assertFalse(cpu.getPF(), "CPIR Failed: PF Flag incorrectly set when BC=0"),
                 () -> assertTrue(cpu.getNF(), "CPIR Failed: N Flag not set")
         );
+    }
+
+    @Test
+    @Disabled("TODO")
+    void testCPDR() {}
+
+    /*
+    @Override
+     public void INI() {
+         // TODO
+         System.out.println("INI implementation pending");
+     }
+ 
+ 	@Override
+     public void IND() {
+         // TODO
+         System.out.println("IND implementation pending");
+     }
+ 
+ 	@Override
+     public void INIR() {
+         // TODO
+         System.out.println("INIR implementation pending");
+     }
+ 
+ 	@Override
+     public void INDR() {
+         // TODO
+         System.out.println("INDR implementation pending");
+     }
+ 
+ 	@Override
+     public void OUTI() {
+         // TODO
+         System.out.println("OUTI implementation pending");
+     }
+ 
+ 	@Override
+     public void OUTD() {
+         // TODO
+         System.out.println("OUTD implementation pending");
+     }
+ 
+ 	@Override
+     public void OTIR() {
+         // TODO
+         System.out.println("OTIR implementation pending");
+     }
+ 
+ 	@Override
+     public void OTDR() {
+         // TODO
+         System.out.println("OTDR implementation pending");
+     }
+     */
+}
         //org.opentest4j.AssertionFailedError: CPIR Failed: Z Flag not set when match found ==>
         //Expected :true
         //Actual   :false
@@ -306,5 +372,3 @@ public class BlockOperationsTest {
         SUB_IY_d
 
                  */
-    }
-}

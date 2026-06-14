@@ -6,19 +6,18 @@ import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.ComputerLoadImageCommand;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
-import com.github.jagarsoft.ZuxApp.modules.computer.commands.LoadRawCodeAndRunCommand;
-import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegionModule;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.BinaryImageLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.logger.events.LogEvent;
-import com.github.jagarsoft.ZuxApp.modules.memoryconfig.commands.GetLoadExecConfiguration;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.commands.GetMemoryConfiguration;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.events.MemoryConfigChangedEvent;
-import com.github.jagarsoft.ZuxApp.modules.zxspectrum.commands.SetZXSpectrumDeviceBanksCommand;
+import com.github.jagarsoft.ZuxApp.modules.tape.PathUtils;
+import com.github.jagarsoft.ZuxApp.modules.tape.RAFSeekable;
+import com.github.jagarsoft.ZuxApp.modules.tape.TAP;
+import com.github.jagarsoft.ZuxApp.modules.zux.SetZuxDeviceBanksCommand;
 
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.net.URISyntaxException;
 import java.util.function.Consumer;
 
 public class ComputerModule extends BaseModule {
@@ -58,8 +57,11 @@ public class ComputerModule extends BaseModule {
             computer.addMemory(bank * pageSizeK, new RAMMemory(pageSizeK));
         }*/
 
-        SetZXSpectrumDeviceBanksCommand command = new SetZXSpectrumDeviceBanksCommand(computer,
-                                                                memConfiguration.numberPages, memConfiguration.pageSize);
+        /*SetZXSpectrumDeviceBanksCommand command = new SetZXSpectrumDeviceBanksCommand(computer,
+                                                                memConfiguration.numberPages, memConfiguration.pageSize);*/
+        SetZuxDeviceBanksCommand command = new SetZuxDeviceBanksCommand(computer,
+                memConfiguration.numberPages, memConfiguration.pageSize);
+
         commandBus.execute(command);
     }
 
@@ -89,6 +91,7 @@ public class ComputerModule extends BaseModule {
         commandBus.registerHandler(GetComputerCommand.class, new CommandHandler<GetComputerCommand>() {
             @Override
             public void handle(GetComputerCommand command) {
+                computer.setEventBus(eventBus);
                 command.setComputer(computer);
                 //command.setCpu(cpu);
             }
@@ -101,6 +104,17 @@ public class ComputerModule extends BaseModule {
                 File file = command.file;
                 int size;
 
+                String extension = PathUtils.getExtension(file.getName());
+
+                if( extension.equals("tap") ) {
+                    try {
+                        loadTAP(file.getAbsolutePath());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
+
                 try {
                     dataStream = new FileInputStream(file);
                 } catch (IOException e) {
@@ -112,23 +126,25 @@ public class ComputerModule extends BaseModule {
                     size = computer.getMemorySize();
                 if( size > computer.getMemorySize() ) {
                     //eventBus.publish(new ImageExceedsMemory(size, computer.getMemorySize()));
-                    System.out.println("ImageExceedsMemory " + size + " > " + computer.getMemorySize());
+                    System.out.println("A:ImageExceedsMemory " + size + " > " + computer.getMemorySize());
                     return;
                 }
 
-                GetLoadExecConfiguration loadExecCommand = new GetLoadExecConfiguration();
-                commandBus.execute(loadExecCommand);
+                /*GetLoadExecConfiguration loadExecCommand = new GetLoadExecConfiguration();
+                commandBus.execute(loadExecCommand);*/
 
                 try {
                     //computer.load(dataStream, size);
-                    computer.loadBytes(dataStream, loadExecCommand.init, size);
+                    computer.loadBytes(dataStream, 0, size); // loadExecCommand.init
                     dataStream.close();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
 
-                if( loadExecCommand.execOnLoad )
+                /*if( loadExecCommand.execOnLoad ) {
+                    computer.setEventBus(eventBus);
                     computer.setPC(loadExecCommand.init);
+                }*/
 
                 //eventBus.publish(new ImageLoadedEvent(computer, size));
                 /*computer.poke(0x0F44, (byte) 0);
@@ -137,11 +153,11 @@ public class ComputerModule extends BaseModule {
                 //computer.poke(0x1303, (byte) 0); // Overwrite HALT TODO interrupts must continue
 
                 // AQUI TODO delegar en ComputerLoadImageCommand si la carga tiene exito
-                eventBus.publish(new BinaryImageLoadedEvent(computer, loadExecCommand.init, size));
+                eventBus.publish(new BinaryImageLoadedEvent(computer, 0, size)); // loadExecCommand.init
             }
         });
 
-        commandBus.registerHandler(LoadRawCodeAndRunCommand.class, new CommandHandler<LoadRawCodeAndRunCommand>() {
+        /*commandBus.registerHandler(LoadRawCodeAndRunCommand.class, new CommandHandler<LoadRawCodeAndRunCommand>() {
             @Override
             public void handle(LoadRawCodeAndRunCommand command) {
                 FileInputStream dataStream;
@@ -157,7 +173,7 @@ public class ComputerModule extends BaseModule {
                 size = (int)file.length();
                 if( size > computer.getMemorySize() ) {
                     //eventBus.publish(new ImageExceedsMemory(size, computer.getMemSize()));
-                    System.out.println("ImageExceedsMemory " + size + " " + computer.getBankSize());
+                    System.out.println("B:ImageExceedsMemory " + size + " " + computer.getBankSize());
                     return;
                 }
 
@@ -172,12 +188,36 @@ public class ComputerModule extends BaseModule {
                 //eventBus.publish(new ImageLoadedEvent(computer, size));
                 /*computer.poke(0x0F44, (byte) 0);
                 computer.poke(0x0F45, (byte) 0);
-                computer.poke(0x0F46, (byte) 0);*/
+                computer.poke(0x0F46, (byte) 0)
 
                 //computer.getCPU().setHL((short)org);
                 //computer.getCPU().JP_HL();
             }
-        });
+        });*/
+    }
+
+    private void loadTAP(String fileName) throws IOException, URISyntaxException {
+        TAP tap = new TAP();
+        RAFSeekable raf = tap.loadTAP(fileName);
+        /*FileDescriptor fd = raf.raf.getFD();
+        FileInputStream fis = new FileInputStream(fd);*/
+
+        do {
+            int init = tap.h.parameter1;
+            int offset = tap.h.parameter2;
+            long size = tap.h.lengthDataBlock;
+            try {
+                raf.getShortLE(); // skip len TAP
+                raf.getByte(); // skip type
+                computer.loadBytes(raf.raf, init, offset, size);
+                raf.getByte(); // skip checksum
+
+                // AQUI TODO delegar en ComputerLoadImageCommand si la carga tiene exito
+                eventBus.publish(new BinaryImageLoadedEvent(computer, init, size)); // loadExecCommand.init
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } while(tap.getNextComponent(raf));
     }
 
     @Override

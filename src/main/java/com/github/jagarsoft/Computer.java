@@ -29,17 +29,24 @@ public class Computer {
         cpu.PC = origin;
     }
 
+    /**
+     * Optimized main loop with frame-based timing.
+     * Executes instructions until frame completion, then handles timing synchronization.
+     */
     public void run(){
         new Thread(()->{
-            for (;;) {
-            /* debugger purpose only
-            int pc = cpu.getPC();
-            byte opC = this.peek(pc);
-//Logger.info("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC));
-            cpu.fetch(opC); // fetch opCode
-            //if( opC == 0x76) break; // is HALT?
-             */
-                cpu.fetch();
+            while (true) {
+                // Execute instructions until frame is complete
+                // The Z80 will handle timing and interrupts internally
+                for (int i = 0; i < 1000 && !Thread.currentThread().isInterrupted(); i++) {
+                    cpu.fetch();
+                    
+                    // Let the CPU handle its own timing - it will sync at frame boundaries
+                    // This reduces the overhead of constant timing checks
+                }
+                
+                // Give other threads a chance to run
+                Thread.yield();
             }
         }).start();
     }
@@ -135,7 +142,8 @@ public class Computer {
         if( ioBanks.containsKey(addr) ) {
             return ioBanks.get(addr /*& 0xFF*/).read(addr);
         } else
-            return (byte) 0xFF; // Pull-up!
+            //return (byte) 0xFF; // Pull-up!
+            return (byte) 0xBF; // Pull-up!
     }
 
     public void write(short addr, byte data) {
@@ -146,6 +154,8 @@ public class Computer {
     public void write(short addr, byte data, int tstate) {
         if( ioBanks.containsKey(addr) )
             ioBanks.get(addr /*& 0x00FF*/).write(addr /*& 0x00FF*/, data, tstate);
+        else
+            System.out.println("No such bank address " + String.format("%04X", addr));
     }
 
     public void load(InputStream dataStream) throws IOException {
@@ -208,10 +218,10 @@ assert dataStream != null;
     }
 
     public void loadBytes(RandomAccessFile dataStream, int init, long length) throws IOException {
-        assert dataStream != null;
+assert dataStream != null;
 
         if( init < 0 )
-            init *= -1;
+            init &= 0x0FFFF;
 
         int bank_size = banks.get(base2key(0)).getSize();
 
@@ -219,7 +229,7 @@ assert dataStream != null;
             long left_to_load = length; // sentinel = end condition
             int base = base2key(init);
             if( base < 0 )
-                base *= -1;
+                base &= 0x0FFFF;
             Memory bank = banks.get(base);
 assert bank != null;
             int relative = init - base; // != 0 for 1st bank only, else 0
@@ -233,6 +243,35 @@ assert bank != null;
             length -= left_to_load;
             init += left_to_load; // next bank
         } while(true); // length > 0
+    }
+
+    // load TAPs
+    public void loadBytes(RandomAccessFile dataStream, int init, int relative, long length) throws IOException {
+        assert dataStream != null;
+
+        if( init < 0 )
+            init &= 0x0FFFF;
+
+        //int bank_size = banks.get(base2key(0)).getSize();
+
+        //do {
+            /*long left_to_load = length; // sentinel = end condition
+            int base = base2key(init);
+            if( base < 0 )
+                base &= 0x0FFFF;*/
+            Memory bank = banks.get(init);
+            assert bank != null;
+            //int relative = init - base; // != 0 for 1st bank only, else 0
+            //if (relative + length > bank_size)
+            //    left_to_load = bank_size - relative;
+
+            bank.load(dataStream, relative, (int)length);
+/*
+            if (left_to_load == length) return;
+
+            length -= left_to_load;
+            init += left_to_load; // next bank
+        } while(true); // length > 0*/
     }
 
     public boolean isSameBank(short org, short dst, short cont) {

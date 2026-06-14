@@ -36,7 +36,7 @@ public class VRAM implements Memory {
         } else if ( addr < ZXSpectrumScreen.VRAM_BYTES + ZXSpectrumScreen.ATTR_BYTES) { // attr map
             return screen.peekAttribute(addr - ZXSpectrumScreen.VRAM_BYTES);
         } else
-            return ram[addr-(ZXSpectrumScreen.VRAM_BYTES + ZXSpectrumScreen.ATTR_BYTES)];
+            return ram[addr-(ZXSpectrumScreen.VRAM_BYTES + ZXSpectrumScreen.ATTR_BYTES)]; // rest of the bank
 
     }
 
@@ -53,9 +53,14 @@ public class VRAM implements Memory {
     @Override
     public void load(RandomAccessFile dataStream, int dest, int size) {
         try {
-            dataStream.read(ram, dest-(ZXSpectrumScreen.VRAM_BYTES + ZXSpectrumScreen.ATTR_BYTES), size);
-        } catch (
-                IOException e) {
+            /*if( addr < ZXSpectrumScreen.VRAM_BYTES) { // pixels map
+                screen.pokeBitmap(addr, data);
+            } else*/ if ( dest < ZXSpectrumScreen.VRAM_BYTES + ZXSpectrumScreen.ATTR_BYTES) { // attr map
+                screen.loadSCREEN(dataStream, dest, size);
+            } else // rest of the bank
+                dataStream.read(ram, dest-(ZXSpectrumScreen.VRAM_BYTES + ZXSpectrumScreen.ATTR_BYTES), size);
+        } catch (/*IO*/Exception e) {
+            System.out.println("dest="+dest+", size="+size);
             throw new RuntimeException(e);
         }
     }

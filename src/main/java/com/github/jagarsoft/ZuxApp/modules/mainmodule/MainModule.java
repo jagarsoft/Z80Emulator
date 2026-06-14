@@ -1,10 +1,8 @@
 package com.github.jagarsoft.ZuxApp.modules.mainmodule;
 
 import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
-import com.github.jagarsoft.ZuxApp.infrastructure.FIleBrowser;
+import com.github.jagarsoft.ZuxApp.infrastructure.FileBrowser;
 import com.github.jagarsoft.ZuxApp.infrastructure.MenuUtils;
-import com.github.jagarsoft.ZuxApp.modules.computer.commands.LoadRawCodeAndRunCommand;
-import com.github.jagarsoft.ZuxApp.modules.debugger.commands.DebuggerPauseCommand;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJMenuItemToMenuCommand;
@@ -14,8 +12,6 @@ import com.github.jagarsoft.ZuxApp.modules.mainmodule.events.FileBinaryImageSele
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,7 +72,7 @@ public class MainModule extends BaseModule {
     public void initUI() {
         JFrame frame = new JFrame("Z80 Emulation Workbench");
         frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        frame.setSize(800, 700);
+        frame.setSize(900, 700);
         frame.setLocationRelativeTo(null);
 
         frame.setLayout(new BorderLayout());
@@ -89,7 +85,7 @@ public class MainModule extends BaseModule {
         menuEntries.put("File", fileMenu);
 
         JMenuItem openFileItem = new JMenuItem("Load binary image...");
-        openFileItem.addActionListener(new FIleBrowser(eventBus, new FileBinaryImageSelectedEvent()) );
+        openFileItem.addActionListener(new FileBrowser(eventBus, new FileBinaryImageSelectedEvent()) );
 
         //JMenuItem openFileCode = new JMenuItem("Load raw code..."); // TODO pending remove
         //openFileCode.addActionListener(rawCodeInit());

@@ -236,7 +236,7 @@ public class DebuggerModule extends BaseModule {
         runDebugger();
         while (running.get() && (stopOnHALT ? !cpu.isHalted() : true) ) {
             int pc = cpu.getPC();
-            if ( ! isBreakpointHit(pc) && ! isDataRegion(pc) )
+            if ( ! isBreakpointHit(pc) /*&& ! isDataRegion(pc)*/ )
                 cpu.step();
             else
                 break;

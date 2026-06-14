@@ -21,6 +21,7 @@ public class BranchTest {
         cpu.setPC(0x0002);
         cpu.setSP((short) 0x0002);
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xCD); // CALL 0xFF00
 
         assertAll("CALL nn Group",
@@ -34,7 +35,9 @@ public class BranchTest {
                 () -> assertEquals((byte) 0x04, compTest.peek(0x0000), "CALL 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
 
                 () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL 0xFF00 Failed (SP+1)="+ Integer.toHexString(compTest.peek(0x0001))),
-                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000)))
+                () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL 0xFF00 Failed (SP)="+ Integer.toHexString(compTest.peek(0x0000))),
+                
+                () -> assertEquals(17, cpu.getTState()-initTState, "CALL nn TState Failed")
         );
     }
 
@@ -55,6 +58,7 @@ public class BranchTest {
 
         cpu.resZF();
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xC4); // CALL NZ, 0xFF00
 
         assertAll("CALL cc[y], nn Group",
@@ -68,7 +72,9 @@ public class BranchTest {
                 () -> assertEquals((byte) 0x00, compTest.peek(0x0001), "CALL NZ, 0xFF00 Failed (SP-1)="+ Integer.toHexString(compTest.peek(0x0001))),
 
                 () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "CALL NZ, 0xFF00 Failed (SP-2)="+ Integer.toHexString(compTest.peek(0x0000))),
-                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL NZ, 0xFF00 Failed (SP-1)="+ Integer.toHexString(compTest.peek(0x0001)))
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "CALL NZ, 0xFF00 Failed (SP-1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                
+                () -> assertEquals(17, cpu.getTState()-initTState, "CALL NZ TState Failed")
         );
 
         cpu.setPC(0x0002);
@@ -233,11 +239,13 @@ public class BranchTest {
 
         cpu.setZF();
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xC4); // CALL NZ, 0xFF00
 
         assertAll("CALL cc[y], nn Group",
                 () -> assertEquals((short)0x0002, cpu.getPC(), "CALL NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
-                () -> assertNotEquals(0x0FF00, cpu.getPC(), "CALL NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+                () -> assertNotEquals(0x0FF00, cpu.getPC(), "CALL NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertEquals(1, cpu.getTState()-initTState, "CALL NZ, 0xFF00 TState Failed")
         );
 
         cpu.setPC(0x0000);
@@ -331,11 +339,13 @@ public class BranchTest {
         cpu.setB((byte) 0xFF);
         cpu.setPC(0x0001);
 
+        long initTState = cpu.getTState();
         cpu.DJNZ();
 
         assertAll("DJNZ Group",
                 () -> assertEquals((byte) 0xFE, cpu.getB(), "DJNZ Failed: B<>0 (B=" + cpu.getB() + ")"),
-                () -> assertEquals(0x0001, cpu.getPC(), "DJNZ Failed: PC was not modified (PC=" + cpu.getPC() + ")")
+                () -> assertEquals(0x0001, cpu.getPC(), "DJNZ Failed: PC was not modified (PC=" + cpu.getPC() + ")"),
+                () -> assertEquals(13, cpu.getTState()-initTState, "DJNZ TState Failed")
         );
     }
 
@@ -351,11 +361,13 @@ public class BranchTest {
         cpu.setB((byte) 1);
         cpu.setPC(0x0001);
 
+        long initTState = cpu.getTState();
         cpu.DJNZ();
 
         assertAll("DJNZ Group",
                 () -> assertEquals(0, cpu.getB(), "DJNZ Failed: B=0 (B=" + cpu.getB() + ")"),
-                () -> assertEquals(0x0002, cpu.getPC(), "DJNZ Failed: PC was modified (PC=" + cpu.getPC() + ")")
+                () -> assertEquals(0x0002, cpu.getPC(), "DJNZ Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertEquals(8, cpu.getTState()-initTState, "DJNZ TState Failed")
         );
     }
 
@@ -370,9 +382,13 @@ public class BranchTest {
 
         cpu.setPC(0x0001);
 
+        long initTState = cpu.getTState();
         cpu.JR();
 
-        assertEquals(0x0001, cpu.getPC(), "JR Failed: PC was not modified (PC=" + cpu.getPC() + ")");
+        assertAll("JR Group",
+                () -> assertEquals(0x0001, cpu.getPC(), "JR Failed: PC was not modified (PC=" + cpu.getPC() + ")"),
+                () -> assertEquals(12, cpu.getTState()-initTState, "JR TState Failed")
+        );
     }
 
     @Test
@@ -387,9 +403,11 @@ public class BranchTest {
         cpu.setPC(0x0001);
         cpu.resZF();
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0x20); // JR NZ
 
         assertEquals(0x0001, cpu.getPC(), "JR NZ Failed: PC was not modified (PC=" + cpu.getPC() + ")");
+        assertEquals(12, cpu.getTState()-initTState, "LD A, I TState Failed");
 
         cpu.setPC(0x0001);
         cpu.setZF();
@@ -425,9 +443,11 @@ public class BranchTest {
         cpu.setPC(0x0001);
         cpu.setZF();
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0x20); // JR NZ
 
         assertEquals(0x0002, cpu.getPC(), "JR NZ Failed: PC was modified (PC=" + cpu.getPC() + ")");
+        assertEquals(7, cpu.getTState()-initTState, "JR NZ TState Failed");
 
         cpu.setPC(0x0001);
         cpu.resZF();
@@ -465,11 +485,13 @@ public class BranchTest {
 
         cpu.resZF();
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xC2); // JP NZ, 0xFF00
 
         assertAll("JP cc[y], nn Group",
                 () -> assertEquals(0x0FF00, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
-                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertEquals(10, cpu.getTState()-initTState, "JP NZ TState Failed")
         );
 
         cpu.setPC(0x0000);
@@ -562,11 +584,13 @@ public class BranchTest {
 
         cpu.setPC(0x0000);
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xC3); // JP 0xFF00
 
         assertAll("JP nn Group",
                 () -> assertEquals(0x0FF00, cpu.getPC(), "JP 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
-                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+                () -> assertNotEquals((short)0x0002, cpu.getPC(), "JP 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertEquals(10, cpu.getTState()-initTState, "JP nn TState Failed")
         );
     }
 
@@ -584,11 +608,13 @@ public class BranchTest {
 
         cpu.setZF();
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xC2); // JP NZ, 0xFF00
 
         assertAll("JP cc[y], nn Group",
                 () -> assertEquals((short)0x0002, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
-                () -> assertNotEquals(0x0FF00, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")")
+                () -> assertNotEquals(0x0FF00, cpu.getPC(), "JP NZ, 0xFF00 Failed: PC was modified (PC=" + cpu.getPC() + ")"),
+                () -> assertEquals(1, cpu.getTState()-initTState, "JP NZ (not taken) TState Failed")
         );
 
         cpu.setPC(0x0000);
@@ -676,11 +702,13 @@ public class BranchTest {
         cpu.setPC((short) 0x0102);
         cpu.setHL((short) 0x0304);
 
+        long initTState = cpu.getTState();
         cpu.JP_HL();
 
         assertAll("JP (HL) Group",
                 () -> assertEquals((short)0x0304, cpu.getPC(), "JP (HL) Failed: not was modified (PC="+ Integer.toHexString(cpu.getPC())+")"),
-                () -> assertNotEquals((short)0x0102, cpu.getPC(), "JP (HL) Failed: still is 0x0102 (PC="+ Integer.toHexString(cpu.getPC())+")")
+                () -> assertNotEquals((short)0x0102, cpu.getPC(), "JP (HL) Failed: still is 0x0102 (PC="+ Integer.toHexString(cpu.getPC())+")"),
+                () -> assertEquals(4, cpu.getTState()-initTState, "JP (HL) TState Failed")
         );
     }
 
@@ -696,10 +724,12 @@ public class BranchTest {
         cpu.setIX((short) 0x2000);
         compTest.poke(0x0000, (byte) 0xDD); // DD prefix
         compTest.poke(0x0001, (byte) 0xE9); // JP (IX)
+        long initTState = cpu.getTState();
         cpu.fetch(); // DD prefix + JP (IX)
 
         assertAll("JP (IX) Group",
-                () -> assertEquals((short) 0x2000, cpu.getPC(), "JP (IX) Failed: PC<>0x2000")
+                () -> assertEquals((short) 0x2000, cpu.getPC(), "JP (IX) Failed: PC<>0x2000"),
+                () -> assertEquals(8, cpu.getTState()-initTState, "JP (IX) TState Failed")
         );
     }
 
@@ -715,10 +745,12 @@ public class BranchTest {
         cpu.setIY((short) 0x3000);
         compTest.poke(0x0000, (byte) 0xFD); // FD prefix
         compTest.poke(0x0001, (byte) 0xE9); // JP (IY)
+        long initTState = cpu.getTState();
         cpu.fetch(); // FD prefix + JP (IY)
 
         assertAll("JP (IY) Group",
-                () -> assertEquals((short) 0x3000, cpu.getPC(), "JP (IY) Failed: PC<>0x3000")
+                () -> assertEquals((short) 0x3000, cpu.getPC(), "JP (IY) Failed: PC<>0x3000"),
+                () -> assertEquals(8, cpu.getTState()-initTState, "JP (IY) TState Failed")
         );
     }
 
@@ -735,6 +767,7 @@ public class BranchTest {
         cpu.setPC(0x0000);
         cpu.setSP((short) 0x0000);
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte)0xC9); // RET
 
         assertAll("RET Group",
@@ -742,7 +775,9 @@ public class BranchTest {
                 () -> assertNotEquals(0x0000, cpu.getPC(), "RET Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
 
                 () -> assertEquals(0x0002, cpu.getSP(), "RET NZ Failed: SP was modified (SP=" + cpu.getSP() + ")"),
-                () -> assertNotEquals(0x0000, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")")
+                () -> assertNotEquals(0x0000, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")"),
+                
+                () -> assertEquals(10, cpu.getTState()-initTState, "RET TState Failed")
         );
     }
 
@@ -761,6 +796,7 @@ public class BranchTest {
 
         cpu.resZF();
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xC0); // RET NZ
 
         assertAll("RET cc[y] Group",
@@ -768,7 +804,9 @@ public class BranchTest {
                 () -> assertNotEquals(0x0000, cpu.getPC(), "RET NZ Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
 
                 () -> assertEquals(0x0002, cpu.getSP(), "RET NZ Failed: SP was modified (SP=" + cpu.getSP() + ")"),
-                () -> assertNotEquals(0x0000, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")")
+                () -> assertNotEquals(0x0000, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")"),
+                
+                () -> assertEquals(11, cpu.getTState()-initTState, "RET NZ TState Failed")
         );
 
         cpu.setPC(0x0000);
@@ -892,6 +930,7 @@ public class BranchTest {
 
         cpu.setZF();
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xC0); // RET NZ
 
         assertAll("RET cc[y] Group",
@@ -899,7 +938,9 @@ public class BranchTest {
                 () -> assertNotEquals(0xFF00, cpu.getPC(), "RET NZ Failed: PC was not pop (PC=" + cpu.getPC() + ")"),
 
                 () -> assertEquals(0x0000, cpu.getSP(), "RET NZ Failed: SP was modified (SP=" + cpu.getSP() + ")"),
-                () -> assertNotEquals(0x0002, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")")
+                () -> assertNotEquals(0x0002, cpu.getSP(), "RET NZ Failed: SP was pop (SP=" + cpu.getSP() + ")"),
+                
+                () -> assertEquals(5, cpu.getTState()-initTState, "RET NZ (not taken) TState Failed")
         );
 
         cpu.resZF();
@@ -1001,11 +1042,13 @@ public class BranchTest {
         compTest.poke(0x00FE, (byte) 0x34); // Return address high
         compTest.poke(0x0000, (byte) 0xED); // ED prefix
         compTest.poke(0x0001, (byte) 0x4D); // RETI
+        long initTState = cpu.getTState();
         cpu.fetch(); // ED prefix + RETI
 
         assertAll("RETI Group",
                 () -> assertEquals((short) 0x1234, cpu.getPC(), "RETI Failed: PC<>0x1234"),
-                () -> assertEquals((short) 0x0100, cpu.getSP(), "RETI Failed: SP<>0x0100")
+                () -> assertEquals((short) 0x0100, cpu.getSP(), "RETI Failed: SP<>0x0100"),
+                () -> assertEquals(14, cpu.getTState()-initTState, "RETI TState Failed")
         );
     }
 
@@ -1023,11 +1066,13 @@ public class BranchTest {
         compTest.poke(0x00FE, (byte) 0x56); // Return address high
         compTest.poke(0x0000, (byte) 0xED); // ED prefix
         compTest.poke(0x0001, (byte) 0x45); // RETN
+        long initTState = cpu.getTState();
         cpu.fetch(); // ED prefix + RETN
 
         assertAll("RETN Group",
                 () -> assertEquals((short) 0x7856, cpu.getPC(), "RETN Failed: PC<>0x7856"),
-                () -> assertEquals((short) 0x0100, cpu.getSP(), "RETN Failed: SP<>0x0100")
+                () -> assertEquals((short) 0x0100, cpu.getSP(), "RETN Failed: SP<>0x0100"),
+                () -> assertEquals(14, cpu.getTState()-initTState, "RETN TState Failed")
         );
     }
 
@@ -1044,6 +1089,7 @@ public class BranchTest {
         cpu.setPC(0x0002);
         cpu.setSP((short) 0x0002);
 
+        long initTState = cpu.getTState();
         cpu.fetch((byte) 0xC7); // RST 0x00
 
         assertAll("RST y*8 Group",
@@ -1057,7 +1103,9 @@ public class BranchTest {
                 () -> assertEquals((byte) 0x00, compTest.peek(0x0001), "RST 0x00 Failed (SP-1)="+ Integer.toHexString(compTest.peek(0x0001))),
 
                 () -> assertNotEquals((byte) 0x34, compTest.peek(0x0000), "RST 0x00 Failed (SP-2)="+ Integer.toHexString(compTest.peek(0x0000))),
-                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "RST 0x00 Failed (SP-1)="+ Integer.toHexString(compTest.peek(0x0001)))
+                () -> assertNotEquals((byte) 0x12, compTest.peek(0x0001), "RST 0x00 Failed (SP-1)="+ Integer.toHexString(compTest.peek(0x0001))),
+                
+                () -> assertEquals(11, cpu.getTState()-initTState, "RST 0x00 TState Failed")
         );
 
         compTest.poke(0x0000, (byte) 0x34);

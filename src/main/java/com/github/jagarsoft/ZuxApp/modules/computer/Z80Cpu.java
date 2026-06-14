@@ -18,7 +18,7 @@ public class Z80Cpu implements IZ80Cpu {
 
     @Override
     public void step() {
-        //System.out.println("Z80 step: " + String.format("%04X", getPC()));
+        System.out.println("Z80 step: " + String.format("%04X", getPC()));
         eventBus.publish(new StepEvent(getPC()));
         cpu.fetch();
     }
@@ -31,6 +31,10 @@ public class Z80Cpu implements IZ80Cpu {
     @Override
     public int getPC() {
         return cpu.getPCnonIncrement();
+    }
+
+    public int getPCinc() {
+        return cpu.getPC();
     }
 
     @Override
@@ -53,14 +57,14 @@ public class Z80Cpu implements IZ80Cpu {
             case "D": v = cpu.getD(); break;
             case "E": v = cpu.getE(); break;
             case "F": v = cpu.getF(); break;
-            case "F_": v = cpu.getF_(); break;
+            case "F_":v = cpu.getF_(); break;
             case "H": v = cpu.getH(); break;
             case "L": v = cpu.getL(); break;
             case "I": v = cpu.getI(); break;
             case "R": v = cpu.getR(); break;
-            case "SP": v = cpu.getSP(); break;
-            case "IX": v = cpu.getIX(); break;
-            case "IY": v = cpu.getIY(); break;
+            case "SP":v = cpu.getSP(); break;
+            case "IX":v = cpu.getIX(); break;
+            case "IY":v = cpu.getIY(); break;
             default:
                 throw new IllegalArgumentException("Unknown reg: "+name);
         }

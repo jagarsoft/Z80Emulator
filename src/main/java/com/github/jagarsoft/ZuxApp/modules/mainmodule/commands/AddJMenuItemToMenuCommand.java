@@ -4,6 +4,10 @@ import com.github.jagarsoft.ZuxApp.core.bus.Command;
 
 import javax.swing.*;
 
+/*
+    MainModule exposes this Command in order to other modules can inject their MenuItems
+    to DesktopPane
+ */
 public class AddJMenuItemToMenuCommand implements Command {
     private final String menuName;
     private final String menuItemName;

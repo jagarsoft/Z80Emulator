@@ -261,7 +261,7 @@ public class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
 
     @Override
     public byte  read(int addr) {
-        int k = 0x1F;
+        int k = 0xBF; // 0x1F
         int mask = (addr >> 8) & 0xFF;
 
         if ((mask & 0x01) == 0) k &= toMask(A8);
@@ -273,12 +273,12 @@ public class ZXSpectrumKeyboard implements IODevice, Keyboard, KeyListener {
         if ((mask & 0x40) == 0) k &= toMask(A14);
         if ((mask & 0x80) == 0) k &= toMask(A15);
 
-if( k != 0x1F ) {
+/*if( k != 0x1F ) {
     System.out.println("ZXSpectrumKeyboard.read:" + Integer.toHexString(addr));
     System.out.println("ZXSpectrumKeyboard.mask:" + Integer.toHexString(mask));
     System.out.println("k:" + Integer.toHexString(k));
-}
-        return (byte) (k & 0x0FF);
+}*/
+        return (byte) ((k & 0x0FF) | 0xA0);
     }
 
     private int toMask(BitSet bs) {

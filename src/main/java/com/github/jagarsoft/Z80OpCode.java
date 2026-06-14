@@ -26,6 +26,7 @@ public interface Z80OpCode {
     void DD_prefix();
     void ED_prefix();
     void FD_prefix();
+    void DDCB_prefix();
     void FDCB_prefix();
 
     void NOP();
@@ -177,6 +178,14 @@ public interface Z80OpCode {
     void DEC_IX();
     void INC_IX_d();
     void DEC_IX_d();
+    void LD_r_y_IXH(); // undocumented
+    void LD_r_y_IXL(); // undocumented
+    void LD_IXH_r_z(); // undocumented
+    void LD_IXL_r_z(); // undocumented
+    void LD_IXL_IXL(); // undocumented
+    void LD_IXH_IXH(); // undocumented
+    void LD_IXH_IXL(); // undocumented
+    void LD_IXL_IXH(); // undocumented
     void LD_IXH_n(); // undocumented
     void LD_IXL_n(); // undocumented
     void LD_IX_d_r_z();
@@ -197,7 +206,38 @@ public interface Z80OpCode {
     void PUSH_IX();
     void ADD_A_IX_d();
 
+    void INC_IXH();
+    void INC_IXL();
+    void DEC_IXH();
+    void DEC_IXL();
+
+    void ADD_A_IXH();
+    void ADD_A_IXL();
+    void ADC_A_IXH();
+    void ADC_A_IXL();
+    void SUB_IXH();
+    void SUB_IXL();
+    void SBC_IXH();
+    void SBC_IXL();
+    void AND_IXH();
+    void AND_IXL();
+    void XOR_IXH();
+    void XOR_IXL();
+    void OR_IXH();
+    void OR_IXL();
+    void CP_IXH();
+    void CP_IXL();
+
     /* DDCB prefix */
+    void RLC_IX_d();
+    void RRC_IX_d();
+    void RL_IX_d();
+    void RR_IX_d();
+    void SLA_IX_d();
+    void SRA_IX_d();
+    void SLL_IX_d(); // undocumented
+    void SRL_IX_d();
+
     void BIT_y_IX_d();
     void RES_y_IX_d();
     void SET_y_IX_d();
@@ -208,6 +248,14 @@ public interface Z80OpCode {
     void LD_IY_d_r_z();
     void INC_IY_d();
     void DEC_IY_d();
+    void LD_r_y_IYH(); // undocumented
+    void LD_r_y_IYL(); // undocumented
+    void LD_IYH_r_z(); // undocumented
+    void LD_IYL_r_z(); // undocumented
+    void LD_IYL_IYL(); // undocumented
+    void LD_IYH_IYH(); // undocumented
+    void LD_IYH_IYL(); // undocumented
+    void LD_IYL_IYH(); // undocumented
     void LD_IYH_n(); // undocumented
     void LD_IYL_n(); // undocumented
     void LD_IY_d_n();
@@ -224,14 +272,44 @@ public interface Z80OpCode {
     void SET_y_IY_d();
     void INC_IY();
     void DEC_IY();
-
     void CP_IY_d();
     void SUB_IY_d();
+
+    void INC_IYH();
+    void INC_IYL();
+    void DEC_IYH();
+    void DEC_IYL();
+
+    void ADD_A_IYH();
+    void ADD_A_IYL();
+    void ADC_A_IYH();
+    void ADC_A_IYL();
+    void SUB_IYH();
+    void SUB_IYL();
+    void SBC_IYH();
+    void SBC_IYL();
+    void AND_IYH();
+    void AND_IYL();
+    void XOR_IYH();
+    void XOR_IYL();
+    void OR_IYH();
+    void OR_IYL();
+    void CP_IYH();
+    void CP_IYL();
 
     void POP_IY();
     void LD_mm_IY();
     void LD_IY_mm();
     void JP_IY();
     void PUSH_IY();
+
+    void RLC_IY_d();
+    void RRC_IY_d();
+    void RL_IY_d();
+    void RR_IY_d();
+    void SLA_IY_d();
+    void SRA_IY_d();
+    void SLL_IY_d(); // undocumented
+    void SRL_IY_d();
 
 }

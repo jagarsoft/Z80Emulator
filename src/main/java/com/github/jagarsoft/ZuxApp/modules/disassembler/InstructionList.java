@@ -11,6 +11,11 @@ public class InstructionList<T> {
         treeMap.put(clave, valor);
     }
 
+    public void remove(int clave) {
+        clave = treeMap.floorKey(clave);
+        treeMap.tailMap(clave).clear();
+    }
+
     /*public T get(Integer clave) {
         return mapa.get(clave);
     }*/

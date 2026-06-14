@@ -8,12 +8,24 @@ import java.util.Arrays;
 import static java.lang.System.exit;
 
 public class Untap {
+    private static final short KERNEL_D_MAGIC = 0x526F; /* identifies kernel data space */
+    private static final short FS_D_MAGIC  = (short)0xDADA;    /* identifies fs data space */
+    private static final short PROG_ORG = 0;             // former 1536 = 0x600;
+
+    private static final short KERN = 0; // text and data+dss
+    private static final short MM   = 2;
+    private static final short FS   = 4;
+    private static final short INIT = 6;
+    private static final short FSCK = 8;
+
     static class Block {
         int size;
         byte[] data;
         TAPHeader h;
     }
 
+    // TODO TAPHeader y TAPData se deben de sacar de aqui y hacerlas public y accesibles
+    // la version buena esta en interna en TAP class
     static class TAPHeader {
         /*
     Byte    Length  Description
@@ -36,24 +48,25 @@ public class Untap {
         public byte checksumByteHeader;
     }
 
-    static class TAPData {
+    static class TAPData { // TODO SE DEBE USAR PARA MOSTRAR BLOQUE DE DATOS sobre todo para leer el checksum
+        // de otro modo, si el TAP tiene otro blque detras estaria leyendo desde checksum
         //public short lengthDataBlock; // = TAPHeader.lengthHeaderBlock
         public byte byteFlagData; // = FFh
         public byte[] data;
         public byte checksumByteData;
     }
 
-    private static enum BLOCKTYPE {
+    private enum BLOCKTYPE {
         IS_HEADER(0),
         IS_DATA(-1),
         IS_UNKNOWN(2);
-        private int value;
+        private final int value;
         BLOCKTYPE(int value) {
             this.value = value;
         }
-    };
+    }
     static RAFSeekable tap;
-    static ArrayList<Block> blocks = new ArrayList<Block>();
+    static ArrayList<Block> blocks = new ArrayList<>();
     static String[] tokens = new String[256];
     static {
         // ZX Spectrum BASIC Tokens (0xA5-0xFF)
@@ -150,17 +163,30 @@ public class Untap {
         tokens[0xFF] = "COPY";
     }
 
-
+/*
+C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:\Program Files\JetBrains\IntelliJ IDEA 2024.3.1.1\lib\idea_rt.jar=11084" -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath C:\Users\fjgarrido\Documents\Private\Repositorio\Github\jagasoft\Z80Emulator\target\classes com.github.jagarsoft.ZuxApp.modules.tape.Untap -l zexall.tap
+*/
     public static void main(String[] args) throws Exception {
         Block blk;
-        int blockIndex = -1;
-        String fileTap;
+        String fileName;
 
         int argIndex = 0;
-        String arg = args[argIndex];
+        String arg = args[argIndex]; // option flag
+
         boolean blockOpt = false;
+        int blockIndex = -1;
+
         boolean listOpt = false;
 
+        boolean tapOpt = false;
+        int bank = 0;
+        int offset = 0;
+
+        boolean patchOptKer = false;
+        boolean patchOptFS = false;
+        int[] sizes = new int[10]; // unsigned short !!
+
+        //while (argIndex < args.length) {}
         switch (arg) {
             case "-b":
                 blockOpt = true;
@@ -171,47 +197,141 @@ public class Untap {
             case "-l":
                 listOpt = true;
                 argIndex++;
+                break;
+
+            /* make TAP file from image bin
+             * untap -t bank offset file.bin
+             *
+             * bank: bank index to load (param1)
+             * offset: relative into bank (param2)
+             */
+            case "-t":
+                tapOpt = true;
+                listOpt = true; // TODO quitar
+                bank = Integer.parseInt(args[argIndex+1]);
+                offset = Integer.parseInt(args[argIndex+2]);
+                argIndex+=3;
+                break;
+
+                /* patch kernel bin image
+                 * untap -pk ker_text_len ker_data_len mm_text_len mm_data_len fs_text_len fs_data_len
+                 *          init_text_len init_data_len fsck_text_len fsck_data_len file.bin
+                 *
+                 */
+            case "-pk":
+                patchOptKer = true;
+                sizes[KERN] = Integer.parseInt(args[argIndex+1]);
+                sizes[KERN+1] = Integer.parseInt(args[argIndex+2]);
+                sizes[MM] = Integer.parseInt(args[argIndex+3]);
+                sizes[MM+1] = Integer.parseInt(args[argIndex+4]);
+                sizes[FS] = Integer.parseInt(args[argIndex+5]);
+                sizes[FS+1] = Integer.parseInt(args[argIndex+6]);
+                sizes[INIT] = Integer.parseInt(args[argIndex+7]);
+                sizes[INIT+1] = Integer.parseInt(args[argIndex+8]);
+                sizes[FSCK] = Integer.parseInt(args[argIndex+9]);
+                sizes[FSCK+1] = Integer.parseInt(args[argIndex+10]);
+                argIndex+=11;
+                break;
+
+            /* patch kernel bin image
+             * untap -pk ker_text_len ker_data_len mm_text_len mm_data_len fs_text_len fs_data_len
+             *          init_text_len init_data_len fsck_text_len fsck_data_len file.bin
+             *
+             */
+            case "-pf":
+                patchOptFS = true;
+                sizes[0] = Integer.parseInt(args[argIndex+1]);
+                sizes[1] = Integer.parseInt(args[argIndex+2]);
+                sizes[2] = Integer.parseInt(args[argIndex+3]);
+                sizes[3] = Integer.parseInt(args[argIndex+4]);
+                sizes[4] = Integer.parseInt(args[argIndex+5]);
+                sizes[5] = Integer.parseInt(args[argIndex+6]);
+                sizes[6] = Integer.parseInt(args[argIndex+7]);
+                sizes[7] = Integer.parseInt(args[argIndex+8]);
+                sizes[8] = Integer.parseInt(args[argIndex+9]);
+                sizes[9] = Integer.parseInt(args[argIndex+10]);
+                argIndex+=11;
+                break;
         }
 
-        fileTap = args[argIndex];
-        System.out.println(fileTap);
+        fileName = args[argIndex];
+        System.out.println(fileName);
 
-        tap = new RAFSeekable(fileTap, "r");
+        if( tapOpt ) {
+            if( ! PathUtils.getExtension(fileName).endsWith(".tap") ) {
+                System.err.println(fileName + " is not a .tap file");
+                exit(-1);
+            }
 
-        blockIndex = 0;
+            TAP tap = new TAP();
+            fileName = tap.createTAP(fileName, bank, offset);
+        }
+
+        if( patchOptKer ) {
+            if( ! PathUtils.getExtension(fileName).endsWith(".bin") ) {
+                System.err.println(fileName + " is not a .bin file");
+                exit(-1);
+            }
+
+            RAFSeekable bin = new RAFSeekable(fileName, "rw");
+            doPatchKernel(bin, sizes);
+            if( ! listOpt ) // if -l was used, dont exit yet
+                exit(0);
+        }
+
+        if( patchOptFS ) {
+            if( ! PathUtils.getExtension(fileName).endsWith(".bin") ) {
+                System.err.println(fileName + " is not a .bin file");
+                exit(-1);
+            }
+
+            RAFSeekable bin = new RAFSeekable(fileName, "rw");
+            doPatchFS(bin, sizes);
+            if( ! listOpt ) // if -l was used, dont exit yet
+                exit(0);
+        }
+
+        if( ! PathUtils.getExtension(fileName).endsWith(".tap") ) {
+            System.err.println(fileName + " is not a .tap file");
+            exit(-1);
+        }
+
+        tap = new RAFSeekable(fileName, "r");
+
+        //blockIndex = 0;
         while (true) {
             try {
                 blk = readBlock();
                 blocks.add(blk);
-                showBlock(blk, blockIndex++); // remove
             } catch (EOFException e) {
                 break;
             }
         }
 
         System.out.println(tap.size() + " bytes");
-        System.out.println(blocks.size() + " blocks");
+        System.out.println(blocks.size() + " blocks" + "\n");
 
         if( blockOpt && (blockIndex < 0 || blockIndex > blocks.size()) ) {
             System.out.println("Invalid block index: " + blockIndex);
             exit(1);
         }
 
-        if( listOpt ) {
+        if( listOpt ) { // -l prevalece a -b
             blockIndex = 0;
             while(blockIndex < blocks.size()) {
-                blk = blocks.get(blockIndex);
+                //blk = blocks.get(blockIndex);
                 //showBlock(blk);
-                showBlock(blk, blockIndex++);
+                //showBlock(blk, blockIndex++);
+                showBlock(blockIndex++);
             }
         } else if (blockOpt ) {
-            //showBlock(blockIndex);
+            showBlock(blockIndex);
         }
     }
 
-    private static void showBlock(Block blk, int blockIndex) {
-    //private static void showBlock(int blockIndex) {
-        //Block blk = blocks.get(blockIndex); // TODO recover
+    //private static void showBlock(Block blk, int blockIndex) {
+    private static void showBlock(int blockIndex) {
+        Block blk = blocks.get(blockIndex); // TODO recover
         BLOCKTYPE typeBlock = getBlockType(blk);
 
         System.out.println("Block " +  blockIndex);
@@ -226,9 +346,7 @@ public class Untap {
                 break;
         }
 
-        System.out.println("Total " + blk.size + " bytes");
-
-        System.out.println();
+        System.out.println("Total " + blk.size + " bytes\n");
     }
 
     private static void showData(Block headerBlk, Block dataBlk) {
@@ -238,7 +356,7 @@ public class Untap {
 
         switch (typeData) {
             case 0: // 0 (Program)
-                getProgram(headerBlk, dataBlk);
+                dumpProgram(getProgram(headerBlk, dataBlk));
                 break;
             case 1: // 1 (Number array)
 //                dumpNumberArray();
@@ -252,14 +370,14 @@ public class Untap {
         }
     }
 
-    private static void getProgram(Block headerBlk, Block dataBlk) {
-        checkProgramIntegrity(headerBlk, dataBlk);
+    private static byte[] getProgram(Block headerBlk, Block dataBlk) {
+        checkProgramIntegrity(/*headerBlk, */dataBlk);
 
         byte[] program = new byte[headerBlk.h.lengthDataBlock];
         System.arraycopy(dataBlk.data, 1, program, 0, headerBlk.h.lengthDataBlock);
 
         System.out.println( Arrays.toString( program ));
-        dumpProgram(program);
+        return program;
     }
 
     private static void dumpProgram(byte[] program) {
@@ -291,7 +409,8 @@ public class Untap {
         System.out.printf("%4d ", b*256 + b1);
     }
 
-    private static void checkProgramIntegrity(Block headerBlk, Block dataBlk) {
+    //private static void checkProgramIntegrity(Block headerBlk, Block dataBlk) {
+    private static void checkProgramIntegrity(Block dataBlk) {
         if( dataBlk.data[0] != -1 ) {
             System.out.println("Program corrupted");
         }
@@ -371,5 +490,127 @@ public class Untap {
         tap.read(blk.data, 0, blk.size);
 
         return blk;
+    }
+
+    // former patch2()
+    private static void doPatchKernel(RAFSeekable bin, int[] sizes) throws IOException {
+        short i = bin.getShortLE(0x40);
+
+        if (i != KERNEL_D_MAGIC) {
+            System.err.println("kernel data space: no magic number");
+            exit(i);
+        }
+
+        bin.seek(0x40);
+
+        bin.putShortLE((short)(sizes[0] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[1] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[2] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[3] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[4] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[5] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[6] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[7] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[8] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[9] & 0x0FFFF));
+
+        bin.seek(0x40);
+
+        for(i = 0x40; i < 0x40+10; ++i) {
+            System.out.printf("0x%02X", i);
+            System.out.print(": ");
+            System.out.printf("0x%04X", (short)bin.getShortLE());
+            System.out.println();
+        }
+    }
+
+    // former patch3()
+    private static void doPatchFS(RAFSeekable bin, int[] sizes) throws IOException {
+        long init_org, fs_org, fbase, mm_data;
+        int init_text_size, init_data_size;
+        short w0, w1, w2;
+        int b0, b1, b2, b3, b4, b5, mag;
+
+        init_org = PROG_ORG;
+        init_org += sizes[KERN] + sizes[KERN+1]; // + sizes[KERN].bss_size
+
+        mm_data = init_org - PROG_ORG; // + BOOTBLOCK_SIZE /* former offset of mm in file */
+        mm_data += sizes[MM];
+
+        init_org += sizes[MM] + sizes[MM+1]; // + sizes[MM].bss_size
+
+        fs_org = init_org - PROG_ORG; // + BOOTBLOCK_SIZE /* offset of fs-text into file */
+        fs_org += sizes[FS];
+
+        init_org += sizes[FS] + sizes[FS+1]; // + sizes[FS].bss_size
+        init_text_size = sizes[INIT];
+        init_data_size = sizes[INIT+1]; // + sizes[INIT].bss_size
+        //init_org >>= CLICK_SHIFT;
+        /*if (sizes[INIT].sep_id == 0) {
+            init_data_size += init_text_size;
+            init_text_size = 0;
+        }*/
+        //init_text_size >>= CLICK_SHIFT;
+        //init_data_size >>= CLICK_SHIFT;
+
+        w0 = (short) (init_org & 0x0FFFF);
+        w1 = (short) (init_text_size & 0x0FFFF);
+        w2 = (short) (init_data_size & 0x0FFFF);
+        b0 =  w0 & 0x0FF;
+        b1 = (w0 >> 8) & 0x0FF;
+        b2 = w1 & 0x0FF;
+        b3 = (w1 >> 8) & 0x0FF;
+        b4 = w2 & 0x0FF;
+        b5 = (w2 >> 8) & 0x0FF;
+
+        /* Check for appropriate magic numbers. */
+        mag = bin.getByte(mm_data+3) + (bin.getShortLE() << 8);
+        if (mag != FS_D_MAGIC) {
+            System.err.println("mm data space: no magic #");
+            exit(mag);
+        }
+        fbase = fs_org + 3; // skip JP instruction
+        mag = bin.getShortLE(fbase) + (bin.getShortLE() << 8);
+        if (mag != FS_D_MAGIC) {
+            System.err.println("fs data space: no magic #");
+            exit(mag);
+        }
+
+        /*put_byte(fbase+4L, b0);
+        put_byte(fbase+5L, b1);
+        put_byte(fbase+6L, b2);
+        put_byte(fbase+7L, b3);
+        put_byte(fbase+8L ,b4);
+        put_byte(fbase+9L, b5);*/
+
+
+        bin.seek(0x40);
+
+        bin.putShortLE((short)(sizes[0] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[1] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[2] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[3] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[4] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[5] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[6] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[7] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[8] & 0x0FFFF));
+        bin.putShortLE((short)(sizes[9] & 0x0FFFF));
+
+        bin.seek(0x40);
+
+        for(int i = 0x40; i < 0x40+10; ++i) {
+            System.out.printf("0x%02X", i);
+            System.out.print(": ");
+            System.out.printf("0x%04X", (short)bin.getShortLE());
+            System.out.println();
+        }
+    }
+
+    // latter patch4()
+    private static void doPatchMM(RAFSeekable bin, int[] sizes) throws IOException {
+        long init_org, fs_org, fbase, mm_data;
+        int init_text_size, init_data_size;
+        short w0, w1, w2;
     }
 }

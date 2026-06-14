@@ -16,10 +16,11 @@ public class RAFSeekable implements Seekable {
     public final RandomAccessFile raf;
 
     public RAFSeekable(String tap, String mode) throws IOException, URISyntaxException {
-        URL resource = getClass().getClassLoader().getResource(tap);
+        /*URL resource = getClass().getClassLoader().getResource(tap);
         if (resource != null) {
             this.raf = new RandomAccessFile(new File(resource.toURI()), mode);
-        } else this.raf = null;
+        } else this.raf = null;*/
+        this.raf = new RandomAccessFile(tap, mode);
         this.pos = 0;
     }
 
@@ -65,6 +66,11 @@ public class RAFSeekable implements Seekable {
     }
 
     @Override
+    public void putByte(byte b) throws IOException {
+        raf.writeByte(b & 0xFF);
+    }
+
+    @Override
     public short getShortLE(long pos) throws IOException {
         this.pos = pos;
         raf.seek(pos);
@@ -85,6 +91,12 @@ public class RAFSeekable implements Seekable {
     @Override
     public void putShortLE(long pos, short value) throws IOException {
         raf.seek(pos);
+        raf.writeByte(value & 0xFF);
+        raf.writeByte((value >> 8) & 0xFF);
+    }
+
+    @Override
+    public void putShortLE(short value) throws IOException {
         raf.writeByte(value & 0xFF);
         raf.writeByte((value >> 8) & 0xFF);
     }

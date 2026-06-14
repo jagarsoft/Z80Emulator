@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 /**
@@ -347,10 +348,19 @@ public class ZXSpectrumScreen extends JPanel {
     public void loadSCRFile(File file) throws IOException {
         byte[] header = new byte[19]; // Skip TAP header
         try (FileInputStream in = new FileInputStream(file)) {
-            if (in.read(header) != 19) throw new IOException("Error leyendo bitmap");
+            if (in.read(header) != 19) throw new IOException("Error leyendo cabecera de SCREEN$");
             if (in.read(bitmap) != 6144) throw new IOException("Error leyendo bitmap");
             if (in.read(attributes) != 768) throw new IOException("Error leyendo atributos");
         }
         updateScreen();
+    }
+
+    public void loadSCREEN(RandomAccessFile dataStream, int dest, int size) {
+        try {
+            if (dataStream.read(bitmap) != 6144) throw new IOException("Error leyendo bitmap");
+            if (dataStream.read(attributes) != 768) throw new IOException("Error leyendo atributos");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

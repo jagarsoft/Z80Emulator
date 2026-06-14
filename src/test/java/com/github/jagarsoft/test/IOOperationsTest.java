@@ -66,4 +66,9 @@ public class IOOperationsTest {
                 () -> assertNotEquals(0x00, cpu.getA(), "OUT (n), A Failed: A<>0x80 = " + Integer.toHexString(cpu.getA()))
         );
     }
+
+    @Test
+    void testIN_r_y_C() {
+        fail("Not yet implemented");
+    }
 }

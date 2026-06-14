@@ -11,6 +11,7 @@ import com.github.jagarsoft.ZuxApp.modules.computer.ComputerModule;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.MainModule;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.MemoryConfigModule;
+import com.github.jagarsoft.ZuxApp.modules.zux.ZuxModule;
 import com.github.jagarsoft.ZuxApp.modules.zxspectrum.ZXSpectrumModule;
 
 import java.util.Arrays;
@@ -30,9 +31,10 @@ public class BootstrapImage implements Bootstrap {
         this.commandBus = new SimpleCommandBus();
 
         List<Module> modules = Arrays.asList(
-                new MainModule()
+                  new MainModule()
                 , new MemoryConfigModule(64, 1) // TODO Create with default values from commandline options or property file
-                , new ZXSpectrumModule()
+                //, new ZXSpectrumModule()
+                , new ZuxModule()
                 , new ComputerModule(image, dataRegion)
         );
 

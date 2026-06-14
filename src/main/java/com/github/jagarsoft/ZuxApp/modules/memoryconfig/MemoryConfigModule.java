@@ -107,7 +107,7 @@ public class MemoryConfigModule extends BaseModule implements ChangeListener {
         this.commandBus.execute(new AddJMenuToMenuBarCommand(toolsMenu));
 
         this.commandBus.execute(new AddJInternalFrameToDesktopPaneCommand(frame));
-        frame.setVisible(true);
+        //frame.setVisible(true); TODO
     }
 
     private JPanel buildMainPanel() {

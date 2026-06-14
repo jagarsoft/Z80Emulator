@@ -1,11 +1,35 @@
 package com.github.jagarsoft.test;
 
 import com.github.jagarsoft.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class InterruptTest {
+    @Test
+    void testNOP() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(0x2));
+        cpu.setComputer(compTest);
+
+        // According to https://skoolkid.github.io/rom/asm/11B7.html#11CB
+        // 6 NOPs takes 24 Tstates
+
+        long initTState = cpu.getTState();
+        for(int i=0; i<6; i++)
+            cpu.NOP();
+
+        assertEquals(6*4, cpu.getTState()-initTState, "NOP TState Failed");
+    }
+
+    @Test
+    void testIM_im_y() {
+        fail("Not yet implemented");
+    }
+
     @Test
     void testDI() {
         Z80ForTesting cpu = new Z80ForTesting();
@@ -59,8 +83,9 @@ public class InterruptTest {
         );
     }
 
-    // @ Test
-    void Skip_testInterrupt() {
+    @Test
+    @Disabled("Skip testInterrupt")
+    void testInterrupt() {
         Z80ForTesting cpu = new Z80ForTesting();
         Computer compTest = new Computer();
         compTest.addCPU(cpu);
@@ -130,6 +155,32 @@ public class InterruptTest {
 
         assertAll("HALT Group",
                 () -> assertEquals((short)0x00, cpu.getA(), "HALT Failed: A was not modified (A=" + cpu.getA() + ")")
+        );
+    }
+
+    @Test
+    void testOneSecondTiming() {
+        Z80ForTesting cpu = new Z80ForTesting();
+        Computer compTest = new Computer();
+        compTest.addCPU(cpu);
+        compTest.addMemory(0x0000, new RAMMemory(0x100));
+        cpu.setComputer(compTest);
+        compTest.poke(0x0000, (byte) 0xFB); // EI
+        compTest.poke(0x0001, (byte) 0x76); // HALT
+        compTest.poke(0x0002, (byte) 0x10); // DJNZ
+        compTest.poke(0x0003, (byte) 0xFD); // -3
+        compTest.poke(0x0038, (byte) 0xFB); // EI
+        compTest.poke(0x0039, (byte) 0xC9); // RET for RST 38h
+
+        cpu.reset();
+        cpu.setSP((short) 0x0100);
+        cpu.setB((byte) 0x32); // 50 interruptions according to https://skoolkid.github.io/rom/asm/0970.html#0991
+        cpu.run();
+
+        System.out.println("Timing TState: " + cpu.getTiming()/1_000_000_000.0 + " second ("+cpu.getTiming()+" nanos)");
+        assertAll("Timing Group", // 1s <= timing <= 1.2s
+                () -> assertTrue(1_000_000_000 <= cpu.getTiming(), "TState timing failed: Too fast??"),
+                () -> assertTrue(cpu.getTiming() <= 1_200_000_000, "TState timing failed: Too slow!!")
         );
     }
 }

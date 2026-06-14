@@ -78,7 +78,6 @@ public class ZXSpectrumModule extends BaseModule {
         screen.addKeyListener(keyboard);
         frame.setContentPane(screen);
         frame.pack();
-        frame.setVisible(true);
         frame.setLocation(20, 20);
 
         this.commandBus.execute(new AddJInternalFrameToDesktopPaneCommand(frame));

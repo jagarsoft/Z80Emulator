@@ -14,7 +14,7 @@ public interface Module {
 
     /**
      * Callback from register()
-     * Here subscribe to all events and all register command handlers this module needs
+     * Here subscribe to all events and register all command handlers this module needs
      */
     void configure();
 

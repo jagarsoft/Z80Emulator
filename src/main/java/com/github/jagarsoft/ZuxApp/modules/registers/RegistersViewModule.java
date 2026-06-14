@@ -41,7 +41,7 @@ public class RegistersViewModule extends BaseModule {
         JTable registerTable = new JTable(registerModel);
 
         JInternalFrame frame = new JInternalFrame("Registers", true, true, true, true);
-        frame.setSize(160, 265);
+        frame.setSize(160, 280);
         frame.add(new JScrollPane(registerTable));
 
         this.commandBus.execute(new AddJInternalFrameToDesktopPaneCommand(frame));

@@ -6,9 +6,40 @@ import com.github.jagarsoft.Z80;
  * Support class to access to Alternative Register Set for testing purpose only
  */
 class Z80ForTesting extends Z80 {
+    private long timing;
+
     Z80ForTesting() {
         super();
     }
+
+    public void run() {
+        Thread t = new Thread(()->{
+            for (;;) {
+            /* debugger purpose only
+            int pc = cpu.getPC();
+            byte opC = this.peek(pc);
+//Logger.info("PC:"+Integer.toHexString(pc)+" opC:"+Integer.toHexString(opC));
+            cpu.fetch(opC); // fetch opCode
+            //if( opC == 0x76) break; // is HALT?
+             */
+                super.fetch();
+                if( super.PC == 0x0004 )
+                    break;
+            }
+        });
+
+        long start = System.nanoTime();
+        t.start();
+        try {
+            t.join(); // wait for thread ends
+            long end = System.nanoTime();
+            timing = (end - start);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public long getTiming() { return timing; }
 
     public byte getA_() { return alternative.A; }
     public void setA_(byte a) { alternative.A = a; }
@@ -41,4 +72,6 @@ class Z80ForTesting extends Z80 {
 
     public int getPC() { return PC & 0x0FFFF; }
     protected void setPC(int pc) { PC = pc; }
+
+    protected long getTState() { return super.getTState(); }
 }

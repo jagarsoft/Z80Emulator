@@ -19,6 +19,7 @@ import com.github.jagarsoft.ZuxApp.modules.logger.LoggerModule;
 import com.github.jagarsoft.ZuxApp.modules.ports.PortsViewModule;
 import com.github.jagarsoft.ZuxApp.modules.registers.RegistersViewModule;
 import com.github.jagarsoft.ZuxApp.modules.symboltable.SymbolTableModule;
+import com.github.jagarsoft.ZuxApp.modules.zux.ZuxModule;
 import com.github.jagarsoft.ZuxApp.modules.zxspectrum.ZXSpectrumModule;
 
 import java.util.Arrays;
@@ -47,7 +48,8 @@ public class BootstrapDebug implements Bootstrap {
                 , new ConsoleModule()
                 //, new HelloWorldModule()
                 , new MemoryConfigModule(64, 1) // TODO Create with default values from commandline options or property file
-                , new ZXSpectrumModule()
+                //, new ZXSpectrumModule()
+                , new ZuxModule()
                 , new ComputerModule(image,  dataRegion)
                 , new RegistersViewModule()
                 , new MemoryViewModule()

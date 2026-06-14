@@ -59,7 +59,7 @@ public class ZXTapeAndBorder implements IODevice {
         System.out.println("OUT("+ Integer.toHexString(addr) + ")," + Integer.toHexString(data) + ", " + thisTstate);
 
             //if( lastTstate != 0)
-                engine.onPulse((data & MIC) == 0, /*thisTstate*/6628 /*2168*/);
+                engine.onPulse((data & MIC) == 0, thisTstate /*6628*/ /*2168*/);
         /*int deltaTstates = (lastTstate == 0) ? 0 : thisTstate - lastTstate;
         engine.onPulse((data & MIC) == 0, deltaTstates);
         lastTstate = thisTstate;*/
@@ -72,7 +72,7 @@ public class ZXTapeAndBorder implements IODevice {
             e.printStackTrace();
         }*/
 
-        screen.setBorderColor(data);
+        //screen.setBorderColor(data);
     }
 
     @Override

@@ -1338,3 +1338,5 @@
 ; VRAM          
 0x4000      DEFS    6144
 0x5800      DEFS    768
+;
+0x9C4C      DEFS    4

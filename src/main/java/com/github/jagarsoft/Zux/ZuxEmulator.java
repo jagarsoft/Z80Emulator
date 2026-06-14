@@ -67,7 +67,7 @@ public class ZuxEmulator {
         }
 
         //System.out.println(FileSizeFormatter.stringifyFileSize(zux.getMemSize()*64L,4,1024));
-        System.out.println(zux.getBankSize() * 64L + "Kb");
+        System.out.println(zux.getBankSize()*64L+"Kb");
         zux.reset();
 
         SwingUtilities.invokeLater(new Runnable() {

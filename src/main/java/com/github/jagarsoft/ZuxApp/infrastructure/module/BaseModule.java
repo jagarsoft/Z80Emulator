@@ -26,7 +26,7 @@ public abstract class BaseModule implements Module {
 
         configure();
 
-        // Emitir evento global
+        // Emits global event
         this.eventBus.publish(new ModuleLoadedEvent(this.getName()));
     }
 

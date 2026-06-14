@@ -25,7 +25,7 @@ public class Logger {
         System.out.println("Halted: NOP executed. Tstate: " + tstate);
     }
 
-    public static void write(String s) { System.out.println("str:"+s); }
+    public static void write(String s) { System.out.println("logger:str:"+s); }
 
     public static void read(String s) {
         System.out.println(s);
@@ -33,5 +33,5 @@ public class Logger {
 
     public static void compMem(String s) {System.out.println(s); }
 
-    public static void intvalue(int data) {System.out.println("intvalue:"+String.format("%04X", data)); }
+    public static void intvalue(int data) {System.out.println("logger:intval:"+String.format("%04X", data)); }
 }

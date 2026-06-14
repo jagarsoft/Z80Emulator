@@ -11,6 +11,12 @@ public class ZXSpectrumIOForTesting implements IODevice {
     }
 
     @Override
+    public void write(int addr, byte data, int tstate) {
+        //throw new RuntimeException("Not implemented: write");
+        this.data = data; // Echoes output ...
+    }
+
+    @Override
     public byte read(int addr) {
         return this.data; // ... to the input
     }

@@ -1,6 +1,6 @@
 package com.github.jagarsoft.ZuxApp.modules.dataregion;
 
-import com.github.jagarsoft.ZuxApp.infrastructure.FIleBrowser;
+import com.github.jagarsoft.ZuxApp.infrastructure.FileBrowser;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.dataregion.events.DataBlockMapLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.dataregion.events.FileDataBlockMapSelectedEvent;
@@ -46,7 +46,7 @@ public class DataRegionModule extends BaseModule {
         frame.add(view, BorderLayout.CENTER);
 
         JMenuItem openFileItem = new JMenuItem("Load Data Block Map...");
-        openFileItem.addActionListener(new FIleBrowser(eventBus, new FileDataBlockMapSelectedEvent()));
+        openFileItem.addActionListener(new FileBrowser(eventBus, new FileDataBlockMapSelectedEvent()));
 
         commandBus.execute(new AddJMenuItemToMenuCommand("File", "Load binary image...", openFileItem));
         
