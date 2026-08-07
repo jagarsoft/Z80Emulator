@@ -37,6 +37,8 @@ public interface EventBus {
      */
     <T> void publish(T event);
 
+    //<T> void publishAndWait(T event) throws InterruptedException; // TODO se descomenta o no?
+
     /**
      * Elimina todos los handlers registrados para un tipo de evento.
      */

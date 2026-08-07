@@ -29,7 +29,8 @@ public class TerminalModel {
     private TerminalPanel panel;
 
     private void debugPrint(String dbgMsg) {
-        System.out.printf(dbgMsg);
+        return;
+        //System.out.printf(dbgMsg);
     }
 
     public TerminalModel(int rows, int cols) {
@@ -139,6 +140,21 @@ debugPrint(String.format("cursorRow=%d cursorCol=%d\r", cursorRow, cursorCol));
         return chars[physicalRow][col];
     }
 
+    public boolean debugTextWritten(int physicalRow) {
+        //char[] target = {'m', 'e', 'm', '_', 't', 'a', 's', 'k'}; // "mem_task" (8 chars)
+        //char[] target = {'m', 'i', 'n', 'i', '_', 's', 'e', 'n', 'd', ':', ' ', 'O', 'K'};
+        //char[] target = {'B', 'o', 'o', 't', 'i', 'n', 'g', ' ', 'Z', 'u', 'x', ' ', 'v', '1', '.', '0', '.', '.', '.'};
+        char[] target = {'c', 'l', 'o', 'c', 'k', '_', 't', 'a', 's', 'k'};
+
+        for (int i = 0; i < target.length; i++) {
+            if (chars[physicalRow][i] != target[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public void putChar(char c) {
 
         switch (c) {
@@ -175,6 +191,9 @@ debugPrint(String.format("cursorRow=%d cursorCol=%d\r", cursorRow, cursorCol));
                 (firstRow + cursorRow) % rows;
 
         chars[physicalRow][cursorCol] = c;
+
+//        if( debugTextWritten(physicalRow) )
+//              System.out.println("ENCONTRADO");
 
         cursorRight();
     }

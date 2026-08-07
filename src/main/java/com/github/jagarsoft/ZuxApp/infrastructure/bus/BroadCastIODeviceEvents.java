@@ -5,11 +5,11 @@ import com.github.jagarsoft.ZuxApp.core.bus.EventBus;
 import com.github.jagarsoft.ZuxApp.modules.ports.events.PortReadEvent;
 import com.github.jagarsoft.ZuxApp.modules.ports.events.PortWriteEvent;
 
-public class BroadCastEvents implements IODevice {
-    EventBus eventBus;
-    IODevice ioDev;
+public class BroadCastIODeviceEvents implements IODevice {
+    private final EventBus eventBus;
+    private final IODevice ioDev;
 
-    public BroadCastEvents(EventBus eventBus, IODevice ioDev) {
+    public BroadCastIODeviceEvents(EventBus eventBus, IODevice ioDev) {
         this.eventBus = eventBus;
         this.ioDev = ioDev;
     }

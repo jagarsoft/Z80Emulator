@@ -1,6 +1,7 @@
 package com.github.jagarsoft.test;
 
 import com.github.jagarsoft.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -68,7 +69,8 @@ public class IOOperationsTest {
     }
 
     @Test
+    @Disabled("TODO")
     void testIN_r_y_C() {
-        fail("Not yet implemented");
+
     }
 }

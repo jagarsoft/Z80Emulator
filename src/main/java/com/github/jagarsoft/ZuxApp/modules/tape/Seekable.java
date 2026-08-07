@@ -10,7 +10,7 @@ public interface Seekable extends Closeable {
     int read(byte[] dst, int off, int len) throws IOException;
     void write(byte[] src, int off, int len) throws IOException;
     byte getByte(long pos) throws IOException;
-    int getByte() throws IOException;
+    byte getByte() throws IOException;
     void putByte(long pos, byte b) throws IOException;
     void putByte(byte b) throws IOException;
     short getShortLE(long pos) throws IOException;

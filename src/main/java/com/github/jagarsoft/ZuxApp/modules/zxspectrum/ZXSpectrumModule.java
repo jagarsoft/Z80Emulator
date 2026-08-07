@@ -2,20 +2,15 @@ package com.github.jagarsoft.ZuxApp.modules.zxspectrum;
 
 import com.github.jagarsoft.*;
 import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
-import com.github.jagarsoft.ZuxApp.infrastructure.bus.BroadCastEvents;
+import com.github.jagarsoft.ZuxApp.infrastructure.bus.BroadCastIODeviceEvents;
+import com.github.jagarsoft.ZuxApp.infrastructure.commands.GetBootstrapCommand;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.commands.AddJInternalFrameToDesktopPaneCommand;
 import com.github.jagarsoft.ZuxApp.modules.zxspectrum.commands.SetZXSpectrumDeviceBanksCommand;
 
 import javax.swing.*;
-import javax.swing.event.InternalFrameAdapter;
-import javax.swing.event.InternalFrameEvent;
-import javax.swing.event.InternalFrameListener;
 import java.awt.event.KeyListener;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.HexFormat;
+import java.io.InputStream;
 
 import static java.lang.Thread.sleep;
 
@@ -29,7 +24,11 @@ public class ZXSpectrumModule extends BaseModule {
         commandBus.registerHandler(SetZXSpectrumDeviceBanksCommand.class, new CommandHandler<SetZXSpectrumDeviceBanksCommand>() {
             @Override
             public void handle(SetZXSpectrumDeviceBanksCommand command) {
+                //ZXComputer computer = (ZXComputer) command.getComputer();
                 Computer computer = command.getComputer();
+                GetBootstrapCommand bootstrapCommand;
+                commandBus.execute(bootstrapCommand = new GetBootstrapCommand());
+                boolean isDebugOn = bootstrapCommand.getBootstrap().isDebugOn();
 
                 short[] ports = new short[8+256];
 
@@ -50,11 +49,17 @@ public class ZXSpectrumModule extends BaseModule {
                 computer.addMemory(0x4000, new VRAM(screen));
                 computer.addMemory(0x8000, new RAMMemory(16 * 1024));
                 computer.addMemory(0xC000, new RAMMemory(16 * 1024));
-                computer.addIODevice(ports,
-                        new BroadCastEvents(eventBus, new ZXSpectrumIO((IODevice) keyboard, new ZXTapeAndBorder(screen))));
+                if( isDebugOn )
+                    computer.addIODevice(ports,
+                        new BroadCastIODeviceEvents(eventBus,
+                                new ZXSpectrumIO((IODevice) keyboard, new ZXTapeAndBorder(screen))));
+                else
+                    computer.addIODevice(ports,
+                                new ZXSpectrumIO((IODevice) keyboard, new ZXTapeAndBorder(screen)));
+
                 /*IODevice ktb = new ZXKeyboardTapeAndBorder(keyboard, screen);
                 computer.addIODevice(ports,
-                        new BroadCastEvents(eventBus, new ZXSpectrumIO(ktb, ktb)));*/
+                        new BroadCastIODeviceEvents(eventBus, new ZXSpectrumIO(ktb, ktb)));*/
 
             }
         });
@@ -83,7 +88,17 @@ public class ZXSpectrumModule extends BaseModule {
         this.commandBus.execute(new AddJInternalFrameToDesktopPaneCommand(frame));
         frame.setVisible(true);
 
-        try {
+        InputStream is = getClass().getClassLoader().getResourceAsStream("reset.tap");
+        if (is != null) {
+            try {
+                screen.loadSCRFile(is);
+                sleep(1000);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /*try {
             // https://atornblad.github.io/zx-spectrum-bitmap/
             URL resource = getClass().getClassLoader().getResource("reset.tap");
             if (resource != null) {
@@ -93,7 +108,30 @@ public class ZXSpectrumModule extends BaseModule {
 
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }*/
+
+        /*try {
+        URL resource = getClass().getClassLoader().getResource("reset.tap");
+        if (resource != null) {
+            File tempFile;
+
+            if (resource.getProtocol().equals("jar")) {
+                // Estamos dentro de un JAR - extraer a temporal
+                InputStream is = resource.openStream();
+                tempFile = File.createTempFile("reset", ".tap");
+                tempFile.deleteOnExit();
+                Files.copy(is, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                // Estamos en IDE - usar directamente
+                tempFile = new File(resource.toURI());
+            }
+
+            screen.loadSCRFile(tempFile);
+            sleep(1000);
         }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }*/
 
         /*SwingUtilities.invokeLater(new Runnable() {
             @Override

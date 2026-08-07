@@ -22,10 +22,10 @@ public class ConsoleModule extends BaseModule {
             Z80State currentState = event.getState();
             for(Z80.RegTouched r : Z80.RegTouched.values()) {
                 if( currentState.isTouched(r) ) {
-                    System.out.println(r.name() + ": cambio " + cpu.getReg(r.name()) );
+                    System.out.println(r.name() + ": cambio " + cpu.getReg(r.name()) + " ("+String.format("%02X", cpu.getReg(r.name()))+")");
                 }
             }
-            System.out.println("PC: cambio " + cpu.getPC() );
+            System.out.println("PC: cambio " + cpu.getPC() + " ("+String.format("%04X", cpu.getPC())+")");
         });
     }
 

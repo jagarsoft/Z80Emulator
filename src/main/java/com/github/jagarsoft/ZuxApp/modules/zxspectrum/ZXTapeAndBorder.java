@@ -72,7 +72,7 @@ public class ZXTapeAndBorder implements IODevice {
             e.printStackTrace();
         }*/
 
-        //screen.setBorderColor(data);
+        screen.setBorderColor(data);
     }
 
     @Override

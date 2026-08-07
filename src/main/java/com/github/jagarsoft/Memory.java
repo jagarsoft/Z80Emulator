@@ -8,6 +8,7 @@ public interface Memory {
     enum MovememDirection { FORWARD, REVERSE }
     void poke(int addr, byte data);
     byte peek(int addr);
+    byte peekText(int addr);
     int getSize();
 
     void load(InputStream dataStream, int dest, int size);

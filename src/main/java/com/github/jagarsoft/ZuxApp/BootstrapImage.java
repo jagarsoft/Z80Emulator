@@ -20,22 +20,28 @@ import java.util.List;
 public class BootstrapImage implements Bootstrap {
     private String image = null;
     private String dataRegion = null;
+    private final Bootstrap that = this;
+    private COMPUTER_MODEL computerModel;
 
     private EventBus eventBus;
     private CommandBus commandBus;
-    private final Bootstrap that = this;
+    private MainModule mainModule;
 
+    /*
+     *  Startup
+     */
     @Override
     public void initialize() {
-        this.eventBus = new SimpleEventBus();
+        this.eventBus = new SimpleEventBus(); // light implementation
         this.commandBus = new SimpleCommandBus();
 
         List<Module> modules = Arrays.asList(
-                  new MainModule()
+                  this.mainModule = new MainModule()
                 , new MemoryConfigModule(64, 1) // TODO Create with default values from commandline options or property file
-                //, new ZXSpectrumModule()
-                , new ZuxModule()
-                , new ComputerModule(image, dataRegion)
+                , computerModel == COMPUTER_MODEL.ZXSPECTRUM ?
+                        new ZXSpectrumModule() :
+                        new ZuxModule()
+                , new ComputerModule(image, dataRegion, computerModel)
         );
 
         commandBus.registerHandler(GetBootstrapCommand.class, new CommandHandler<GetBootstrapCommand>() {
@@ -51,14 +57,17 @@ public class BootstrapImage implements Bootstrap {
         }
     }
 
+	/*
+     * Shutdown
+     */
     @Override
     public void terminate() {
-
+		// TODO terminate or withdraw
     }
 
     @Override
     public void withdraw() {
-
+        //mainModule.dispose(); // TODO who calls it?
     }
 
     @Override
@@ -69,5 +78,15 @@ public class BootstrapImage implements Bootstrap {
     @Override
     public void setDataRegion(String dataRegion) {
         this.dataRegion = dataRegion;
+    }
+
+    @Override
+    public void setComputerModel(COMPUTER_MODEL computerModel) {
+        this.computerModel = computerModel;
+    }
+
+    @Override
+    public boolean isDebugOn() {
+        return false;
     }
 }

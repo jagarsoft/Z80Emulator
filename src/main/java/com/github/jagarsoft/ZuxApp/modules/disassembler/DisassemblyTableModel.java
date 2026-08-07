@@ -3,6 +3,7 @@ package com.github.jagarsoft.ZuxApp.modules.disassembler;
 import javax.swing.table.AbstractTableModel;
 
 import com.github.jagarsoft.Instruction;
+import com.github.jagarsoft.ZuxApp.modules.debugger.DebuggerModule;
 
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,9 @@ import java.util.Map;
 public class DisassemblyTableModel extends AbstractTableModel {
     private final InstructionList<Instruction> instructions = new InstructionList<>();
     private int currentPCIndex = 0;
+
+    //public boolean isBankingOn = false;
+    //public int bank = 0;
 
     @Override
     public int getRowCount() {
@@ -23,8 +27,9 @@ public class DisassemblyTableModel extends AbstractTableModel {
     public Object getValueAt(int row, int col) {
         Instruction instr = instructions.get(row);
         return switch (col) {
-            case 0 -> "";
-            case 1 -> String.format("%04X", instr.getAddress());
+            case 0 -> ""; // gap for BreakPoint
+            case 1 -> ( !instr.isBankingOn() ? String.format("%04X", instr.getAddress()) :
+                              String.format("%04X:%04X", instr.bank, instr.getAddress()));
             case 2 -> instr.getHexBytes();
             case 3 -> instr.getLabel();
             case 4 -> instr.getMnemonic();
@@ -66,9 +71,17 @@ public class DisassemblyTableModel extends AbstractTableModel {
         currentPCIndex = instructions.getByAddress(pc).getIndex();
     }
 
+    public int getLastProcessed() { return instructions.getLastProcessed(); }
 
+    // TODO Refactor pending!
+    // All breakpoints concern must be BreakPointManager's responsibility
+    // shared with DisassemblyTableModel and DebuggerModule.
+    // BreakPointManager is a Model for Breakpoints
     public boolean isBreakpoint(int addr) {
-        return instructions.getByAddress(addr).hasBreakPoint;
+        Instruction instr = instructions.getByAddress(addr);
+        if( instr == null ) // TODO no debería de ocurrir
+            return false;
+        return instr.hasBreakPoint; // TODO bring flag to Manager
     }
 
     public void toggleBreakpoint(int addr) {

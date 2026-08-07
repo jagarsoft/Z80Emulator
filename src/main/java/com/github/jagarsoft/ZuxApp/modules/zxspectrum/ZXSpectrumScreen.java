@@ -3,10 +3,7 @@ package com.github.jagarsoft.ZuxApp.modules.zxspectrum;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.Arrays;
 
 /**
@@ -126,7 +123,8 @@ public class ZXSpectrumScreen extends JPanel {
         // primero rellenar borde
         fillBorder();
         // luego todo el bitmap
-        for (int addr = 0; addr < VRAM_BYTES; addr++) updateByte(addr);
+        for (int addr = 0; addr < VRAM_BYTES; addr++)
+            updateByte(addr);
         repaint();
     }
 
@@ -160,7 +158,11 @@ public class ZXSpectrumScreen extends JPanel {
         Color borderColor = ZXPalette.getColor(borderColorIndex, false); // borderBright
         Graphics2D g = image.createGraphics();
         g.setColor(borderColor);
-        g.fillRect(0, 0, FULL_W, FULL_H);
+        //g.fillRect(0, 0, FULL_W, FULL_H);
+        g.fillRect(0, 0,                   FULL_W, BORDER);    // top
+        g.fillRect(0, BORDER + SCREEN_H,   FULL_W, BORDER);    // bottom
+        g.fillRect(0, BORDER,                 BORDER, SCREEN_H);  // left
+        g.fillRect(BORDER + SCREEN_W, BORDER, BORDER, SCREEN_H);  // right
         g.dispose();
     }
 
@@ -345,13 +347,23 @@ public class ZXSpectrumScreen extends JPanel {
     }
  */
 
-    public void loadSCRFile(File file) throws IOException {
+    /*public void loadSCRFile(File file) throws IOException {
         byte[] header = new byte[19]; // Skip TAP header
         try (FileInputStream in = new FileInputStream(file)) {
             if (in.read(header) != 19) throw new IOException("Error leyendo cabecera de SCREEN$");
             if (in.read(bitmap) != 6144) throw new IOException("Error leyendo bitmap");
             if (in.read(attributes) != 768) throw new IOException("Error leyendo atributos");
         }
+        updateScreen();
+    }*/
+
+    public void loadSCRFile(InputStream in) throws IOException {
+        byte[] header = new byte[19]; // Skip TAP header
+        //try (FileInputStream in = new FileInputStream(file)) {
+            if (in.read(header) != 19) throw new IOException("Error leyendo cabecera de SCREEN$");
+            if (in.read(bitmap) != 6144) throw new IOException("Error leyendo bitmap");
+            if (in.read(attributes) != 768) throw new IOException("Error leyendo atributos");
+        //}
         updateScreen();
     }
 

@@ -78,6 +78,11 @@ System.out.println("c="+pointLR[0]+" r="+pointLR[1]+" paper="+attr[0]+" ink="+at
 
     public byte peek(int addr) { return ram[addr]; }
 
+    @Override
+    public byte peekText(int addr) {
+        return peek(addr);
+    }
+
     public Rectangle getRectangle() {
         Rectangle or = r;
         r = null;

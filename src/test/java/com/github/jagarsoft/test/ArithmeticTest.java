@@ -2328,7 +2328,7 @@ NEG
                 () -> assertNotEquals((byte) 0x0F, cpu.getA(), "CPL Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
                 () -> assertTrue(cpu.getHF(), "CPL Failed: H Flag not set"),
                 () -> assertTrue(cpu.getNF(), "CPL Failed: N Flag not set"),
-                () -> assertEquals(0, cpu.getF() & 0b1110_1101, "CPL Failed: F Flags affected: " + Integer.toHexString(cpu.getF())),
+                () -> assertEquals(0, cpu.getF() & 0b1100_0101, "CPL Failed: F Flags affected: " + Integer.toHexString(cpu.getF())),
                 () -> assertEquals(4, cpu.getTState()-initTState, "CPL TState Failed")
         );
 

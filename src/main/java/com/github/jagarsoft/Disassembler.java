@@ -22,7 +22,8 @@ public class Disassembler {
 
         Computer comp = new Computer();
         comp.addCPU(disassembler);
-        comp.addMemory(0x0000, new RAMMemory(comp.upper_power_of_two(size)));
+        //comp.addMemory(0x0000, new RAMMemory(comp.upper_power_of_two(size)));
+        comp.addMemory(0x0000, new RAMMemory(0x1_0000));
 
         try {
             comp.load(dataStream, size);
@@ -37,11 +38,13 @@ public class Disassembler {
     static void list(Computer comp, int org, int size) {
 
         disassembler.setComputer(comp);
-
-        comp.reset();
         comp.setOrigin(org);
+        comp.reset();
+
         do {
-            disassembler.fetch();
+            //disassembler.fetch();
+            Instruction instruction = disassembler.fetchInstruction();
+            //System.out.println(instruction.toString());
         } while( (disassembler.getPC() - org) < size);
     }
 }

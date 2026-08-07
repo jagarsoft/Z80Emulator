@@ -21,7 +21,8 @@ TAP format
 Byte    Length  Description
 ---------------------------
 0       2       Length of header block (always 19 (0013h))
-2       1       Byte Flag: 0=Header
+
+        1       Byte Flag: 0=Header
 
 The structure of the 17 byte tape header is as follows.
 
@@ -29,16 +30,17 @@ Byte    Length  Description
 ---------------------------
 0       1       Type (0,1,2 or 3)
 1       10      Filename (right-padded with blanks)
-11      2       Length of data block
+11      2       Length of data block (*)
 13      2       Parameter 1
 15      2       Parameter 2
-17      1       Checksum byte of header
+
+        1       Checksum byte of header
 
 Byte    Length  Description
 ---------------------------
-0       2       Length of data block (Length of data block (from offset 11) + 2)
+0       2       Length of data block (Length of data block (from offset 11 (*)) + 2)
 2       1       Byte Flag: FFh=Data
-3       N       N bytes as indicated by offset 11 (Length of data block)
+3       N       N bytes as indicated by offset 11 (Length of data block (*))
 N+3     1       Checksum byte of data block
 
 */
@@ -72,6 +74,7 @@ N+3     1       Checksum byte of data block
             //s = new RAFSeekable("Harmonic Horror (1986)(Sinclair User)(16K).tap", "r");
             //s = new RAFSeekable("membertro.tap", "r");
             //s = new RAFSeekable("ManicMiner.tap", "r");
+            //s = new RAFSeekable("C:\\Users\\fjgarrido\\Downloads\\tetrisyt2\\tetrisyt.tap", "r");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -158,9 +161,10 @@ N+3     1       Checksum byte of data block
         RAFSeekable inFile = new RAFSeekable(file, "r");
         String dirname = PathUtils.getDirectoryPath(file);
         String basename = PathUtils.getBaseNameWithoutExtension(file);
-        String ext = PathUtils.getExtension(file);
+        //String ext = PathUtils.getExtension(file);
         String outFileName = dirname + '\\' + basename + ".tap";
         RAFSeekable outFile = new RAFSeekable(outFileName, "rw");
+        outFile.raf.setLength(0);
         int size = inFile.size();
         //TAPHeader h = new TAPHeader();
         int i;
@@ -170,9 +174,11 @@ N+3     1       Checksum byte of data block
             exit(1);
         }
 
-        h.lengthHeaderBlock = 0x0013;
+        // Create Header Block for CODE
+
+        h.lengthHeaderBlock = 17+2;
         h.byteFlagHeader = 0x00;
-        h.type = 0x03;
+        h.type = 0x03; // CODE
 
         h.filename = new byte[10];
         for (i = 0; i < basename.length(); i++) {
@@ -187,22 +193,22 @@ N+3     1       Checksum byte of data block
         h.parameter2 = offset;
         h.checksumByteHeader = 0xAA;
 
-        // Header block
+        // Write Header Block
 
-        outFile.putShortLE(0, (short) h.lengthHeaderBlock);
-        outFile.putByte(2, (byte) h.byteFlagHeader);
-        outFile.putByte(3, (byte) h.type);
-        outFile.write(h.filename, 0, 10);
-        outFile.putShortLE(14, (short) h.lengthDataBlock);
-        outFile.putShortLE(16, (short) h.parameter1);
-        outFile.putShortLE(18, (short) h.parameter2);
-        outFile.putByte(20, (byte) h.checksumByteHeader);
+        outFile.putShortLE(0, (short) h.lengthHeaderBlock);  // 17+2
+        outFile.putByte((byte) h.byteFlagHeader);                // 1 -> 1
+        outFile.putByte((byte) h.type);                          // 1 -> 1
+        outFile.write(h.filename, 0, 10);                // 10->11
+        outFile.putShortLE((short) h.lengthDataBlock);           // 2 ->13
+        outFile.putShortLE((short) h.parameter1);                // 2 ->15
+        outFile.putShortLE((short) h.parameter2);                // 2 ->17
+        outFile.putByte((byte) h.checksumByteHeader);            // 1 -> 1
 
-        // Data block
+        // Create Header Data Block
 
         d.lengthDataBlock = (short)(size+2);
-        d.byteFlagData = (byte) 0xFF;
-        d.checksumByteData = 0xBB;
+        d.byteFlagData = (byte) 0xFF;   // +1
+        d.checksumByteData = 0xBB;      // +1
 
         outFile.putShortLE((short)d.lengthDataBlock);
         outFile.putByte((byte)d.byteFlagData);
@@ -244,7 +250,7 @@ N+3     1       Checksum byte of data block
             h.parameter2 = inFile.getShortLE();
             h.checksumByteHeader = inFile.getByte();
 
-            Logger.info(Arrays.toString(h.filename));
+            Logger.info(new String(h.filename));
         } catch (IOException e) {
             return false;
         }

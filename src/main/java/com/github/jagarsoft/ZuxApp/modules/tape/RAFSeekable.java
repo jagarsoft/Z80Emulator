@@ -1,14 +1,9 @@
 package com.github.jagarsoft.ZuxApp.modules.tape;
 
 // RAFSeekable.java (RandomAccessFile)
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 
 public class RAFSeekable implements Seekable {
     private long pos;
@@ -44,30 +39,37 @@ public class RAFSeekable implements Seekable {
     @Override
     public void write(byte[] src, int off, int len) throws IOException {
         raf.write(src, off, len);
+        this.pos += len;
     }
 
     @Override
     public byte getByte(long pos) throws IOException {
+        this.pos = pos;
         raf.seek(pos);
+        int r = raf.readByte() & 0x00FF;
         this.pos++;
-        return raf.readByte();
+        return (byte)r;
     }
 
     @Override
-    public int getByte() throws IOException {
+    public byte getByte() throws IOException {
+        int r = raf.readByte() & 0x00FF;
         this.pos++;
-        return raf.readByte() & 0x00FF;
+        return (byte)r;
     }
 
     @Override
     public void putByte(long pos, byte b) throws IOException {
+        this.pos = pos;
         raf.seek(pos);
         raf.writeByte(b & 0xFF);
+        this.pos++;
     }
 
     @Override
     public void putByte(byte b) throws IOException {
         raf.writeByte(b & 0xFF);
+        this.pos++;
     }
 
     @Override
@@ -90,15 +92,18 @@ public class RAFSeekable implements Seekable {
 
     @Override
     public void putShortLE(long pos, short value) throws IOException {
+        this.pos = pos;
         raf.seek(pos);
         raf.writeByte(value & 0xFF);
         raf.writeByte((value >> 8) & 0xFF);
+        this.pos+=2;
     }
 
     @Override
     public void putShortLE(short value) throws IOException {
         raf.writeByte(value & 0xFF);
         raf.writeByte((value >> 8) & 0xFF);
+        this.pos+=2;
     }
 
     @Override

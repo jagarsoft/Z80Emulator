@@ -38,7 +38,13 @@ public class DisassemblerModule extends BaseModule {
 
     @Override
     public void configure() {
-        eventBus.subscribe(BinaryImageLoadedEvent.class, (UIEventHandler<BinaryImageLoadedEvent>) (e) -> {
+        //eventBus.subscribe(BinaryImageLoadedEvent.class, (UIEventHandler<BinaryImageLoadedEvent>) (e) -> {
+        eventBus.subscribe(BinaryImageLoadedEvent.class, (Consumer<BinaryImageLoadedEvent>) (e) -> {
+            if ( e.getComputer().getBankingOn() ) {
+                e.getComputer().setTextBank(e.getBank()); // switch new bank loaded
+                e.getComputer().switchBanks();
+            }
+
             list(e.getComputer(), e.getOrigin(), e.getLength());
             //disassemblyModel.fireTableDataChanged(); // TODO evitarlo si se usa fireTableRowsInserted abajo
         });
@@ -60,10 +66,11 @@ public class DisassemblerModule extends BaseModule {
         //eventBus.subscribe(CpuStateUpdatedEvent.class, (Consumer<CpuStateUpdatedEvent>) ev -> {
         eventBus.subscribe(CpuStateUpdatedEvent.class, (UIEventHandler<CpuStateUpdatedEvent>) ev -> {
             int pc = ev.getCpu().getPC();
+            int bank = ev.getCpu().getComputer().getTextBank();
             /*if( ev.getCpu().isHalted() )
                 disassemblyModel.setCurrentPC(pc-1);
             else*/
-                disassemblyModel.setCurrentPC(pc);
+                disassemblyModel.setCurrentPC(bank*0x1_0000+pc);
 
             int index = disassemblyModel.getCurrentPCRow();
             if (index >= 0 && index < disassemblyTable.getRowCount()) {
@@ -77,11 +84,11 @@ public class DisassemblerModule extends BaseModule {
             disassemblyModel.fireTableDataChanged();
         });
 
-        // Log every single instruction stepped
-        eventBus.subscribe(StepEvent.class, (Consumer<StepEvent>) (ev) -> {
+        // Log stepping to console for debugging purpose only
+        /*eventBus.subscribe(StepEvent.class, (Consumer<StepEvent>) (ev) -> {
             Instruction instruction = disassemblyModel.getInstructionByPC(ev.getPC());
             System.out.println(instruction.toString());
-        });
+        });*/
     }
 
     private void list(Computer comp, int org, long size) {
@@ -96,27 +103,29 @@ public class DisassemblerModule extends BaseModule {
         //int oldPC = comp.getCPU().getPC();
         //comp.setOrigin(org);
         disassembler.setOrigin(org);
-        int processed = 0;
+        int processed = disassemblyModel.getLastProcessed();
         int lastProcessed = processed;
+        /* EVITADO
         Instruction firstInst = disassemblyModel.getInstructionByPC(org);
         if( firstInst != null ) { // There are code in these rows
             processed = firstInst.index;
             disassemblyModel.removeFrom(org);
             disassemblyModel.fireTableDataChanged();
             size = 0x1_0000 - org; // rest of RAM
-            firstInst.hasBreakPoint = true;
-        }
+            firstInst.hasBreakPoint = true; // force a breakpoint on first instruction
+        }*/
         do {
             final int pc = disassembler.getPC();
             final Instruction instruction = disassembler.fetchInstruction();
+            int bank = instruction.getBank();
             instruction.index = processed; // assoc this row to PC
-            disassemblyModel.add(pc, instruction);
+            disassemblyModel.add(bank*0x1_0000+pc, instruction);
             processed++;
             // Update UI every 100 instructions
             if (processed % 100 == 0) {
                 //disassemblyModel.fireTableDataChanged();
                 disassemblyModel.fireTableRowsInserted(processed-100, processed-1);
-                lastProcessed = processed;
+                lastProcessed = processed; // last chunk pending
             }
         } while( (disassembler.getPC() - org) < size);
         disassemblyModel.fireTableRowsInserted(lastProcessed, processed);
@@ -135,11 +144,13 @@ public class DisassemblerModule extends BaseModule {
             public void mouseClicked(MouseEvent e) {
                 int row = disassemblyTable.rowAtPoint(e.getPoint());
                 int col = disassemblyTable.columnAtPoint(e.getPoint());
-                if (row >= 0 && col == 0) { // primera columna
-                    int addr = disassemblyModel.getInstruction(row).getAddress();
-                    disassemblyModel.toggleBreakpoint(addr);
+                if (row >= 0 && col == 0) { // click on BreakPoint column only
+                    final Instruction instruction = disassemblyModel.getInstruction(row);
+                    int bank = instruction.getBank();
+                    int addr = instruction.getAddress();
+                    disassemblyModel.toggleBreakpoint(bank*0x1_0000+addr);
                     disassemblyModel.fireTableCellUpdated(row, col);
-                    eventBus.publish(new BreakpointToggledEvent(addr));
+                    eventBus.publish(new BreakpointToggledEvent(bank*0x1_0000+addr)); // TODO send Instruction instead
                 }
             }
         });
@@ -181,16 +192,19 @@ searchField.setName("symbolSearchField");
 
         // Pop-up menu
         JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem updateItem = new JMenuItem("Update Instruction");
+        JMenuItem updateItem = new JMenuItem("Update Instruction(s) (on current bank)");
         updateItem.addActionListener(e -> {
             int row = disassemblyTable.getSelectedRow();
             if (row >= 0) {
-                int address = disassemblyModel.getInstruction(row).getAddress();
-                int size = 0x1_0000 - address; // update all rows
+                final Instruction instruction = disassemblyModel.getInstruction(row);
+                int bank = instruction.getBank();
+                int address = instruction.getAddress();
+                int size = 0x1_0000 - address; // update all rows until the end of current bank
                 GetComputerCommand computerCommand = new GetComputerCommand();
                 commandBus.execute(computerCommand);
                 Computer computer = computerCommand.getComputer();
-                eventBus.publish(new BinaryImageLoadedEvent(computer, address, size));
+                //computer.setTextBank(disassemblyModel.bank);
+                eventBus.publish(new BinaryImageLoadedEvent(computer, bank, address, size));
             }
         });
         popupMenu.add(updateItem);
@@ -207,7 +221,7 @@ searchField.setName("symbolSearchField");
                                                            boolean isSelected, boolean hasFocus,
                                                            int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                int pcRow = pcRowSupplier.get(); // Call to disassemblyModel::getCurrentPCRow
+                int pcRow = pcRowSupplier.get(); // Callback to disassemblyModel::getCurrentPCRow
                 if (row == pcRow) {
                     c.setBackground(Color.YELLOW);
                 } else {

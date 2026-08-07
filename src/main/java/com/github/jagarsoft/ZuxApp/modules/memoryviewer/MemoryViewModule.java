@@ -16,6 +16,7 @@ public class MemoryViewModule extends BaseModule implements Module {
     @Override
     public void configure() {
         eventBus.subscribe(BinaryImageLoadedEvent.class, (UIEventHandler<BinaryImageLoadedEvent>) (e) -> {
+            // TODO pendiente implementar bank en el model de memoria de datos
             memoryModel.dump(e.getComputer(), e.getOrigin(), (int)e.getLength());
         });
 

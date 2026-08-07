@@ -27,28 +27,33 @@ public class PortsTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int row, int col) {
-        int port = ports.get(row);
-        if (col == 0) return String.format("%02X", port);
+        try {
+            int port = ports.get(row);
+            if (col == 0) return String.format("%02X", port);
 
-        Deque<Integer> history = values.get(port);
-        if (history == null) return "";
+            Deque<Integer> history = values.get(port);
+            if (history == null) return "";
 
-        int idx;
-        if (col <= HISTORY) {
-            // Bloque HEX
-            idx = col - 1;
-            return history.stream().skip(idx).findFirst()
-                    .map(v -> String.format("%02X", v))
-                    .orElse("");
-        } else {
-            // Bloque ASCII
-            idx = col - HISTORY - 1;
-            return history.stream().skip(idx).findFirst()
-                    .map(v -> {
-                        char c = (char) (v & 0xFF);
-                        return (c >= 32 && c < 127) ? String.valueOf(c) : ".";
-                    })
-                    .orElse("");
+            int idx;
+            if (col <= HISTORY) {
+                // Bloque HEX
+                idx = col - 1;
+                return history.stream().skip(idx).findFirst()
+                        .map(v -> String.format("%02X", v))
+                        .orElse("");
+            } else {
+                // Bloque ASCII
+                idx = col - HISTORY - 1;
+                return history.stream().skip(idx).findFirst()
+                        .map(v -> {
+                            char c = (char) (v & 0xFF);
+                            return (c >= 32 && c < 127) ? String.valueOf(c) : ".";
+                        })
+                        .orElse("");
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting value at " + row + " " + col);
+            return "";
         }
     }
 

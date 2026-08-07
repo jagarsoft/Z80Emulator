@@ -40,7 +40,7 @@ public class BitOperationTest {
 
         assertAll(
                 () -> assertTrue(cpu.getZF(), "BIT 7, B Failed: bit must be ON"),
-                () -> assertTrue(cpu.getSF(), "BIT 7, B Failed: bit must be ON"),
+                () -> assertFalse(cpu.getSF(), "BIT 7, B Failed: bit must be OFF"),
                 () -> assertTrue(cpu.getPF(), "BIT 7, A Failed: bit must be ON")
         );
 
@@ -139,8 +139,8 @@ public class BitOperationTest {
         cpu.fetch();  // BIT 7, (IX+4)
 
         assertAll(
-                () -> assertTrue(cpu.getZF(), "BIT 7, (IY+4) Failed: bit must be clear"),
-                () -> assertTrue(cpu.getSF(), "BIT 7, (IY+4) Failed: bit must be clear"),
+                () -> assertTrue(cpu.getZF(), "BIT 7, (IY+4) Failed: bit must be OFF"),
+                () -> assertFalse(cpu.getSF(), "BIT 7, (IY+4) Failed: bit must be OFF"),
                 () -> assertTrue(cpu.getPF(), "BIT 7, (IX+4) Failed: bit must be ON")
         );
     }

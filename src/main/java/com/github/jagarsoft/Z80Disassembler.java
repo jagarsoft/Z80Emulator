@@ -2,8 +2,6 @@ package com.github.jagarsoft;
 
 import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegion;
 
-import java.nio.charset.StandardCharsets;
-
 public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     Instruction instruction = new Instruction();
@@ -41,37 +39,37 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
     public void CB_prefix() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
         fetchCB(opC);
     }
 
     public void ED_prefix() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
         fetchED(opC);
     }
 
     public void DD_prefix() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
         fetchDD(opC);
     }
 
     public void FD_prefix() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
         fetchFD(opC);
     }
 
     public void FDCB_prefix() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = (byte)d;
         fetchFDCB((byte)0); // dummy param
     }
 
     public void fetchFDCB(byte d) { // d is dummy
-        byte opC = currentComp.peek(PC); // Exception: not skip yet
+        byte opC = currentComp.peekText(PC); // Exception: not skip yet
 
         opCMasked(opC);
 
@@ -82,6 +80,27 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         else { // No deberia de ocurrir
             System.out.println("FDCB+OpCode not implemented yet: " + Integer.toHexString(opC & 0x00FF));
             //throw new IllegalArgumentException("FDCB+OpCode not implemented yet: " + Integer.toUnsignedInt(opC));
+        }
+    }
+
+    public void DDCB_prefix() {
+        d = currentComp.peekText(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = (byte)d;
+        fetchDDCB((byte)0); // dummy param
+    }
+
+    public void fetchDDCB(byte d) { // d is dummy
+        byte opC = currentComp.peekText(PC); // Exception: not skip yet
+
+        opCMasked(opC);
+
+        if( x == 0 )
+            DDCBopCodes[0][0][y].execute();
+        else if (DDCBopCodes[x][0][0] != null)
+            DDCBopCodes[x][0][0].execute();
+        else { // No deberia de ocurrir
+            System.out.println("DDCB+OpCode not implemented yet: " + Integer.toHexString(opC & 0x00FF));
+            //throw new IllegalArgumentException("DDCB+OpCode not implemented yet: " + Integer.toUnsignedInt(opC));
         }
     }
 
@@ -108,18 +127,19 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
         /*if(cpu != null)
             return fetchInstruction(currentComp.peek(cpu.PC++));
         else*/
-            return fetchInstruction(currentComp.peek(PC++));
+            return fetchInstruction(currentComp.peekText(PC++));
          }
 
     public Instruction fetchInstruction(byte opC) {
         //this.PC = this.getPC();
+        instruction.isBankingOn = currentComp.getBankingOn();
+        instruction.bank = currentComp.getTextBank();
         instruction.PC = this.PC - 1;
         //instruction.PC = getPC();
         instruction.opCodes[0] = opC;
         instruction.opCodeCounter = 1;
         super.fetch(opC);
         System.out.println(instruction);
-        //instructions.add(instruction);
         Instruction i = instruction;
         instruction = null;
         instruction = new Instruction();
@@ -129,6 +149,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     public Instruction fetchData(byte opC) {
         //this.PC = this.getPC();
+        instruction.isBankingOn = currentComp.getBankingOn();
+        instruction.bank = currentComp.getDataBank();
         instruction.PC = this.PC - 1;
         //instruction.PC = getPC();
         instruction.opCodes[0] = opC;
@@ -366,29 +388,29 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void DJNZ() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
         instruction.mnemonic = "DJNZ " + String.format("%04X", PC+d);
     }
 
 	@Override
     public void JR() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
         instruction.mnemonic = "JR " + String.format("%04X", PC+d);
     }
 
 	@Override
     public void JR_cc() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
         instruction.mnemonic = "JR " + cc[y-4] + ", " + String.format("%04X", PC+d);
     }
 
     @Override
     public void LD_rp_p_nn() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD "+rp[p]+", "+getWord(W, Z);
@@ -411,8 +433,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_mm_HL() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD ("+getWord(W, Z)+"), HL";
@@ -420,8 +442,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_mm_A() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD ("+getWord(W, Z)+"), A";
@@ -439,8 +461,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_HL_mm() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD HL, (" + getWord(W, Z) + ")";
@@ -448,8 +470,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_A_mm() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD A, (" + getWord(W, Z) + ")";
@@ -476,12 +498,12 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_r_y_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "LD "+r[y]+", "+toByteHex(Z);
+        instruction.mnemonic = "LD "+r[y]+", "+ toHexString(Z);
     }
 
-    private String toByteHex(byte z) {
+    private String toHexString(byte z) {
         return String.format("%02X", z);
     }
 
@@ -695,8 +717,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void JP_cc_y_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "JP "+cc[y]+", "+getWord(W, Z);
@@ -704,8 +726,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void JP_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "JP "+getWord(W, Z);
@@ -713,16 +735,16 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void OUT_n_A() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "OUT ("+toByteHex(Z)+"), A";
+        instruction.mnemonic = "OUT ("+ toHexString(Z)+"), A";
     }
 
 	@Override
     public void IN_A_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "IN A, ("+toByteHex(Z)+")";
+        instruction.mnemonic = "IN A, ("+ toHexString(Z)+")";
     }
 
 	@Override
@@ -758,8 +780,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void CALL_cc_y_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "CALL "+cc[y]+", "+getWord(W, Z);
@@ -772,8 +794,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void CALL_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "CALL "+getWord(W, Z);
@@ -781,62 +803,62 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void ADD_A_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "ADD A, "+toByteHex(Z);
+        instruction.mnemonic = "ADD A, "+ toHexString(Z);
     }
 
 	@Override
     public void ADC_A_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "ADC A, "+toByteHex(Z);
+        instruction.mnemonic = "ADC A, "+ toHexString(Z);
     }
 
 	@Override
     public void SUB_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "SUB "+toByteHex(Z);
+        instruction.mnemonic = "SUB "+ toHexString(Z);
     }
 
 	@Override
     public void SBC_A_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "SBC A, "+toByteHex(Z);
+        instruction.mnemonic = "SBC A, "+ toHexString(Z);
     }
 	@Override
     public void AND_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "AND "+toByteHex(Z);
+        instruction.mnemonic = "AND "+ toHexString(Z);
     }
 
 	@Override
     public void XOR_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "XOR "+toByteHex(Z);
+        instruction.mnemonic = "XOR "+ toHexString(Z);
     }
 
 	@Override
     public void OR_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "OR "+toByteHex(Z);
+        instruction.mnemonic = "OR "+ toHexString(Z);
     }
 
 	@Override
     public void CP_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "CP "+toByteHex(Z);
+        instruction.mnemonic = "CP "+ toHexString(Z);
     }
 
 	@Override
     public void RST_y_8() {
-        instruction.mnemonic = "RST "+String.format("%02x", y*8);
+        instruction.mnemonic = "RST "+ toHexString((byte) (y*8));
     }
 
     /* ED prefix */
@@ -853,8 +875,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_mm_rp_p() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD ("+getWord(W,Z)+"), "+rp[p];
@@ -862,8 +884,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_rp_p_mm() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD "+rp[p]+", ("+getWord(W,Z)+")";
@@ -902,7 +924,12 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 	/* ED Prefix */
 
     public void OUT_C_r_y() {
-        instruction.mnemonic = "OUT (C), "+r[y];
+        if( y != 6)
+            instruction.mnemonic = "OUT (C), "+r[y];
+        else {
+            instruction.mnemonic = "OUT (C), 0";
+            instruction.comment = "; undocumented, NMOS behaviour assumed";
+        }
     }
 
 	@Override
@@ -957,12 +984,12 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
 	@Override
-    public void LDI() { // TODO
+    public void LDI() {
         instruction.mnemonic = "LDI";
     }
 
 	@Override
-    public void LDD() { // TODO
+    public void LDD() {
         instruction.mnemonic = "LDD";
     }
 
@@ -977,63 +1004,63 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
 
 	@Override
-    public void CPI() { // TODO
+    public void CPI() {
         instruction.mnemonic = "CPI";
     }
 
 	@Override
-    public void CPD() { // TODO
+    public void CPD() {
         instruction.mnemonic = "CPD";
     }
 
 	@Override
-    public void CPIR() { // TODO
+    public void CPIR() {
         instruction.mnemonic = "CPIR";
     }
 
 	@Override
-    public void CPDR() { // TODO
+    public void CPDR() {
         instruction.mnemonic = "CPDR";
     }
 
 	@Override
-    public void INI() { // TODO
+    public void INI() {
         instruction.mnemonic = "INI";
     }
 
 	@Override
-    public void IND() { // TODO
+    public void IND() {
         instruction.mnemonic = "IND";
     }
 
 	@Override
-    public void INIR() { //TODO
+    public void INIR() {
         instruction.mnemonic = "INIR";
     }
 
 	@Override
-    public void INDR() { // TODO
+    public void INDR() {
         instruction.mnemonic = "INDR";
     }
 
 	@Override
-    public void OUTI() { // TODO
+    public void OUTI() {
         instruction.mnemonic = "OUTI";
     }
 
 	@Override
-    public void OUTD() { // TODO
+    public void OUTD() {
         instruction.mnemonic = "OUTD";
     }
 
 	@Override
-    public void OTIR() { // TODO
+    public void OTIR() {
         instruction.mnemonic = "OTIR";
     }
 
 	@Override
     public void OTDR() {
-        // TODO
+        instruction.mnemonic = "OTDR";
     }
 
     /* DD prefix */
@@ -1050,39 +1077,39 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     @Override
     public void INC_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "INC (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "INC (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void DEC_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "DEC (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "DEC (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void LD_IXH_n() {
-        byte d = currentComp.peek(PC++);
-        instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "LD IXh, "+String.format("%02X",d);
+        byte Z = currentComp.peekText(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = Z;
+        instruction.mnemonic = "LD IXh, "+ toHexString(Z);
         instruction.comment = "; undocumented";
     }
 
     @Override
     public void LD_IXL_n() {
-        byte d = currentComp.peek(PC++);
-        instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "LD IXl, "+String.format("%02X",d);
+        byte Z = currentComp.peekText(PC++);
+        instruction.opCodes[instruction.opCodeCounter++] = Z;
+        instruction.mnemonic = "LD IXl, "+ toHexString(Z);
         instruction.comment = "; undocumented";
     }
 
     @Override
     public void LD_r_y_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "LD "+r[y]+", (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "LD "+r[y]+", (IX+"+ toHexString(d)+")";
     }
 
     @Override
@@ -1102,8 +1129,8 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     @Override
     public void LD_IX_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD IX, "+getWord(W, Z);
@@ -1116,86 +1143,90 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     @Override
     public void ADD_A_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "ADD A, (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "ADD A, (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void ADC_A_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "ADC A, (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "ADC A, (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void SUB_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "SUB (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "SUB (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void SBC_A_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "SBC A, (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "SBC A, (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void AND_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "AND (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "AND (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void XOR_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "XOR (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "XOR (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void OR_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "OR (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "OR (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void CP_IX_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "CP (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "CP (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void INC_IXH() {
         instruction.mnemonic = "INC IXH";
+        instruction.comment = "; undocumented";
     }
 
     @Override
     public void INC_IXL() {
         instruction.mnemonic = "INC IXL";
+        instruction.comment = "; undocumented";
     }
 
     @Override
     public void DEC_IXH() {
         instruction.mnemonic = "DEC IXH";
+        instruction.comment = "; undocumented";
     }
 
     @Override
     public void DEC_IXL() {
         instruction.mnemonic = "DEC IXL";
+        instruction.comment = "; undocumented";
     }
 
 	/* FD Prefix */
 
 	@Override
     public void LD_IY_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD IY, "+getWord(W,Z);
@@ -1203,15 +1234,15 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_IY_d_r_z() {
-        d = currentComp.peek(PC++);
-        instruction.mnemonic = "LD (IY+"+String.format("%02X",d)+"), "+r[z];
+        d = currentComp.peekText(PC++);
+        instruction.mnemonic = "LD (IY+"+ toHexString(d)+"), "+r[z];
     }
 
 	@Override
     public void LD_r_y_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "LD "+r[y]+", (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "LD "+r[y]+", (IY+"+ toHexString(d)+")";
     }
 
     @Override
@@ -1265,16 +1296,16 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
     @Override
     public void INC_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "INC (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "INC (IY+"+ toHexString(d)+")";
     }
 
 	@Override
     public void DEC_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "DEC (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "DEC (IY+"+ toHexString(d)+")";
     }
 
     @Override
@@ -1289,260 +1320,220 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
 
 	@Override
     public void LD_IY_d_n() {
-        byte d = currentComp.peek(PC++);
-        Z = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "LD (IY+"+String.format("%02X",d)+"), "+Z;
+        instruction.mnemonic = "LD (IY+"+ toHexString(d)+"), "+ toHexString(Z);
     }
 
     /* DDCB prefix */
 
-    public void RLC_IX_d() { instruction.mnemonic = "RLC (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void RRC_IX_d() { instruction.mnemonic = "RLC (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void RL_IX_d() { instruction.mnemonic = "RL (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void RR_IX_d() { instruction.mnemonic = "RR (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void SLA_IX_d() { instruction.mnemonic = "SLA (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void SRA_IX_d() { instruction.mnemonic = "SRA (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void SLL_IX_d() { instruction.mnemonic = "SLL (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); instruction.comment = "; undocumented"; }
-    public void SRL_IX_d() { instruction.mnemonic = "SRL (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
+    public void RLC_IX_d() { instruction.mnemonic = "RLC (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void RRC_IX_d() { instruction.mnemonic = "RLC (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void RL_IX_d() { instruction.mnemonic = "RL (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void RR_IX_d() { instruction.mnemonic = "RR (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void SLA_IX_d() { instruction.mnemonic = "SLA (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void SRA_IX_d() { instruction.mnemonic = "SRA (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void SLL_IX_d() { instruction.mnemonic = "SLL (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); instruction.comment = "; undocumented"; }
+    public void SRL_IX_d() { instruction.mnemonic = "SRL (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
 
     @Override
     public void BIT_y_IX_d() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
-        instruction.mnemonic = "BIT "+y+", (IX+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "BIT "+y+", (IX+"+ toHexString(d)+")";
     }
 
     @Override
     public void RES_y_IX_d() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
-        instruction.mnemonic = "RES "+y+", (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:"");
+        instruction.mnemonic = "RES "+y+", (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:"");
     }
 
     @Override
     public void SET_y_IX_d() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
-        instruction.mnemonic = "SET "+y+", (IX+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:"");
+        instruction.mnemonic = "SET "+y+", (IX+"+ toHexString(d)+")"+(z!=6?","+r[z]:"");
     }
 
 	/* FDCB prefix */
 
-    public void RLC_IY_d() { instruction.mnemonic = "RLC (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void RRC_IY_d() { instruction.mnemonic = "RLC (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void RL_IY_d() { instruction.mnemonic = "RL (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void RR_IY_d() { instruction.mnemonic = "RR (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void SLA_IY_d() { instruction.mnemonic = "SLA (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void SRA_IY_d() { instruction.mnemonic = "SRA (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
-    public void SLL_IY_d() { instruction.mnemonic = "SLL (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); instruction.comment = "; undocumented"; }
-    public void SRL_IY_d() { instruction.mnemonic = "SRL (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:""); }
+    public void RLC_IY_d() { instruction.mnemonic = "RLC (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void RRC_IY_d() { instruction.mnemonic = "RLC (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void RL_IY_d() { instruction.mnemonic = "RL (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void RR_IY_d() { instruction.mnemonic = "RR (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void SLA_IY_d() { instruction.mnemonic = "SLA (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void SRA_IY_d() { instruction.mnemonic = "SRA (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
+    public void SLL_IY_d() { instruction.mnemonic = "SLL (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); instruction.comment = "; undocumented"; }
+    public void SRL_IY_d() { instruction.mnemonic = "SRL (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:""); }
     
 	@Override
     public void BIT_y_IY_d() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
-        instruction.mnemonic = "BIT "+y+", (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "BIT "+y+", (IY+"+ toHexString(d)+")";
     }
 
 	@Override
     public void RES_y_IY_d() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
-        instruction.mnemonic = "RES "+y+", (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:"");
+        instruction.mnemonic = "RES "+y+", (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:"");
     }
 
 	@Override
     public void SET_y_IY_d() {
-        byte opC = currentComp.peek(PC++);
+        byte opC = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = opC;
-        instruction.mnemonic = "SET "+y+", (IY+"+String.format("%02X",d)+")"+(z!=6?","+r[z]:"");
+        instruction.mnemonic = "SET "+y+", (IY+"+ toHexString(d)+")"+(z!=6?","+r[z]:"");
     }
 
 	@Override
     public void ADD_A_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "ADD A, (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "ADD A, (IY+"+ toHexString(d)+")";
     }
 
     @Override
     public void ADC_A_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "ADC A, (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "ADC A, (IY+"+ toHexString(d)+")";
     }
 
     @Override
     public void CP_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "CP (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "CP (IY+"+ toHexString(d)+")";
     }
 
     public void SUB_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "SUB A, (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "SUB A, (IY+"+ toHexString(d)+")";
     }
 
     public void SBC_A_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "SBC A, (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "SBC A, (IY+"+ toHexString(d)+")";
     }
 
     @Override
     public void AND_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "AND (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "AND (IY+"+ toHexString(d)+")";
     }
 
     @Override
     public void OR_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "OR (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "OR (IY+"+ toHexString(d)+")";
     }
 
     @Override
     public void XOR_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "XOR (IY+"+String.format("%02X",d)+")";
+        instruction.mnemonic = "XOR (IY+"+ toHexString(d)+")";
     }
 
     @Override
-    public void ADD_A_IYH() {
-        instruction.mnemonic = "ADD A, IYH";
-    }
+    public void ADD_A_IYH() { instruction.mnemonic = "ADD A, IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void ADD_A_IYL() {
-        instruction.mnemonic = "ADD A, IYL";
-    }
+    public void ADD_A_IYL() { instruction.mnemonic = "ADD A, IYL"; instruction.comment = "; undocumented";    }
 
     @Override
-    public void ADC_A_IYH() {
-        instruction.mnemonic = "ADC A, IYH";
-    }
+    public void ADC_A_IYH() { instruction.mnemonic = "ADC A, IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void ADC_A_IYL() {
-        instruction.mnemonic = "ADC A, IYL";
-    }
+    public void ADC_A_IYL() { instruction.mnemonic = "ADC A, IYL"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void SUB_IYH() {
-        instruction.mnemonic = "SUB IYH";
-    }
+    public void SUB_IYH() { instruction.mnemonic = "SUB IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void SUB_IYL() {
-        instruction.mnemonic = "SUB IYL";
-    }
+    public void SUB_IYL() { instruction.mnemonic = "SUB IYL"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void SBC_IYH() {
-        instruction.mnemonic = "SBC IYH";
-    }
+    public void SBC_IYH() { instruction.mnemonic = "SBC IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void SBC_IYL() {
-        instruction.mnemonic = "SBC IYL";
-    }
+    public void SBC_IYL() { instruction.mnemonic = "SBC IYL";instruction.comment = "; undocumented"; }
 
     @Override
-    public void AND_IYH() {
-        instruction.mnemonic = "AND IYH";
-    }
+    public void AND_IYH() { instruction.mnemonic = "AND IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void AND_IYL() {
-        instruction.mnemonic = "AND IYL";
-    }
+    public void AND_IYL() { instruction.mnemonic = "AND IYL"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void XOR_IYH() {
-        instruction.mnemonic = "XOR IYH";
-    }
+    public void XOR_IYH() { instruction.mnemonic = "XOR IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void XOR_IYL() {
-        instruction.mnemonic = "XOR IYL";
-    }
+    public void XOR_IYL() { instruction.mnemonic = "XOR IYL"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void OR_IYH() {
-        instruction.mnemonic = "OR IYH";
-    }
+    public void OR_IYH() { instruction.mnemonic = "OR IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void OR_IYL() {
-        instruction.mnemonic = "OR IYL";
-    }
+    public void OR_IYL() { instruction.mnemonic = "OR IYL"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void CP_IYH() {
-        instruction.mnemonic = "CP IYH";
-    }
+    public void CP_IYH() { instruction.mnemonic = "CP IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void CP_IYL() {
-        instruction.mnemonic = "CP IYL";
-    }
+    public void CP_IYL() { instruction.mnemonic = "CP IYL"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void INC_IYH() {
-        instruction.mnemonic = "INC IYH";
-    }
+    public void INC_IYH() { instruction.mnemonic = "INC IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void INC_IYL() {
-        instruction.mnemonic = "INC IYL";
-    }
+    public void INC_IYL() { instruction.mnemonic = "INC IYL"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void DEC_IYH() {
-        instruction.mnemonic = "DEC IYH";
-    }
+    public void DEC_IYH() { instruction.mnemonic = "DEC IYH"; instruction.comment = "; undocumented"; }
 
     @Override
-    public void DEC_IYL() {
-        instruction.mnemonic = "DEC IYL";
-    }
+    public void DEC_IYL() { instruction.mnemonic = "DEC IYL"; instruction.comment = "; undocumented"; }
 
     @Override
     public void LD_IYH_n() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "LD IYh, "+String.format("%02X",d);
+        instruction.mnemonic = "LD IYh, "+ toHexString(d);
         instruction.comment = "; undocumented";
     }
 
     @Override
     public void LD_IYL_n() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
-        instruction.mnemonic = "LD IYl, "+String.format("%02X",d);
+        instruction.mnemonic = "LD IYl, "+ toHexString(d);
         instruction.comment = "; undocumented";
     }
 
     @Override
     public void LD_IX_d_n() {
-        d = currentComp.peek(PC++);
-        Z = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
+        Z = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = d;
         instruction.opCodes[instruction.opCodeCounter++] = Z;
-        instruction.mnemonic = "LD (IX+"+String.format("%02X",d)+"), "+Z;
+        instruction.mnemonic = "LD (IX+"+ toHexString(d)+"), "+Z;
     }
 
     @Override
     public void LD_IX_d_r_z() {
-        d = currentComp.peek(PC++);
-        instruction.mnemonic = "LD (IX+"+String.format("%02X",d)+"), "+r[z];
+        d = currentComp.peekText(PC++);
+        instruction.mnemonic = "LD (IX+"+ toHexString(d)+"), "+r[z];
     }
 
     @Override
@@ -1592,32 +1583,32 @@ public class Z80Disassembler extends Z80 implements Z80OpCode {
     }
     
     public void LD_mm_IX() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD ("+getWord(W, Z)+"), IX";
     }
 
     public void LD_IX_mm() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD IX, (" + getWord(W, Z) + ")";
     }
 
     public void LD_mm_IY() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD ("+getWord(W, Z)+"), IY";
     }
 
     public void LD_IY_mm() {
-        byte Z = currentComp.peek(PC++);
-        byte W = currentComp.peek(PC++);
+        byte Z = currentComp.peekText(PC++);
+        byte W = currentComp.peekText(PC++);
         instruction.opCodes[instruction.opCodeCounter++] = Z;
         instruction.opCodes[instruction.opCodeCounter++] = W;
         instruction.mnemonic = "LD IY, (" + getWord(W, Z) + ")";

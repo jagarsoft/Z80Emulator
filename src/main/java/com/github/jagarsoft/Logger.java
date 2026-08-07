@@ -33,5 +33,7 @@ public class Logger {
 
     public static void compMem(String s) {System.out.println(s); }
 
-    public static void intvalue(int data) {System.out.println("logger:intval:"+String.format("%04X", data)); }
+    public static void intvalue(int data) {System.out.println("logger:intval:"+String.format("%05d", data)); }
+
+    public static void hexvalue(int data) {System.out.println("logger:hexval:"+String.format("%04X", data)); }
 }

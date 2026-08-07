@@ -896,7 +896,7 @@ public class LoadStoreTest {
         cpu.setComputer(compTest);
         cpu.reset();
 
-        cpu.setR((byte) 0xFF);
+        cpu.setR((byte) 0x80);
         cpu.setA((byte) 0x00);
         cpu.setF((byte) 0x00);
         compTest.poke(0x0000, (byte) 0xED); // ED prefix
@@ -905,7 +905,7 @@ public class LoadStoreTest {
         cpu.fetch(); // ED prefix + LD A, R
 
         assertAll("LD A, R Group",
-                () -> assertEquals((byte) 0xFF, cpu.getA(), "LD A, R Failed: A<>0xFF"),
+                () -> assertEquals((byte) 0x81, cpu.getA(), "LD A, R Failed: A<>0x81"),
                 () -> assertTrue(cpu.getSF(), "LD A, R Failed: S Flag incorrectly set"),
                 () -> assertFalse(cpu.getNF(), "LD A, R Failed: N Flag incorrectly set"),
                 () -> assertFalse(cpu.getHF(), "LD A, R Failed: H Flag incorrectly set"),
@@ -922,8 +922,8 @@ public class LoadStoreTest {
         cpu.fetch(); // ED prefix + LD A, R
 
         assertAll("LD A, R Group",
-                () -> assertEquals((byte) 0x00, cpu.getA(), "LD A, R Failed: A<>0x00"),
-                () -> assertTrue(cpu.getZF(), "LD A, R Failed: Z Flag incorrectly set")
+                () -> assertEquals((byte) 0x01, cpu.getA(), "LD A, R Failed: A<>0x01"),
+                () -> assertFalse(cpu.getZF(), "LD A, R Failed: Z Flag incorrectly set")
         );
 
         cpu.setPC(0x0000);
@@ -1070,7 +1070,7 @@ public class LoadStoreTest {
 
         cpu.setPC(0x0000);
         cpu.setIX((short) 0x0005); // IX = 0x0005, so IX+5 = 0x000A
-        cpu.setA((byte) 0xCC);
+        cpu.setA((byte) 0xCC);     // Control Centinel
 
         long initTState = cpu.getTState();
         cpu.fetch(); // DD 77 05

@@ -283,92 +283,51 @@ public class BlockOperationsTest {
 
     /*
     @Override
-     public void INI() {
-         // TODO
-         System.out.println("INI implementation pending");
-     }
- 
- 	@Override
-     public void IND() {
-         // TODO
-         System.out.println("IND implementation pending");
-     }
- 
- 	@Override
-     public void INIR() {
-         // TODO
-         System.out.println("INIR implementation pending");
-     }
- 
- 	@Override
-     public void INDR() {
-         // TODO
-         System.out.println("INDR implementation pending");
-     }
- 
- 	@Override
-     public void OUTI() {
-         // TODO
-         System.out.println("OUTI implementation pending");
-     }
- 
- 	@Override
-     public void OUTD() {
-         // TODO
-         System.out.println("OUTD implementation pending");
-     }
- 
- 	@Override
-     public void OTIR() {
-         // TODO
-         System.out.println("OTIR implementation pending");
-     }
- 
- 	@Override
-     public void OTDR() {
-         // TODO
-         System.out.println("OTDR implementation pending");
-     }
+    public void INI() {
+        // TODO
+        System.out.println("INI implementation pending");
+    }
+
+	@Override
+    public void IND() {
+        // TODO
+        System.out.println("IND implementation pending");
+    }
+
+	@Override
+    public void INIR() {
+        // TODO
+        System.out.println("INIR implementation pending");
+    }
+
+	@Override
+    public void INDR() {
+        // TODO
+        System.out.println("INDR implementation pending");
+    }
+
+	@Override
+    public void OUTI() {
+        // TODO
+        System.out.println("OUTI implementation pending");
+    }
+
+	@Override
+    public void OUTD() {
+        // TODO
+        System.out.println("OUTD implementation pending");
+    }
+
+	@Override
+    public void OTIR() {
+        // TODO
+        System.out.println("OTIR implementation pending");
+    }
+
+	@Override
+    public void OTDR() {
+        // TODO
+        System.out.println("OTDR implementation pending");
+    }
      */
 }
-        //org.opentest4j.AssertionFailedError: CPIR Failed: Z Flag not set when match found ==>
-        //Expected :true
-        //Actual   :false
-        /*
-        DAA     TODO !!!
-        CPIR
-        CPDR
-        XOR_IX_d
-        XOR_IY_d
-        OR_IX_d
-        OR_IY_d
-        LD_r_y_IX_d
-        LD_IX_nn
-        LD_mm_IX
-        LD_IX_mm
-        INC_IX_d
-        DEC_IX_d
-        LD_IXH_n
-        LD_IXL_n
-        LD_IX_d_r_z
-        LD_IX_d_n
-        LD_IYH_n
-        LD_IYL_n
-        ADC_A_IY_d
-        BIT_y_IX_d
-        RES_y_IX_d
-        SET_y_IX_d
-        BIT_y_IY_d
-        RES_y_IY_d
-        SET_y_IY_d  HECHO
-        LD_IY_nn
-        LD_mm_IY
-        LD_IY_mm
-        LD_IY_d_r_z
-        LD_r_y_IY_d
-        LD_IY_d_n
-        INC_IY_d
-        DEC_IY_d
-        SUB_IY_d
-
-                 */

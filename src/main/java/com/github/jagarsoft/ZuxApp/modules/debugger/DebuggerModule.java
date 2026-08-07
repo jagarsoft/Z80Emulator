@@ -41,6 +41,7 @@ public class DebuggerModule extends BaseModule {
     private NotificationStrategy notificationStrategy = new StepStrategy();
     //private NotificationStrategy notificationStrategy = new SnapshotStrategy();
     private boolean stopOnHALT = false;
+    private boolean stopOnForcedBP = false; // For IDE debugging mode purpose only
 
     // Coalescing de UI: un “tick” cada ~33ms (30 FPS)
     private volatile long lastUiPushMs = 0L;
@@ -59,6 +60,7 @@ public class DebuggerModule extends BaseModule {
     private JButton runButton;
     private JButton pauseButton;
     private JButton stepButton;
+    private JButton resetButton;
 
     public DebuggerModule() {
         this.cpu = null; //new Z80Cpu();
@@ -118,25 +120,27 @@ public class DebuggerModule extends BaseModule {
         });
 
         // TOGGLE BREAKPOINT
-        /*commandBus.registerHandler(DebuggerToggleBreakpointCommand.class, new CommandHandler<DebuggerToggleBreakpointCommand>() {
+        commandBus.registerHandler(DebuggerToggleBreakpointCommand.class, new CommandHandler<DebuggerToggleBreakpointCommand>() {
             @Override public void handle(DebuggerToggleBreakpointCommand cmd) {
-                boolean enabled = breakpoints.toggle(cmd.getAddress());
+                stopOnForcedBP = breakpoints.toggle(cmd.getAddress());
                 // TODO (Opcional) publicar un evento de “breakpoints actualizados”
-                // eventBus.publish(new BreakPointToggledEvent(breakpoints));
+                //eventBus.publish(new BreakPointToggledEvent(breakpoints));
             }
-        });*/
+        });
 
         //eventBus.subscribe(ExecutionStartedEvent.class, (Consumer<ExecutionStartedEvent>) (e) -> {
         eventBus.subscribe(ExecutionStartedEvent.class, (UIEventHandler<ExecutionStartedEvent>) (e) -> {
             runButton.setEnabled(false);
             pauseButton.setEnabled(true);
             stepButton.setEnabled(false);
+            resetButton.setEnabled(true);
         });
         //eventBus.subscribe(ExecutionPausedEvent.class, (Consumer<ExecutionPausedEvent>) (e) -> {
         eventBus.subscribe(ExecutionPausedEvent.class, (UIEventHandler<ExecutionPausedEvent>) (e) -> {
             runButton.setEnabled(true);
             pauseButton.setEnabled(false);
             stepButton.setEnabled(true);
+            resetButton.setEnabled(true);
         });
         /*eventBus.subscribe(BreakpointHitEvent.class, (Consumer<BreakpointHitEvent>) (e) -> {
             eventBus.publish(new ExecutionPausedEvent("BREAKPOINT"));
@@ -193,14 +197,16 @@ public class DebuggerModule extends BaseModule {
                 e -> commandBus.execute(new DebuggerStepCommand())
         );
 
-        JButton resetButton = new JButton("Reset");
+        resetButton = new JButton("Reset");
         resetButton.addActionListener(
                 e -> commandBus.execute(new DebuggerResetCommand())
         );
 
-        runButton.setEnabled(true);
+        // all buttons disabled until binary code loaded
+        runButton.setEnabled(false);
         pauseButton.setEnabled(false);
-        stepButton.setEnabled(true);
+        stepButton.setEnabled(false);
+        resetButton.setEnabled(false);
 
         toolBar.add(runButton);
         toolBar.add(pauseButton);
@@ -236,11 +242,13 @@ public class DebuggerModule extends BaseModule {
         runDebugger();
         while (running.get() && (stopOnHALT ? !cpu.isHalted() : true) ) {
             int pc = cpu.getPC();
-            if ( ! isBreakpointHit(pc) /*&& ! isDataRegion(pc)*/ )
+            int bank = cpu.getComputer().getTextBank();
+            if ( ! stopOnForcedBP && ! isBreakpointHit(bank*0x1_0000+pc) /*&& ! isDataRegion(bank*0x1_0000+pc)*/ )
                 cpu.step();
             else
                 break;
         }
+        stopOnForcedBP = false;
 
         if (stopOnHALT && cpu.isHalted()) {
             pauseDebugger("HALTED");
@@ -250,7 +258,7 @@ public class DebuggerModule extends BaseModule {
     }
 
     private boolean isBreakpointHit(int pc) {
-        if (breakpoints.isBreakpoint(pc)) {
+        if (breakpoints.isBreakpoint(pc)) { // pc on bank
             pauseDebugger("BREAKPOINT");
             eventBus.publish(new BreakpointHitEvent(pc));
             return true;
@@ -259,7 +267,7 @@ public class DebuggerModule extends BaseModule {
     }
 
     private boolean isDataRegion(int pc) {
-        if( dataRegion.isDataRegion(pc) ) {
+        if( dataRegion.isDataRegion(pc) ) { // pc on bank
             pauseDebugger("DATAREGION");
             eventBus.publish(new BreakpointHitEvent(pc));
             return true;

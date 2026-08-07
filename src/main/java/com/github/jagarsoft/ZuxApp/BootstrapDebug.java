@@ -12,6 +12,7 @@ import com.github.jagarsoft.ZuxApp.modules.console.ConsoleModule;
 import com.github.jagarsoft.ZuxApp.modules.dataregion.DataRegionModule;
 import com.github.jagarsoft.ZuxApp.modules.debugger.DebuggerModule;
 import com.github.jagarsoft.ZuxApp.modules.disassembler.DisassemblerModule;
+import com.github.jagarsoft.ZuxApp.modules.kernel.ProcTableModule;
 import com.github.jagarsoft.ZuxApp.modules.memoryviewer.MemoryViewModule;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.MemoryConfigModule;
 import com.github.jagarsoft.ZuxApp.modules.mainmodule.MainModule;
@@ -29,28 +30,31 @@ public class BootstrapDebug implements Bootstrap {
     private String image = null;
     private String dataRegion = null;
     private final Bootstrap that = this;
+    private COMPUTER_MODEL computerModel;
 
     private EventBus eventBus;
     private CommandBus commandBus;
+    private MainModule mainModule;
 
     /*
      *  Startup
      */
+    @Override
     public void initialize() {
         //this.eventBus = new SimpleEventBus();
         this.eventBus = new AsyncEventBus();
         this.commandBus = new SimpleCommandBus();
 
-        //this.mainModule = new MainModule(commandBus, eventBus);
         List<Module> modules = Arrays.asList(
-                  new MainModule()
+                  this.mainModule = new MainModule()
                 , new LoggerModule()
                 , new ConsoleModule()
                 //, new HelloWorldModule()
                 , new MemoryConfigModule(64, 1) // TODO Create with default values from commandline options or property file
-                //, new ZXSpectrumModule()
-                , new ZuxModule()
-                , new ComputerModule(image,  dataRegion)
+                , computerModel == COMPUTER_MODEL.ZXSPECTRUM ?
+                        new ZXSpectrumModule() :
+                        new ZuxModule()
+                , new ComputerModule(image,  dataRegion, computerModel)
                 , new RegistersViewModule()
                 , new MemoryViewModule()
                 , new PortsViewModule()
@@ -58,6 +62,7 @@ public class BootstrapDebug implements Bootstrap {
                 , new DataRegionModule()
                 , new DisassemblerModule()
                 , new DebuggerModule()
+                , new ProcTableModule()
         );
 
         commandBus.registerHandler(GetBootstrapCommand.class, new CommandHandler<GetBootstrapCommand>() {
@@ -76,8 +81,9 @@ public class BootstrapDebug implements Bootstrap {
     /*
      * Shutdown
      */
-
+	@Override
     public void terminate() {
+		// TODO terminate or withdraw
     }
 
     public void withdraw() {
@@ -92,5 +98,15 @@ public class BootstrapDebug implements Bootstrap {
     @Override
     public void setDataRegion(String dataRegion) {
         this.dataRegion = dataRegion;
+    }
+
+    @Override
+    public void setComputerModel(COMPUTER_MODEL computerModel) {
+        this.computerModel = computerModel;
+    }
+
+    @Override
+    public boolean isDebugOn() {
+        return true;
     }
 }

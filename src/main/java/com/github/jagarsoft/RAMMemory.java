@@ -21,23 +21,26 @@ public class RAMMemory implements Memory {
         public byte peek(int addr) { return ram[addr]; }
 
         @Override
+        public byte peekText(int addr) {
+            return peek(addr);
+        }
+
+        @Override
         public void load(InputStream dataStream, int dest, int size) {
                 try {
                         dataStream.read(ram, dest, size);
-                } catch (
-                        IOException e) {
+                } catch (IOException e) {
                         throw new RuntimeException(e);
                 }
         }
 
-    public void load(RandomAccessFile dataStream, int dest, int size) {
-        try {
-            dataStream.read(ram, dest, size);
-        } catch (
-                IOException e) {
-            throw new RuntimeException(e);
+        public void load(RandomAccessFile dataStream, int dest, int size) {
+            try {
+                dataStream.read(ram, dest, size);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
-    }
 
         @Override
         public void movemem(short org, short dst, short count, MovememDirection dir) {
@@ -51,6 +54,5 @@ public class RAMMemory implements Memory {
                                         ram[dst--] = ram[org--];
                                 break;
                 }
-
         }
 }

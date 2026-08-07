@@ -11,8 +11,6 @@ import static java.lang.Thread.sleep;
 
 public class Z80 implements Z80OpCode, Cloneable {
 
-    private final TAP tap;
-
     @Override
     public Z80 clone() {
         try {
@@ -786,12 +784,12 @@ public class Z80 implements Z80OpCode, Cloneable {
         tstate+=11;
     }
 
-    public void CB_prefix() { fetchCB(currentComp.peek(PC++)); }
-    public void ED_prefix() { fetchED(currentComp.peek(PC++)); }
-    public void DD_prefix() { fetchDD(currentComp.peek(PC++)); }
-    public void FD_prefix() { fetchFD(currentComp.peek(PC++)); }
-    public void DDCB_prefix() { fetchDDCB(currentComp.peek(PC++)); }
-    public void FDCB_prefix() { fetchFDCB(currentComp.peek(PC++)); }
+    public void CB_prefix() { fetchCB(currentComp.peekText(PC++)); }
+    public void ED_prefix() { fetchED(currentComp.peekText(PC++)); }
+    public void DD_prefix() { fetchDD(currentComp.peekText(PC++)); }
+    public void FD_prefix() { fetchFD(currentComp.peekText(PC++)); }
+    public void DDCB_prefix() { fetchDDCB(currentComp.peekText(PC++)); }
+    public void FDCB_prefix() { fetchFDCB(currentComp.peekText(PC++)); }
 
     /****/
     // Optimized frame-based timing system
@@ -817,7 +815,8 @@ public class Z80 implements Z80OpCode, Cloneable {
     private boolean checkFrameComplete() {
         // Check if frame is complete and interrupt should be triggered
         if (frameTiming.executeFrame(this)) {
-            interrupt();
+            //interrupt(); //EVITADO !!!
+            System.out.println("interrupt(); //EVITADO !!!");
             return true;
         }
         return false;
@@ -833,16 +832,9 @@ public class Z80 implements Z80OpCode, Cloneable {
     }
 
     public void fetch() {
-        if( PC == 0x0010 ) {outToScreen(getA());}
-        /*if( PC == 0x04C2 ) {
-            tap.SA_BYTES();
-            PC = 0x053F; // SA_LD_RET, test for BREAK
-        } else if( PC == 0x556 ) {
-            tap.LD_BYTES(currentComp, getA()&0x00FF, getIX()&0x0000FFFF, getDE());
-            PC = 0x053F;  // SA_LD_RET, test for BREAK
-        }*/
+        //if( PC == 0x0010 ) {outToScreen(getA());}
 
-        fetch(currentComp.peek(PC++));
+        fetch(currentComp.peekText(PC++)); // fetch opCode on M1 cycle
     }
 
     String outToScreenOUT = "archivoOUT.txt";
@@ -972,9 +964,10 @@ public class Z80 implements Z80OpCode, Cloneable {
         opCMasked(opC);
 
         if (x == 1) {
-            if( z == 6 && y == 6 )
+            if( z == 6 && y == 6 ) {
                 DDopCodes[x][6][6].execute(); // NONI
-            else if( z != 6 && y == 6 )
+                tstate += 4;
+            } else if( z != 6 && y == 6 )
                 DDopCodes[x][0][6].execute(); //LD_IX_d_r_z
             else if( z == 6 /*&& y != 6*/ )
                 DDopCodes[x][6][0].execute(); //LD_r_y_IX_d
@@ -988,15 +981,15 @@ public class Z80 implements Z80OpCode, Cloneable {
                 DDopCodes[x][0][y].execute(); //LD_IXH_r_z / LD_IXL_r_z
             else if( (z == 4 || z == 5) /*&& (y == 4 || y == 5)*/ )
                 DDopCodes[x][z][y].execute(); // LD_IXH_IXL / LD_IXL_IXH
-            else
-                DDopCodes[x][0][0].execute();
+            else {
+                DDopCodes[x][0][0].execute(); // LD_r_y_r_z
+                tstate += 4;
+            }
 
-            tstate += 4;
             return;
         }
 
         if (DDopCodes[x][z][y] != null) {
-            //System.out.println("D");
             DDopCodes[x][z][y].execute();
         } else {
             System.out.println("DD+OpCode not implemented yet: " + Integer.toHexString(opC & 0x00FF) + " PC: " + Integer.toHexString(PC));
@@ -1008,9 +1001,10 @@ public class Z80 implements Z80OpCode, Cloneable {
         opCMasked(opC);
         
         if (x == 1) {
-            if( z == 6 && y == 6 )
+            if( z == 6 && y == 6 ) {
                 FDopCodes[x][6][6].execute(); // NONI
-            else if( z != 6 && y == 6 )
+                tstate += 4;
+            } else if( z != 6 && y == 6 )
                 FDopCodes[x][0][6].execute(); //LD_IY_d_r_z
             else if( z == 6 /*&& y != 6*/ )
                 FDopCodes[x][6][0].execute(); //LD_r_y_IY_d
@@ -1024,15 +1018,15 @@ public class Z80 implements Z80OpCode, Cloneable {
                 FDopCodes[x][0][y].execute(); //LD_IYH_r_z / LD_IYL_r_z
             else if( (z == 4 || z == 5) /*&& (y == 4 || y == 5)*/ ) // LD_IYH_IYL / LD_IYL_IYH
                 FDopCodes[x][z][y].execute();
-            else
-                FDopCodes[x][0][0].execute();
+            else {
+                FDopCodes[x][0][0].execute(); // LD_r_y_r_z
+                tstate += 4;
+            }
 
-            tstate += 4;
             return;
         }
 
         if (FDopCodes[x][z][y] != null) {
-            //System.out.println("D");
             FDopCodes[x][z][y].execute();
         } else {
             System.out.println("FD+OpCode not implemented yet: " + Integer.toHexString(opC & 0x00FF) + " PC: " + Integer.toHexString(PC));
@@ -1042,7 +1036,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     protected void fetchDDCB(byte opC) {
         d = opC; // skip displacement
-        opC = currentComp.peek(PC++);
+        opC = currentComp.peekText(PC++);
 
         opCMasked(opC);
 
@@ -1058,7 +1052,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     protected void fetchFDCB(byte opC) {
         d = opC; // skip displacement
-        opC = currentComp.peek(PC++);
+        opC = currentComp.peekText(PC++);
 
         opCMasked(opC);
 
@@ -1119,12 +1113,10 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     public Z80() {
         dispatcher(this);
-        tap = new TAP(currentComp);
     }
 
     public Z80(Z80OpCode opC) {
         dispatcher(opC);
-        tap = new TAP(currentComp);
     }
 
     /*
@@ -1332,6 +1324,7 @@ public class Z80 implements Z80OpCode, Cloneable {
         return String.format("%04X", (short) ((h << 8) & 0xFF00 | (l & 0xFF)));
     }
 
+    public void setPC(int addr) { PC = addr; }
     public int getPC() { return PC++; }
     public int getPCnonIncrement() { return PC; }
 
@@ -1434,7 +1427,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void DJNZ() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
 
         if (--B != 0) {
             PC += (short) d;
@@ -1447,7 +1440,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void JR() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
 
         PC += (short) d;
 
@@ -1459,7 +1452,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 	@Override
     public void JR_cc() {
         boolean ccSet = false;
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
 
         switch (cc[y - 4]) {
             case "NZ":
@@ -1486,8 +1479,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_rp_p_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         set_rp_p();
         tstate+=10;
@@ -1631,8 +1624,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_mm_HL() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         currentComp.poke(getWZ(), L);
         currentComp.poke(getWZ() + 1, H);
@@ -1642,8 +1635,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_mm_A() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         MEMPTR = getWZ();
 
         currentComp.poke(MEMPTR++, A);
@@ -1671,8 +1664,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_HL_mm() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         setL(currentComp.peek(getWZ()));
         setH(currentComp.peek(getWZ() + 1));
@@ -1682,8 +1675,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_A_mm() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         MEMPTR = getWZ();
 
         setA(currentComp.peek(MEMPTR++));
@@ -1846,7 +1839,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_r_y_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
 
         set_r_(y);
 
@@ -1929,7 +1922,16 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void RRA() {
-        byte c = (byte) (A & 0x01); // pre-carry
+        Z = A;
+
+        RR_common();
+
+        A = Z;
+
+        regTouched(RegTouched.A);
+        tstate+=4;
+
+        /*byte c = (byte) (A & 0x01); // pre-carry
         boolean oc = getCF(); // old-carry
 
         A >>= 1;
@@ -1945,13 +1947,20 @@ public class Z80 implements Z80OpCode, Cloneable {
         else
             A &= 0x7F;
 
+        BitSet pA = BitSet.valueOf(new byte[]{A});
+
+        if( (pA.cardinality() % 2) == 0 )
+            setPF();
+        else
+            resPF();
+
         resNF();
         resHF();
 
         affectXYFlags(A);
 
         regTouched(RegTouched.A);
-        tstate+=4;
+        tstate+=4;*/
     }
 
     // https://worldofspectrum.org/faq/reference/z80reference.htm#DAA
@@ -2984,7 +2993,7 @@ public class Z80 implements Z80OpCode, Cloneable {
     @Override
     public void SUB_IX_d() {
         int x = A & 0x0FF;
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         Z = currentComp.peek(MEMPTR = getIX() + d);
         int y = Z & 0x0FF;
@@ -3028,7 +3037,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void SBC_A_IX_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(MEMPTR = getIX() + d);
         int x = A & 0xFF;
         int y = Z & 0xFF;
@@ -3070,7 +3079,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void SBC_A_IY_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(getIY()+d);
         int x = A & 0xFF;
         int y = Z & 0xFF;
@@ -3109,7 +3118,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void AND_IX_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(MEMPTR = getIX() + d);
 
         AND_common();
@@ -3140,7 +3149,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void AND_IY_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(getIY()+d);
 
         AND_common();
@@ -3171,7 +3180,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void XOR_IX_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(MEMPTR = getIX() + d);
 
         XOR_common();
@@ -3181,7 +3190,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void XOR_IY_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(getIY()+d);
 
         XOR_common();
@@ -3191,7 +3200,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void OR_IX_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(MEMPTR = getIX() + d);
 
         OR_common();
@@ -3201,7 +3210,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void OR_IY_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(getIY()+d);
 
         OR_common();
@@ -3211,7 +3220,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void CP_IX_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         int x = A & 0xFF;
 
@@ -3931,8 +3940,8 @@ public class Z80 implements Z80OpCode, Cloneable {
     public void JP_cc_y_nn() {
         boolean ccSet = false;
 
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         MEMPTR = getWZ();
 
@@ -3972,8 +3981,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void JP_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         PC = MEMPTR = getWZ();
         tstate+=10;
@@ -3981,18 +3990,21 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void OUT_n_A() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         W = 0; //A;
         tstate+=11;
         currentComp.write((short)getWZ(), A, (int)(tstate - old_tstate_out));
         Z++;
         MEMPTR = getWZ();
         old_tstate_out = tstate;
+
+        if(getWZ() == 0x00CC+1)
+            outToScreen(getA());
     }
 
 	@Override
-    public void IN_A_n() { // TODO
-        Z = currentComp.peek(PC++);
+    public void IN_A_n() {
+        Z = currentComp.peekText(PC++);
         W = A;
         MEMPTR = (short)getWZ();
 
@@ -4069,8 +4081,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 	@Override
     public void CALL_cc_y_nn() {
         boolean ccSet = false;
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         MEMPTR = getWZ();
 
@@ -4139,8 +4151,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void CALL_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         currentComp.poke(--SP, (byte)((PC & 0xFF00)>>8));
         currentComp.poke(--SP, (byte)(PC & 0x00FF));
@@ -4154,7 +4166,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 	@Override
     public void ADD_A_n() {
         int x = A & 0x0FF;
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         int y = Z & 0x0FF;
     //System.out.print(x + ", " + y);
     //ADD_A_common2(y);
@@ -4198,7 +4210,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void ADC_A_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         int x = A & 0x0FF;
         int y = Z & 0x0FF;
 
@@ -4246,7 +4258,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void SUB_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         int x = A & 0xFF;
         int y = Z & 0xFF;
 
@@ -4288,7 +4300,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void SBC_A_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         int x = A & 0xFF;
         int y = Z & 0xFF;
 
@@ -4334,7 +4346,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void AND_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
 //System.out.print(A + ", " + Z);
 //AND_common2(Z);
         AND_common();
@@ -4377,7 +4389,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void XOR_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
 //System.out.print(A + ", " + Z);
 //XOR_common2(Z);
         XOR_common();
@@ -4403,7 +4415,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void OR_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
 //System.out.print(A + ", " + Z);
 //OR_common2(Z);
         OR_common();
@@ -4430,7 +4442,7 @@ public class Z80 implements Z80OpCode, Cloneable {
     public void CP_n() {
         int x = A & 0xFF;
 
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
         int y = Z & 0xFF;
 //System.out.println(x + ", " + y);
 //cp_common2(y);
@@ -5143,8 +5155,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_mm_rp_p() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         MEMPTR = getWZ();
 
         get_rp_p();
@@ -5157,8 +5169,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_rp_p_mm() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         MEMPTR = getWZ();
 
         Z = currentComp.peek(MEMPTR);
@@ -5250,7 +5262,7 @@ public class Z80 implements Z80OpCode, Cloneable {
         if( y != 6)
             get_r_(y);
         else
-            Z = 0;
+            Z = 0; // NMOS behaviour
 
         currentComp.write((short) MEMPTR++, Z, (int)(tstate - old_tstate_out));
         old_tstate_out = tstate;
@@ -6277,7 +6289,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_r_y_IX_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
         Z = currentComp.peek(MEMPTR = getIX() + d);
 
         set_r_(y);
@@ -6286,8 +6298,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_IX_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         setIX((short)getWZ());
     }
@@ -6341,8 +6353,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_mm_IX() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         MEMPTR = getWZ();
 
         short ix = getIX();
@@ -6354,8 +6366,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 /* TODO test Alternative
 
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         currentComp.poke(getWZ(), getIXL());
         currentComp.poke(getWZ() + 1, getIXH());
@@ -6364,8 +6376,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_IX_mm() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         MEMPTR = getWZ();
 
         Z = currentComp.peek(MEMPTR);
@@ -6375,8 +6387,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 /* TODO test alternative
 
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         setIXL(currentComp.peek(getWZ());
         setIXH(currentComp.peek(getWZ() + 1);
@@ -6385,7 +6397,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void INC_IX_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         W = Z = currentComp.peek(MEMPTR = getIX() + d);
         Z++;
@@ -6423,7 +6435,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void DEC_IX_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         W = Z = currentComp.peek(MEMPTR = getIX() + d);
         Z--;
@@ -6461,21 +6473,21 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_IXH_n() {
-        W = currentComp.peek(PC++);
+        W = currentComp.peekText(PC++);
 
         setIXH(W);
     }
 
     @Override
     public void LD_IXL_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
 
         setIXL(Z);
     }
 
     @Override
     public void LD_IX_d_r_z() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         get_r_(z);
 
@@ -6486,7 +6498,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_IX_d_n() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         Z = currentComp.peek(PC++);
 
         currentComp.poke(MEMPTR = getIX() + d, Z);
@@ -6574,7 +6586,7 @@ public class Z80 implements Z80OpCode, Cloneable {
     @Override
     public void ADD_A_IX_d() {
         int x = A & 0x0FF;
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
 
         Z = currentComp.peek(MEMPTR = getIX() + d);
         int y = Z & 0x0FF;
@@ -6587,7 +6599,7 @@ public class Z80 implements Z80OpCode, Cloneable {
     @Override
     public void ADC_A_IX_d() {
         int x = A & 0x0FF;
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
 
         Z = currentComp.peek(MEMPTR = getIX() + d);
         int y = Z & 0x0FF;
@@ -6600,7 +6612,7 @@ public class Z80 implements Z80OpCode, Cloneable {
     @Override
     public void ADC_A_IY_d() {
         int x = A & 0x0FF;
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
 
         Z = currentComp.peek(MEMPTR = getIY() + d);
         int y = Z & 0x0FF;
@@ -6654,16 +6666,16 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_IY_nn() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
 
         setIY((short)getWZ());
     }
 
     @Override
     public void LD_mm_IY() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         MEMPTR = getWZ();
 
         short iy = getIY();
@@ -6676,8 +6688,8 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_IY_mm() {
-        Z = currentComp.peek(PC++);
-        W = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
+        W = currentComp.peekText(PC++);
         MEMPTR = getWZ();
 
         Z = currentComp.peek(MEMPTR);
@@ -6688,7 +6700,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_IY_d_r_z() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         get_r_(z);
 
@@ -6699,7 +6711,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_r_y_IY_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         Z = currentComp.peek(MEMPTR = getIY() + d);
 
@@ -6710,7 +6722,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void INC_IY_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         W = Z = currentComp.peek(MEMPTR = getIY() + d);
         Z++;
@@ -6748,7 +6760,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void DEC_IY_d() {
-        d = currentComp.peek(PC++);
+        d = currentComp.peekText(PC++);
 
         W = Z = currentComp.peek(MEMPTR = getIY() + d);
         Z--;
@@ -6830,7 +6842,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
 	@Override
     public void LD_IY_d_n() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         Z = currentComp.peek(PC++);
 
         currentComp.poke(MEMPTR = getIY() + d, Z);
@@ -6881,7 +6893,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 	@Override
     public void ADD_A_IY_d() {
         int x = A & 0x0FF;
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
 
         Z = currentComp.peek(MEMPTR = getIY() + d);
         int y = Z & 0x0FF;
@@ -6925,7 +6937,7 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void CP_IY_d() {
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
         int x = A & 0xFF;
 
         Z = currentComp.peek(MEMPTR = getIY() + d);
@@ -6940,7 +6952,7 @@ public class Z80 implements Z80OpCode, Cloneable {
     @Override
     public void SUB_IY_d() {
         int x = A & 0xFF;
-        byte d = currentComp.peek(PC++);
+        byte d = currentComp.peekText(PC++);
 
         Z = currentComp.peek(MEMPTR = getIY() + d);
         int y = Z & 0xFF;
@@ -6984,14 +6996,14 @@ public class Z80 implements Z80OpCode, Cloneable {
 
     @Override
     public void LD_IYH_n() {
-        W = currentComp.peek(PC++);
+        W = currentComp.peekText(PC++);
 
         setIYH(W);
     }
 
     @Override
     public void LD_IYL_n() {
-        Z = currentComp.peek(PC++);
+        Z = currentComp.peekText(PC++);
 
         setIYL(Z);
     }

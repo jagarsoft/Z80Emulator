@@ -215,7 +215,7 @@ public class TerminalPanel extends JPanel {
             return false;
         }
 
-            int start = position(selStartRow, selStartCol);
+        int start = position(selStartRow, selStartCol);
         int end = position(selEndRow, selEndCol);
 
         if (start > end) {
@@ -276,7 +276,6 @@ public class TerminalPanel extends JPanel {
     /*
      * End Selection feature
      */
-
     public void setGrid(boolean status) {
         isGrid = status;
     }
@@ -286,28 +285,29 @@ public class TerminalPanel extends JPanel {
      * status = false -> Hide
      */
     public void setCursorEnable(boolean status) {
-            isCursorEnabled = status;
-            setBlinkTimer(isCursorEnabled && isCursorBlinking);
-            isCursorVisible = status;
-        }
+        isCursorEnabled = status;
+        setBlinkTimer(isCursorEnabled && isCursorBlinking);
+        isCursorVisible = status;
+    }
 
-        /*
-         * status = true -> Blink
-         * status = false -> Steady
-         */
-        public void setCursorBlink(boolean status) {
-            isCursorBlinking = status;
-            setBlinkTimer(isCursorEnabled && isCursorBlinking);
-        }
+    /*
+     * status = true -> Blink
+     * status = false -> Steady
+     */
+    public void setCursorBlink(boolean status) {
+        isCursorBlinking = status;
+        setBlinkTimer(isCursorEnabled && isCursorBlinking);
+    }
 
-        private void setBlinkTimer(boolean status) {
-            if(status) {
+    // start o stop blink timer according to status
+    private void setBlinkTimer(boolean status) {
+        if(status) {
             //cursorTimer.restart();
             if(!cursorTimer.isRunning())
                 cursorTimer.start();
         } else
-        if(cursorTimer.isRunning())
-            cursorTimer.stop();
+            if(cursorTimer.isRunning())
+                cursorTimer.stop();
     }
 
     @Override
@@ -415,8 +415,8 @@ public class TerminalPanel extends JPanel {
 
     public void Hmas() {
         cellHeight++;
-System.out.println("cellHeight = " + cellHeight);
-System.out.println("cellWidth = " + cellWidth);
+//System.out.println("cellHeight = " + cellHeight);
+//System.out.println("cellWidth = " + cellWidth);
         setSize(cellWidth*model.getCols()+BORDER,
                 cellHeight*model.getRows()+BORDER);
         this.pack();
@@ -424,8 +424,8 @@ System.out.println("cellWidth = " + cellWidth);
 
     public void Hmenos() {
         cellHeight--;
-System.out.println("cellHeight = " + cellHeight);
-System.out.println("cellWidth = " + cellWidth);
+//System.out.println("cellHeight = " + cellHeight);
+//System.out.println("cellWidth = " + cellWidth);
             /*setSize(cellWidth*model.getCols()+BORDER,
                     cellHeight*model.getRows()+BORDER);*/
         setPreferredSize(
@@ -439,8 +439,8 @@ System.out.println("cellWidth = " + cellWidth);
 
     public void Wmas() {
         cellWidth++;
-System.out.println("cellHeight = " + cellHeight);
-System.out.println("cellWidth = " + cellWidth);
+//System.out.println("cellHeight = " + cellHeight);
+//System.out.println("cellWidth = " + cellWidth);
             /*setSize(cellWidth*model.getCols()+BORDER,
                     cellHeight*model.getRows()+BORDER);*/
         setPreferredSize(
@@ -454,8 +454,8 @@ System.out.println("cellWidth = " + cellWidth);
 
     public void Wmenos() {
         cellWidth--;
-System.out.println("cellHeight = " + cellHeight);
-System.out.println("cellWidth = " + cellWidth);
+//System.out.println("cellHeight = " + cellHeight);
+//System.out.println("cellWidth = " + cellWidth);
             /*setSize(cellWidth*model.getCols()+BORDER,
                     cellHeight*model.getRows()+BORDER);*/
         setPreferredSize(
@@ -523,7 +523,7 @@ System.out.println("computed cols = " + (getWidth() / cellWidth));*/
 
         // 1. Activar renderizado de alta calidad para texto (Antialiasing)
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                             RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         // 2. Calcular el espacio disponible real en el componente
         int panelWidth = getWidth();
@@ -632,16 +632,16 @@ System.out.println("baseline = " + baseline);*/
             // 6. Redimensiona el cursor de acuerdo al nuevo tamaño de la fuente
         setCursorDimensions(currentCursorStyle);
 
-System.out.println("cellHeight = " + cellHeight);
-System.out.println("cellWidth = " + cellWidth);
-System.out.println("panel height = " + availH);
-System.out.println("panel width = " + availW);
-System.out.println("computed rows = " + (availH / cellHeight));
-System.out.println("computed cols = " + (availW / cellWidth));
-System.out.println("offsetX = " + offsetX);
-System.out.println("offsetY = " + offsetY);
-System.out.println("baseline = " + baseline);
-System.out.println();
+//System.out.println("cellHeight = " + cellHeight);
+//System.out.println("cellWidth = " + cellWidth);
+//System.out.println("panel height = " + availH);
+//System.out.println("panel width = " + availW);
+//System.out.println("computed rows = " + (availH / cellHeight));
+//System.out.println("computed cols = " + (availW / cellWidth));
+//System.out.println("offsetX = " + offsetX);
+//System.out.println("offsetY = " + offsetY);
+//System.out.println("baseline = " + baseline);
+//System.out.println();
     }
 
     private void drawCursor(Graphics2D g2) {

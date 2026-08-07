@@ -16,16 +16,29 @@ import com.github.jagarsoft.ZuxApp.modules.memoryviewer.MemoryViewModule;
  */
 public class BinaryImageLoadedEvent implements Event {
     private final Computer currentComputer;
+    private final int bank;
     private final int origin;
     private final long length;
 
     public BinaryImageLoadedEvent(Computer currentComputer, int origin, long length) {
         this.currentComputer = currentComputer;
+        this.bank = 0;
         this.origin = origin;
         this.length = length;
     }
 
+    public BinaryImageLoadedEvent(Computer currentComputer, int bank, int offset, long length) {
+        this.currentComputer = currentComputer;
+        this.bank = bank;
+        this.origin = offset;
+        this.length = length;
+    }
+
     public Computer getComputer() { return currentComputer; }
+
+    public int getBank() {
+        return bank;
+    }
 
     public int getOrigin() {
         return origin;

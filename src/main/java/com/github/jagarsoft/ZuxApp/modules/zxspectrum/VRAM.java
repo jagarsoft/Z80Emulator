@@ -41,6 +41,11 @@ public class VRAM implements Memory {
     }
 
     @Override
+    public byte peekText(int addr) {
+        return peek(addr);
+    }
+
+    @Override
     public int getSize() {
         return this.size;
     }

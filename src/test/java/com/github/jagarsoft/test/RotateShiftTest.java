@@ -106,7 +106,7 @@ public class RotateShiftTest {
                 () -> assertEquals((byte) 0x87, cpu.getA(), "RRA Failed: A<>0x87 = " + Integer.toHexString(cpu.getA())),
                 () -> assertNotEquals((byte) 0x0F, cpu.getA(), "RRA Failed: A still 0x0F = " + Integer.toHexString(cpu.getA())),
                 () -> assertTrue(cpu.getCF(), "RRA Failed: Carry flag must be ON"),
-                () -> assertTrue(cpu.getPF(), "RRA Failed: Parity flag must be OFF")
+                () -> assertTrue(cpu.getPF(), "RRA Failed: Parity flag must be ON")
         );
 
         cpu.resCF();

@@ -5,6 +5,7 @@ import com.github.jagarsoft.ZuxApp.core.bus.IAsyncEventBus;
 import com.github.jagarsoft.ZuxApp.core.bus.UIEventHandler;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -100,6 +101,33 @@ public class AsyncEventBus implements IAsyncEventBus {
         globalListeners.clear();
         globalAsyncListeners.clear();
         globalUIListeners.clear();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> void publishAndWait(T event) throws InterruptedException {
+        List<Future<?>> futures = new ArrayList<>();
+        List<Object> handlers = listeners.get(event.getClass());
+        if (handlers != null) {
+            for (Object handler : handlers) {
+                if (handler instanceof UIEventHandler) {
+                    futures.add(executor.submit(() -> {
+                        try {
+                            SwingUtilities.invokeAndWait(() -> ((UIEventHandler<T>) handler).handle(event));
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }));
+                } else if (handler instanceof Consumer) {
+                    futures.add(executor.submit(() -> ((Consumer<T>) handler).accept(event)));
+                } else if (handler instanceof EventHandler) {
+                    futures.add(executor.submit(() -> invokeHandler((EventHandler<T>) handler, event)));
+                }
+            }
+        }
+        for (Future<?> f : futures) {
+            try { f.get(); } catch (ExecutionException e) { throw new RuntimeException(e); }
+        }
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.github.jagarsoft.ZuxApp.modules.disassembler;
 
+import com.github.jagarsoft.Instruction;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
@@ -19,14 +21,20 @@ public class BreakpointCellRenderer extends DefaultTableCellRenderer {
         JLabel label = (JLabel) super.getTableCellRendererComponent(
                 table, value, isSelected, hasFocus, row, column);
 
-        int addr = model.getInstruction(row).getAddress();
-        if (model.isBreakpoint(addr)) {
-            label.setIcon(bpIcon);
-            label.setText(""); // sólo icono
-        } else {
-            label.setIcon(null);
-            label.setText("");
-        }
+        Instruction inst = model.getInstruction(row);
+        if( inst != null ) {
+            int bank = inst.bank;
+            int addr = inst.getAddress();
+            if (model.isBreakpoint(bank*0x1_0000+addr)) {
+                label.setIcon(bpIcon);
+                label.setText(""); // icon only
+            } else {
+                label.setIcon(null);
+                label.setText("");
+            }
+        } else
+            System.out.println("Fila "+row+" no encontrada");
+
 
         label.setHorizontalAlignment(SwingConstants.CENTER);
         return label;

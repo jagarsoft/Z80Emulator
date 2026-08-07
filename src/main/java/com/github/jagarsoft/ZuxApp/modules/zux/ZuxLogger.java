@@ -10,6 +10,7 @@ public class ZuxLogger implements IODevice {
     public final static byte LOG_INT = 0;
     public final static byte LOG_STR = 1;
     public final static byte LOG_CHAR = 2;
+    public final static byte LOG_HEX = 3;
     private final Computer zux;
     private byte log_cmd;
     private byte word = 0;
@@ -66,13 +67,17 @@ public class ZuxLogger implements IODevice {
             case LOGGER_DAT:
                 switch (log_cmd) {
                     case LOG_INT:
+                    case LOG_HEX:
                         if (word++ == 0) {
                             proc_ptr_low = ((short)data&0x00FF);
                         } else {
                             proc_ptr_hi = ((short)data&0x00FF);
                             word = 0;
                             proc_ptr = proc_ptr_hi * 256 + proc_ptr_low;
-                            log(proc_ptr);
+                            if(log_cmd == LOG_INT)
+                                log(proc_ptr);
+                            else
+                                loghex(proc_ptr);
                         }
                         break;
                     case LOG_STR:
@@ -107,6 +112,10 @@ public class ZuxLogger implements IODevice {
 
     private void log(int data) {
         Logger.intvalue(data);
+    }
+
+    private void loghex(int data) {
+        Logger.hexvalue(data);
     }
 
     private void log(String str) {

@@ -2,10 +2,15 @@ package com.github.jagarsoft.ZuxApp.modules.computer;
 
 import com.github.jagarsoft.*;
 import com.github.jagarsoft.Computer;
+import com.github.jagarsoft.ZuxApp.Bootstrap;
+import com.github.jagarsoft.ZuxApp.core.bus.Command;
 import com.github.jagarsoft.ZuxApp.core.bus.CommandHandler;
+import com.github.jagarsoft.ZuxApp.core.bus.IAsyncEventBus;
+import com.github.jagarsoft.ZuxApp.infrastructure.bus.AsyncEventBus;
 import com.github.jagarsoft.ZuxApp.infrastructure.module.BaseModule;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.ComputerLoadImageCommand;
 import com.github.jagarsoft.ZuxApp.modules.computer.commands.GetComputerCommand;
+import com.github.jagarsoft.ZuxApp.modules.computer.commands.SetTextBankCommand;
 import com.github.jagarsoft.ZuxApp.modules.debugger.events.BinaryImageLoadedEvent;
 import com.github.jagarsoft.ZuxApp.modules.logger.events.LogEvent;
 import com.github.jagarsoft.ZuxApp.modules.memoryconfig.commands.GetMemoryConfiguration;
@@ -14,6 +19,8 @@ import com.github.jagarsoft.ZuxApp.modules.tape.PathUtils;
 import com.github.jagarsoft.ZuxApp.modules.tape.RAFSeekable;
 import com.github.jagarsoft.ZuxApp.modules.tape.TAP;
 import com.github.jagarsoft.ZuxApp.modules.zux.SetZuxDeviceBanksCommand;
+import com.github.jagarsoft.ZuxApp.modules.zxspectrum.ZXComputer;
+import com.github.jagarsoft.ZuxApp.modules.zxspectrum.commands.SetZXSpectrumDeviceBanksCommand;
 
 
 import java.io.*;
@@ -24,6 +31,7 @@ public class ComputerModule extends BaseModule {
     private final Computer computer;
     private final String image;
     private final String dataRegion;
+    private final Bootstrap.COMPUTER_MODEL computerModel;
     Z80 cpu;
 
     /*public ComputerModule() {
@@ -35,16 +43,23 @@ public class ComputerModule extends BaseModule {
         this.dataRegion = null;
     }*/
 
-    public ComputerModule(String image, String dataRegion) {
-        computer = new Computer();
+    public ComputerModule(String image, String dataRegion, Bootstrap.COMPUTER_MODEL computerModel) {
+        computer = switch (computerModel) {
+            case ZXSPECTRUM -> new ZXComputer();
+            case ZUX -> new Computer();
+            case DEFAULT -> null;
+        };
+        //computer = new Computer();
         computer.addCPU(cpu = new Z80());
-        computer.setEventBus(eventBus); // TODO refactor. Computer must not raise events
         cpu.setComputer(computer);
+        computer.setEventBus(eventBus); // TODO refactor. Computer must not raise events
         this.image = image;
         this.dataRegion = dataRegion;
+        this.computerModel = computerModel;
     }
 
     private void allocMemory() {
+        Command command;
         int pageSizeK;
         GetMemoryConfiguration memConfiguration = new GetMemoryConfiguration();
         commandBus.execute(memConfiguration);
@@ -57,10 +72,14 @@ public class ComputerModule extends BaseModule {
             computer.addMemory(bank * pageSizeK, new RAMMemory(pageSizeK));
         }*/
 
-        /*SetZXSpectrumDeviceBanksCommand command = new SetZXSpectrumDeviceBanksCommand(computer,
-                                                                memConfiguration.numberPages, memConfiguration.pageSize);*/
-        SetZuxDeviceBanksCommand command = new SetZuxDeviceBanksCommand(computer,
-                memConfiguration.numberPages, memConfiguration.pageSize);
+        command = switch (computerModel) {
+            case ZXSPECTRUM -> new SetZXSpectrumDeviceBanksCommand(computer,
+                    memConfiguration.numberPages, memConfiguration.pageSize);
+            case ZUX -> new SetZuxDeviceBanksCommand(computer,
+                    memConfiguration.numberPages, memConfiguration.pageSize);
+            case DEFAULT -> null;
+        };
+
 
         commandBus.execute(command);
     }
@@ -71,10 +90,10 @@ public class ComputerModule extends BaseModule {
 
         //screen = new ZuxScreen();
         //IODevice keyboard = new ZXSpectrumKeyboard();
-        //computer.addIODevice((byte) 0xCC, new BroadCastEvents(eventBus, new ZuxIO(keyboard, new ZuxTerminal(screen))));
-        //computer.addIODevice((byte) 0xFE, new BroadCastEvents(eventBus, new ZuxIO(keyboard, new ZuxTerminal(screen))));
+        //computer.addIODevice((byte) 0xCC, new BroadCastIODeviceEvents(eventBus, new ZuxIO(keyboard, new ZuxTerminal(screen))));
+        //computer.addIODevice((byte) 0xFE, new BroadCastIODeviceEvents(eventBus, new ZuxIO(keyboard, new ZuxTerminal(screen))));
         //ZuxLogger zuxLogger = new ZuxLogger(computer);
-        //computer.addIODevice(new byte[]{(byte)LOGGER_CMD, (byte)LOGGER_DAT}, new BroadCastEvents(eventBus, new ZuxIO(zuxLogger, zuxLogger)));
+        //computer.addIODevice(new byte[]{(byte)LOGGER_CMD, (byte)LOGGER_DAT}, new BroadCastIODeviceEvents(eventBus, new ZuxIO(zuxLogger, zuxLogger)));
         //computer.addIODevice((byte)0xFE, new ZXSpectrumIO(keyboard, new ZXTapeAndBorder(screen)));
 
 
@@ -194,6 +213,14 @@ public class ComputerModule extends BaseModule {
                 //computer.getCPU().JP_HL();
             }
         });*/
+
+        commandBus.registerHandler(SetTextBankCommand.class, new  CommandHandler<SetTextBankCommand>() {
+            @Override
+            public void handle(SetTextBankCommand command) {
+                computer.setTextBank(command.getBank()); // switch current bank
+                computer.switchBanks();
+            }
+        });
     }
 
     private void loadTAP(String fileName) throws IOException, URISyntaxException {
@@ -203,21 +230,25 @@ public class ComputerModule extends BaseModule {
         FileInputStream fis = new FileInputStream(fd);*/
 
         do {
-            int init = tap.h.parameter1;
+            int bank = tap.h.parameter1;
             int offset = tap.h.parameter2;
             long size = tap.h.lengthDataBlock;
             try {
                 raf.getShortLE(); // skip len TAP
                 raf.getByte(); // skip type
-                computer.loadBytes(raf.raf, init, offset, size);
+                computer.loadBytes(raf.raf, bank, offset, size);
                 raf.getByte(); // skip checksum
 
-                // AQUI TODO delegar en ComputerLoadImageCommand si la carga tiene exito
-                eventBus.publish(new BinaryImageLoadedEvent(computer, init, size)); // loadExecCommand.init
-            } catch (IOException e) {
+                // TODO delegar en ComputerLoadImageCommand si la carga tiene exito
+                if( eventBus instanceof AsyncEventBus)
+                    ((IAsyncEventBus)eventBus).publishAndWait(new BinaryImageLoadedEvent(computer, bank, offset, size));
+                else
+                    eventBus.publish(new BinaryImageLoadedEvent(computer, bank, offset, size));
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         } while(tap.getNextComponent(raf));
+        commandBus.execute(new SetTextBankCommand(0)); // switch initial bank
     }
 
     @Override

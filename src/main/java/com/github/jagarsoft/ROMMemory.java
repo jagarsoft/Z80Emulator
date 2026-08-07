@@ -16,12 +16,14 @@ public class ROMMemory implements Memory {
     }
 
     @Override
-    //public void poke(int addr, byte data) { /* Read-Only Memory */; } // TODO recover
-    public void poke(int addr, byte data) { if( addr == 0x1303 ) rom[addr] = data; } // TODO remove
+    public void poke(int addr, byte data) { /* Read-Only Memory */; }
 
     @Override
     public byte peek(int addr){ return rom[addr]; }
-    
+
+    @Override
+    public byte peekText(int addr) { return rom[addr]; }
+
     @Override
     public int getSize() { return rom.length; }
 

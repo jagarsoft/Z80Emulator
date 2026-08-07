@@ -17,6 +17,7 @@ public class Untap {
     private static final short FS   = 4;
     private static final short INIT = 6;
     private static final short FSCK = 8;
+    private static final short INFO = 3;
 
     static class Block {
         int size;
@@ -215,7 +216,7 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
 
                 /* patch kernel bin image
                  * untap -pk ker_text_len ker_data_len mm_text_len mm_data_len fs_text_len fs_data_len
-                 *          init_text_len init_data_len fsck_text_len fsck_data_len file.bin
+                 *          init_text_len init_data_len fsck_text_len fsck_data_len kernel.bin
                  *
                  */
             case "-pk":
@@ -234,22 +235,22 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
                 break;
 
             /* patch kernel bin image
-             * untap -pk ker_text_len ker_data_len mm_text_len mm_data_len fs_text_len fs_data_len
-             *          init_text_len init_data_len fsck_text_len fsck_data_len file.bin
+             * untap -pf ker_text_len ker_data_len mm_text_len mm_data_len fs_text_len fs_data_len
+             *          init_text_len init_data_len fsck_text_len fsck_data_len fs.bin
              *
              */
             case "-pf":
                 patchOptFS = true;
-                sizes[0] = Integer.parseInt(args[argIndex+1]);
-                sizes[1] = Integer.parseInt(args[argIndex+2]);
-                sizes[2] = Integer.parseInt(args[argIndex+3]);
-                sizes[3] = Integer.parseInt(args[argIndex+4]);
-                sizes[4] = Integer.parseInt(args[argIndex+5]);
-                sizes[5] = Integer.parseInt(args[argIndex+6]);
-                sizes[6] = Integer.parseInt(args[argIndex+7]);
-                sizes[7] = Integer.parseInt(args[argIndex+8]);
-                sizes[8] = Integer.parseInt(args[argIndex+9]);
-                sizes[9] = Integer.parseInt(args[argIndex+10]);
+                sizes[KERN] = Integer.parseInt(args[argIndex+1]);
+                sizes[KERN+1] = Integer.parseInt(args[argIndex+2]);
+                sizes[MM] = Integer.parseInt(args[argIndex+3]);
+                sizes[MM+1] = Integer.parseInt(args[argIndex+4]);
+                sizes[FS] = Integer.parseInt(args[argIndex+5]);
+                sizes[FS+1] = Integer.parseInt(args[argIndex+6]);
+                sizes[INIT] = Integer.parseInt(args[argIndex+7]);
+                sizes[INIT+1] = Integer.parseInt(args[argIndex+8]);
+                sizes[FSCK] = Integer.parseInt(args[argIndex+9]);
+                sizes[FSCK+1] = Integer.parseInt(args[argIndex+10]);
                 argIndex+=11;
                 break;
         }
@@ -258,8 +259,8 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
         System.out.println(fileName);
 
         if( tapOpt ) {
-            if( ! PathUtils.getExtension(fileName).endsWith(".tap") ) {
-                System.err.println(fileName + " is not a .tap file");
+            if( ! PathUtils.getExtension(fileName).endsWith("bin") ) {
+                System.err.println(fileName + " is not a .bin file");
                 exit(-1);
             }
 
@@ -268,30 +269,30 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
         }
 
         if( patchOptKer ) {
-            if( ! PathUtils.getExtension(fileName).endsWith(".bin") ) {
+            if( ! PathUtils.getExtension(fileName).endsWith("bin") ) {
                 System.err.println(fileName + " is not a .bin file");
                 exit(-1);
             }
 
             RAFSeekable bin = new RAFSeekable(fileName, "rw");
             doPatchKernel(bin, sizes);
-            if( ! listOpt ) // if -l was used, dont exit yet
-                exit(0);
+            bin.close();
+            exit(0);
         }
 
         if( patchOptFS ) {
-            if( ! PathUtils.getExtension(fileName).endsWith(".bin") ) {
+            if( ! PathUtils.getExtension(fileName).endsWith("bin") ) {
                 System.err.println(fileName + " is not a .bin file");
                 exit(-1);
             }
 
             RAFSeekable bin = new RAFSeekable(fileName, "rw");
             doPatchFS(bin, sizes);
-            if( ! listOpt ) // if -l was used, dont exit yet
-                exit(0);
+            bin.close();
+            exit(0);
         }
 
-        if( ! PathUtils.getExtension(fileName).endsWith(".tap") ) {
+        if( ! PathUtils.getExtension(fileName).endsWith("tap") ) {
             System.err.println(fileName + " is not a .tap file");
             exit(-1);
         }
@@ -327,6 +328,8 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
         } else if (blockOpt ) {
             showBlock(blockIndex);
         }
+
+        tap.close();
     }
 
     //private static void showBlock(Block blk, int blockIndex) {
@@ -431,9 +434,9 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
 
         System.out.println("Header for: " + getHeaderType(blk.h.type));
         System.out.println("Filename: \"" + new String(blk.h.filename) + "\"");
-        System.out.println("Length Data Block: " + blk.h.lengthDataBlock);
-        System.out.println("Parameter 1: " + blk.h.parameter1);
-        System.out.println("Parameter 2: " + blk.h.parameter2);
+        System.out.println("Length Data Block: " + blk.h.lengthDataBlock +" ("+ Integer.toHexString(blk.h.lengthDataBlock) +")");
+        System.out.println("Parameter 1: " + blk.h.parameter1 +" ("+ Integer.toHexString(blk.h.parameter1) +")");
+        System.out.println("Parameter 2: " + blk.h.parameter2 +" ("+ Integer.toHexString(blk.h.parameter2) +")");
         System.out.println("Checksum Byte Header: " + blk.h.checksumByteHeader);
     }
 
@@ -516,7 +519,7 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
 
         bin.seek(0x40);
 
-        for(i = 0x40; i < 0x40+10; ++i) {
+        for(i = 0x40; i < 0x40+20; i+=2) {
             System.out.printf("0x%02X", i);
             System.out.print(": ");
             System.out.printf("0x%04X", (short)bin.getShortLE());
@@ -528,21 +531,22 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
     private static void doPatchFS(RAFSeekable bin, int[] sizes) throws IOException {
         long init_org, fs_org, fbase, mm_data;
         int init_text_size, init_data_size;
-        short w0, w1, w2;
-        int b0, b1, b2, b3, b4, b5, mag;
+        short w0, w1, w2, mag;
+        byte b0, b1, b2, b3, b4, b5;
 
         init_org = PROG_ORG;
-        init_org += sizes[KERN] + sizes[KERN+1]; // + sizes[KERN].bss_size
+//        init_org += 0; //sizes[KERN] + sizes[KERN+1]; // + sizes[KERN].bss_size TMP
 
-        mm_data = init_org - PROG_ORG; // + BOOTBLOCK_SIZE /* former offset of mm in file */
-        mm_data += sizes[MM];
+//        mm_data = init_org - PROG_ORG; // + BOOTBLOCK_SIZE /* former offset of mm in file */
+//        mm_data += sizes[MM];
 
-        init_org += sizes[MM] + sizes[MM+1]; // + sizes[MM].bss_size
+        //init_org += sizes[MM] + sizes[MM+1]; // + sizes[MM].bss_size TMP
 
         fs_org = init_org - PROG_ORG; // + BOOTBLOCK_SIZE /* offset of fs-text into file */
-        fs_org += sizes[FS];
+        //fs_org += sizes[FS]; TMP
 
-        init_org += sizes[FS] + sizes[FS+1]; // + sizes[FS].bss_size
+        //init_org += sizes[FS] + sizes[FS+1]; // + sizes[FS].bss_size
+        init_org = 1; // BANK 1
         init_text_size = sizes[INIT];
         init_data_size = sizes[INIT+1]; // + sizes[INIT].bss_size
         //init_org >>= CLICK_SHIFT;
@@ -556,50 +560,38 @@ C:\Users\fjgarrido\Documents\Private\Java\jdk-21.0.2\bin\java.exe "-javaagent:C:
         w0 = (short) (init_org & 0x0FFFF);
         w1 = (short) (init_text_size & 0x0FFFF);
         w2 = (short) (init_data_size & 0x0FFFF);
-        b0 =  w0 & 0x0FF;
-        b1 = (w0 >> 8) & 0x0FF;
-        b2 = w1 & 0x0FF;
-        b3 = (w1 >> 8) & 0x0FF;
-        b4 = w2 & 0x0FF;
-        b5 = (w2 >> 8) & 0x0FF;
+        b0 = (byte) (w0 & 0x0FF);
+        b1 = (byte) ((w0 >> 8) & 0x0FF);
+        b2 = (byte) (w1 & 0x0FF);
+        b3 = (byte) ((w1 >> 8) & 0x0FF);
+        b4 = (byte) (w2 & 0x0FF);
+        b5 = (byte) ((w2 >> 8) & 0x0FF);
 
         /* Check for appropriate magic numbers. */
-        mag = bin.getByte(mm_data+3) + (bin.getShortLE() << 8);
+        //mag = bin.getByte(mm_data+3) + (bin.getShortLE() << 8);
+        /*mag = bin.getShortLE(mm_data+3);
         if (mag != FS_D_MAGIC) {
             System.err.println("mm data space: no magic #");
             exit(mag);
-        }
-        fbase = fs_org + 3; // skip JP instruction
-        mag = bin.getShortLE(fbase) + (bin.getShortLE() << 8);
+        }*/
+        fbase = fs_org + INFO; // skip JP instruction
+        //mag = bin.getShortLE(fbase) + (bin.getShortLE() << 8);
+        mag = bin.getShortLE(fbase);
         if (mag != FS_D_MAGIC) {
-            System.err.println("fs data space: no magic #");
+            System.err.println("fs data space: no magic number");
             exit(mag);
         }
 
-        /*put_byte(fbase+4L, b0);
-        put_byte(fbase+5L, b1);
-        put_byte(fbase+6L, b2);
-        put_byte(fbase+7L, b3);
-        put_byte(fbase+8L ,b4);
-        put_byte(fbase+9L, b5);*/
+        bin.putByte(fbase, b0);
+        bin.putByte(b1);
+        bin.putByte(b2);
+        bin.putByte(b3);
+        bin.putByte(b4);
+        bin.putByte(b5);
 
+        bin.seek(fbase);
 
-        bin.seek(0x40);
-
-        bin.putShortLE((short)(sizes[0] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[1] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[2] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[3] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[4] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[5] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[6] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[7] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[8] & 0x0FFFF));
-        bin.putShortLE((short)(sizes[9] & 0x0FFFF));
-
-        bin.seek(0x40);
-
-        for(int i = 0x40; i < 0x40+10; ++i) {
+        for(int i = (int)fbase; i < fbase+6; i+=2) {
             System.out.printf("0x%02X", i);
             System.out.print(": ");
             System.out.printf("0x%04X", (short)bin.getShortLE());

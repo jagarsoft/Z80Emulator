@@ -10,12 +10,17 @@ import java.util.BitSet;
 import java.util.HashMap;
 
 public class Computer {
-    Z80 cpu;
-    HashMap<Integer, Memory> banks   = new HashMap<Integer, Memory>();
-    HashMap<Short, IODevice> ioBanks = new HashMap<Short, IODevice>();
+    protected Z80 cpu;
+    private HashMap<Integer, Memory> banks   = new HashMap<Integer, Memory>();
+    private HashMap<Short, IODevice> ioBanks = new HashMap<Short, IODevice>();
 
-    int sizeMask = 0;
+    private int sizeMask = 0;
     private EventBus eventBus;
+    private int textBank;
+    private int dataBank;
+    private boolean isBankingOn = false;
+    private int nextTextBank;
+    private int nextDataBank;
 
     public Computer(){
     }
@@ -83,7 +88,14 @@ public class Computer {
             throw new IllegalArgumentException("All banks must be the same size as the first one (" + Integer.toHexString(sizeMask) + "). " + Integer.toHexString(s) + " given");
         }
 
-        int key = base2key(base);
+        int key;
+
+        if ( s != 0x1_0000 )
+            key = base2keyData(base);
+        else {
+            key = base;
+            isBankingOn = true;
+        }
 
         banks.put(key, memory);
     }
@@ -112,30 +124,43 @@ public class Computer {
         return ~(s - 1);
     }
 
-    private int base2key(int addr) {
-        return addr & sizeMask;
+    protected int base2keyText(int addr) {
+        return (!isBankingOn) ? addr & sizeMask : textBank;
     }
-    
+
+    private int base2keyData(int addr) { return (!isBankingOn) ? addr & sizeMask : dataBank; }
+
     private void bindPortsToDevice(short[] ports, IODevice device) {
         for(short port : ports) {
             ioBanks.put(port, device);
         }
     }
 
+    public byte peekText(int addr) {
+        addr = addr & 0x0000FFFF;
+        final int key = base2keyText(addr);
+        if( banks.containsKey(key) ) {
+            return banks.get(key).peekText(addr - (addr & sizeMask));
+        } else
+            return (byte) 0xFF; // Pull-up!
+    }
+
     public byte peek(int addr) {
         addr = addr & 0x0000FFFF;
-        if( banks.containsKey( base2key(addr) ) ) {
-            return banks.get(base2key(addr)).peek(addr - (addr & sizeMask));
+        final int key = base2keyData(addr);
+        if( banks.containsKey(key) ) {
+            return banks.get(key).peek(addr - (addr & sizeMask));
         } else
             return (byte) 0xFF; // Pull-up!
     }
 
     public void poke(int addr, byte data) {
         addr = addr & 0x0000FFFF;
-        if( banks.containsKey( base2key(addr) ) )
-            banks.get(base2key(addr)).poke(addr - (addr & sizeMask), data);
+        final int key = base2keyData(addr);
+        if( banks.containsKey( key ) )
+            banks.get(key).poke(addr - (addr & sizeMask), data);
         else
-            throw  new IllegalArgumentException("No such bank address " + addr);
+            System.out.println("No such bank address " + String.format("%04X", addr));
     }
 
     public byte read(short addr) {
@@ -155,12 +180,12 @@ public class Computer {
         if( ioBanks.containsKey(addr) )
             ioBanks.get(addr /*& 0x00FF*/).write(addr /*& 0x00FF*/, data, tstate);
         else
-            System.out.println("No such bank address " + String.format("%04X", addr));
+            System.out.println("No such I/O address " + String.format("%04X", addr));
     }
 
     public void load(InputStream dataStream) throws IOException {
 assert dataStream != null;
-        banks.get(base2key(0)).load(dataStream, 0,16*1024);
+        banks.get(base2keyData(0)).load(dataStream, 0,16*1024);
     }
 
     /*
@@ -181,27 +206,26 @@ assert dataStream != null;
      */
     public void load(FileInputStream dataStream, long length) throws IOException {
         assert dataStream != null;
-        Logger.info("Computer.load dataStream: "+dataStream.toString());
         long left_to_load;
-        int bank_size = banks.get(base2key(0)).getSize();
+        int bank_size = banks.get(base2keyData(0)).getSize();
         int i = 0;
         while( length > bank_size ) {
             left_to_load = length - bank_size;
-            banks.get(base2key(i)).load(dataStream, 0, bank_size);
+            banks.get(base2keyData(i)).load(dataStream, 0, bank_size);
             length = left_to_load;
             i += bank_size;
         }
-        banks.get(base2key(i)).load(dataStream, 0, (int)length);
+        banks.get(base2keyData(i)).load(dataStream, 0, (int)length);
     }
 
     public void loadBytes(FileInputStream dataStream, int init, long length) throws IOException {
         assert dataStream != null;
 
-        int bank_size = banks.get(base2key(0)).getSize();
+        int bank_size = banks.get(base2keyData(0)).getSize();
 
         do {
             long left_to_load = length; // sentinel = end condition
-            int base = base2key(init);
+            int base = base2keyData(init);
             Memory bank = banks.get(base);
 
             int relative = init - base; // != 0 for 1st bank only, else 0
@@ -223,11 +247,11 @@ assert dataStream != null;
         if( init < 0 )
             init &= 0x0FFFF;
 
-        int bank_size = banks.get(base2key(0)).getSize();
+        int bank_size = banks.get(base2keyData(0)).getSize();
 
         do {
             long left_to_load = length; // sentinel = end condition
-            int base = base2key(init);
+            int base = base2keyData(init);
             if( base < 0 )
                 base &= 0x0FFFF;
             Memory bank = banks.get(base);
@@ -246,31 +270,31 @@ assert bank != null;
     }
 
     // load TAPs
-    public void loadBytes(RandomAccessFile dataStream, int init, int relative, long length) throws IOException {
+    public void loadBytes(RandomAccessFile dataStream, int indexBank, int offset, long length) throws IOException {
         assert dataStream != null;
 
-        if( init < 0 )
-            init &= 0x0FFFF;
+        if( indexBank < 0 )
+            indexBank &= 0x0FFFF;
 
         //int bank_size = banks.get(base2key(0)).getSize();
 
         //do {
             /*long left_to_load = length; // sentinel = end condition
-            int base = base2key(init);
+            int base = base2key(indexBank);
             if( base < 0 )
                 base &= 0x0FFFF;*/
-            Memory bank = banks.get(init);
+            Memory bank = banks.get(indexBank);
             assert bank != null;
-            //int relative = init - base; // != 0 for 1st bank only, else 0
-            //if (relative + length > bank_size)
-            //    left_to_load = bank_size - relative;
+            //int offset = indexBank - base; // != 0 for 1st bank only, else 0
+            //if (offset + length > bank_size)
+            //    left_to_load = bank_size - offset;
 
-            bank.load(dataStream, relative, (int)length);
+            bank.load(dataStream, offset, (int)length);
 /*
             if (left_to_load == length) return;
 
             length -= left_to_load;
-            init += left_to_load; // next bank
+            indexBank += left_to_load; // next bank
         } while(true); // length > 0*/
     }
 
@@ -282,7 +306,7 @@ assert bank != null;
 
     // PRECOND: origin and destination are in the same bank throughout the entire count
     public void movemem(short org, short dst, short count, Memory.MovememDirection dir) {
-        banks.get(base2key(org)).movemem((short) (org - (org & sizeMask)), (short) (dst - (dst & sizeMask)), count, dir);
+        banks.get(base2keyData(org)).movemem((short) (org - (org & sizeMask)), (short) (dst - (dst & sizeMask)), count, dir);
     }
 
     public void dump(int org, int count) {
@@ -325,5 +349,52 @@ assert bank != null;
 
     public EventBus getEventBus() {
         return this.eventBus;
+    }
+
+    public void setTextBank(int bank) {
+        nextTextBank = bank;
+    }
+
+    public int getTextBank() {
+        return textBank;
+    }
+
+    public int getDataBank() {
+        return dataBank;
+    }
+
+    public void setDataBankImmediate(int bank) {
+        dataBank = bank;
+    }
+
+    public void setBothBanks(int textbank, int databank) {
+        nextTextBank = textbank;
+        nextDataBank = databank;
+    }
+
+    public void switchBanks() {
+        textBank = nextTextBank;
+        dataBank = nextDataBank;
+    }
+
+    public boolean getBankingOn() {
+        return isBankingOn;
+    }
+
+    public void movemem_between_banks(int org, int dst, int count, Memory.MovememDirection dir) {
+        Memory ram_org = banks.get(org >>> 16);
+        Memory ram_dst = banks.get(dst >>> 16);
+        short off_org = (short) (org & 0x0FFFF);
+        short off_dst = (short) (dst & 0x0FFFF);
+        switch (dir) {
+            case FORWARD:
+                while (count-- > 0)
+                    ram_dst.poke(off_dst++, ram_org.peek(off_org++));
+                break;
+            case REVERSE:
+                while (count-- > 0)
+                    ram_dst.poke(off_dst--, ram_org.peek(off_org--));
+                break;
+        }
     }
 }
